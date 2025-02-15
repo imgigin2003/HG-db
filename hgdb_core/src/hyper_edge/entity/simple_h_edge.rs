@@ -3,14 +3,14 @@ use serde::{Serialize, Deserialize}; // For serializing and deserializing data
 use std::hash::Hash; // For implementing hash-based collections
 
 // Deriving Serialize, Deserialize, and Debug traits for the Property struct
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Property<K: Eq + Hash, V: Eq + Hash> {
     pub key: K, // The key for the property
     pub value: Vec<V>, // The value associated with the key
 }
 
 // Deriving Serialize, Deserialize, and Debug traits for the SimpleHyperEdge struct
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SimpleHyperEdge<T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> {
     pub id: T, // The unique ID for the hyperedge
     pub name: T, // The name of the hyperedge
