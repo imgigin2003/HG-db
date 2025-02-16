@@ -7,7 +7,7 @@ mod tests {
     const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/data"; // RocksDB path
 
     #[test]
-    fn test_crud_operations() -> Result<(), Box<dyn Error>> {
+    fn test_simple_h_edge_crud_operations() -> Result<(), Box<dyn Error>> {
         // Initialize repository
         let repository = HyperEdgeRepository::new(DB_PATH)?;
 
