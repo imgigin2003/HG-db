@@ -1,15 +1,16 @@
 use rocksdb::{DB, Options};
 use serde_json::{self, to_vec};
 use crate::hyper_edge::entity::simple_h_edge::SimpleHyperEdge;
+use crate::hyper_edge::entity::dual_h_edge::DualHyperEdge;
 use std::error::Error;  // Import general error trait
 
 #[allow(dead_code)]
-pub struct HyperEdgeRepository {
+pub struct SimpleHyperEdgeRepository {
     db: DB,
     db_path: String,
 }
 
-impl HyperEdgeRepository {
+impl SimpleHyperEdgeRepository {
     /// Constructor for creating a new repository
     pub fn new(db_path: &str) -> Result<Self, Box<dyn Error>> {  // Return Boxed error type
         let mut opts = Options::default();
@@ -18,7 +19,7 @@ impl HyperEdgeRepository {
         // Open RocksDB with the provided path
         let db = DB::open(&opts, db_path)?;
 
-        Ok(HyperEdgeRepository {
+        Ok(SimpleHyperEdgeRepository {
             db,
             db_path: db_path.to_string(),
         })
@@ -88,5 +89,15 @@ impl HyperEdgeRepository {
         }
 
         Ok(edges) // Return the list of edges
+    }
+
+    pub fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+        // Serialize the dual edge
+        let serialized_dual_edge = serde_json::to_string(&dual_edge)?;
+
+        // Store the dual edge in the repository (using its unique ID)
+        self.db.put(dual_edge.id, serialized_dual_edge)?;
+
+        Ok(())
     }
 }

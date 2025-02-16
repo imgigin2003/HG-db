@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use hgdb_core::hyper_edge::repository::simple_h_edge_repository::HyperEdgeRepository;
+    use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
     use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
     use std::error::Error;
 
@@ -9,7 +9,7 @@ mod tests {
     #[test]
     fn test_simple_h_edge_crud_operations() -> Result<(), Box<dyn Error>> {
         // Initialize repository
-        let repository = HyperEdgeRepository::new(DB_PATH)?;
+        let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
 
         // Define test data
         let test_key = "test_edge";
