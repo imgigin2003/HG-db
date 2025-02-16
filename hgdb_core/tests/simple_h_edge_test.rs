@@ -14,16 +14,17 @@ mod tests {
         // Define test data
         let test_key = "test_edge";
         let test_edge = SimpleHyperEdge {
-            id: "Keys".to_string(),
-            name: "Edges".to_string(),
+            id: "edge1".to_string(),
+            name: "Friendship".to_string(),
             main_properties: vec![
-                Property { key: "e1".to_string(), value: vec!["v1".to_string(), "v2".to_string(), "v3".to_string()] },
-                Property { key: "e2".to_string(), value: vec!["v4".to_string(), "v5".to_string()] },
-                Property { key: "e3".to_string(), value: vec!["v6".to_string()] }
+                Property {
+                    key: "relationship-type".to_string(),
+                    value: vec!["friends".to_string()]
+                }
             ],
-            traversable: true,
-            head_hyper_nodes: Box::new(vec![]),
-            tail_hyper_nodes: Box::new(vec![]),
+            traversable: false,
+            head_hyper_nodes: Box::new(vec!["alice".to_string(), "bob".to_string()]),
+            tail_hyper_nodes: Box::new(vec!["charlie".to_string()]),
         };
 
         // Create
@@ -36,7 +37,7 @@ mod tests {
         // Retrieve by key again and verify
         let retrieved_edge = repository.get_by_key(test_key)?;
         assert!(retrieved_edge.is_some(), "Edge was not found in database");
-        assert_eq!(retrieved_edge.unwrap().name, "Edges", "Retrieved edge name mismatch");
+        assert_eq!(retrieved_edge.unwrap().name, "Friendship", "Retrieved edge name mismatch");
 
         // Log retrieved edge for debugging
         let retrieved_edge = repository.get_by_key(test_key)?;
