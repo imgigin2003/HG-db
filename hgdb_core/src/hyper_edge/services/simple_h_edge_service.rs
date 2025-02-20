@@ -50,31 +50,28 @@ impl<'a> DualHyperEdgeService<'a> {
     }            
 
     // Simulate matrix creation based on head and tail nodes
-    pub fn create_incidence_matrix(
+    pub fn create_incidence_matrix<T: ToString> (
         &self,
-        nodes: &Vec<String>,
-        original_edge: &SimpleHyperEdge<String, String, String>,
+        nodes: &[T],
+        original_edge: &SimpleHyperEdge<String, String, String>
     ) -> Vec<Vec<bool>> {
-        let mut matrix = Vec::new();
+        let mut matrix = vec![vec![false; 1]; nodes.len()];
 
-        // Create rows for each node (just an example)
-        for node in nodes {
-            let mut row = vec![false; 1]; // Matrix is 1-dimensional for simplicity
-            // Here, you could fill in the row based on your logic
-            // Example: if node is in head or tail of the edge, mark it
-            if original_edge.head_hyper_nodes.contains(node) {
-                row[0] = true;
-            }
-            matrix.push(row);
+        for (i, node) in nodes.iter().enumerate() {
+            let node_str = node.to_string();
+        
+
+        if original_edge.head_hyper_nodes.contains(&node_str) || original_edge.tail_hyper_nodes.contains(&node_str) {
+            matrix [i][0] = true;
         }
-
-        matrix
+    }
+    matrix
     }
 
     // Function to transpose the matrix
     pub fn transpose_matrix(&self, matrix: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
         if matrix.is_empty() || matrix[0].is_empty() {
-            return vec![]; // Return empty if matrix is empty
+            return Vec::new(); // Return empty if matrix is empty
         }
     
         let rows = matrix.len();
@@ -82,9 +79,9 @@ impl<'a> DualHyperEdgeService<'a> {
     
         let mut transposed = vec![vec![false; rows]; cols]; // Flip row/column sizes
     
-        for i in 0..rows {
-            for j in 0..cols {
-                transposed[j][i] = matrix[i][j]; // Swap positions
+        for (i, row) in matrix.iter().enumerate() {
+            for (j, &val) in row.iter().enumerate() {
+                transposed[j][i] = val;
             }
         }
     

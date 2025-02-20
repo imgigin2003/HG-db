@@ -94,7 +94,7 @@ impl SimpleHyperEdgeRepository {
         match self.db.get(key)? {
             Some(serialized_edge) => {
                 let edge: DualHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
-                println!("🔍 Retrieved Dual Hyperedge: {:?}", edge); // Debug log
+                println!("🔍 Retrieving Dual Hyperedge"); // Debug log
                 Ok(Some(edge))
             }
             None => {

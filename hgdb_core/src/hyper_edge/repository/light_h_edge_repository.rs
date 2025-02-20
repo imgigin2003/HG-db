@@ -24,7 +24,7 @@ impl LightHyperEdgeRepository {
 
     pub fn create(&self, key: &str, edge: &LightHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         let serialized_edge = to_vec(edge).map_err(|e| {
-            eprintln!("Serialization error for edge with key '{}': {:?}", key, e);
+            eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
             Box::new(e) as Box<dyn Error>
         })?;
 
@@ -36,7 +36,7 @@ impl LightHyperEdgeRepository {
         match self.db.get(key)? {
             Some(serialized_edge) => {
                 let edge: LightHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge).map_err(|e| {
-                    eprintln!("Deserialization error for key '{}': {:?}", key, e);
+                    eprintln!("❌ Deserialization error for key '{}': {:?}", key, e);
                     Box::new(e) as Box<dyn Error>
                 })?;
                 Ok(Some(edge))
@@ -54,14 +54,14 @@ impl LightHyperEdgeRepository {
                     match serde_json::from_slice(&value) {
                         Ok(edge) => edges.push(edge),
                         Err(e) => {
-                            eprintln!("Skipping entry due to the deserialization error: {:?}", e);
+                            eprintln!("❌ Skipping entry due to the deserialization error: {:?}", e);
                             continue;
                         }
                     }
                 }
 
                 Err(e) => {
-                    eprintln!("Error iterating over database: {:?}", e);
+                    eprintln!("❌ Error iterating over database: {:?}", e);
                     return Err(Box::new(e));
                 }
             }
