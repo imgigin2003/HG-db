@@ -6,7 +6,7 @@ use std::error::Error;  // Import general error trait
 
 #[allow(dead_code)]
 pub struct SimpleHyperEdgeRepository {
-    db: DB,
+    pub db: DB,
     db_path: String,
 }
 
@@ -29,7 +29,7 @@ impl SimpleHyperEdgeRepository {
     pub fn create(&self, key: &str, edge: &SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         // Serialize the SimpleHyperEdge to Vec<u8>
         let serialized_edge = to_vec(edge).map_err(|e| {
-            eprintln!("Serialization error for edge with key '{}': {:?}", key, e);
+            eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
             Box::new(e) as Box<dyn Error> // Return as a Boxed error
         })?;
 
@@ -44,7 +44,7 @@ impl SimpleHyperEdgeRepository {
             Some(serialized_edge) => {
                 // Deserialize the SimpleHyperEdge
                 let edge: SimpleHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge).map_err(|e| {
-                    eprintln!("Deserialization error for key '{}': {:?}", key, e);
+                    eprintln!("❌ Deserialization error for key '{}': {:?}", key, e);
                     Box::new(e) as Box<dyn Error> // Return as a Boxed error
                 })?;
                 Ok(Some(edge))
@@ -66,38 +66,53 @@ impl SimpleHyperEdgeRepository {
 
     /// Method to retrieve all SimpleHyperEdges in the database
     pub fn get_all(&self) -> Result<Vec<SimpleHyperEdge<String, String, String>>, Box<dyn Error>> {
-        let mut edges = Vec::new(); // Vector to hold all edges
+        let mut edges = Vec::new();
 
-        // Iterate over all key-value pairs in the database
         for item in self.db.iterator(rocksdb::IteratorMode::Start) {
             match item {
                 Ok((_key, value)) => {
-                    // Deserialize the value into a SimpleHyperEdge
-                    match serde_json::from_slice(&value) {
-                        Ok(edge) => edges.push(edge), // Add deserialized edge to the vector
+                    // Only attempt to deserialize as SimpleHyperEdge
+                    match serde_json::from_slice::<SimpleHyperEdge<String, String, String>>(&value) {
+                        Ok(edge) => edges.push(edge),
                         Err(e) => {
-                            eprintln!("Skipping entry due to deserialization error: {:?}", e);
-                            continue; // Skip this entry if deserialization fails
+                            eprintln!("❌ Skipping entry due to deserialization error: {:?}", e);
+                            continue; // Skip corrupted or mismatched entries
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error iterating over database: {:?}", e); // Log iteration error
-                    return Err(Box::new(e)); // Return the error as a Boxed error
+                    eprintln!("❌ Error iterating over database: {:?}", e);
+                    return Err(Box::new(e));
                 }
             }
         }
 
-        Ok(edges) // Return the list of edges
-    }
+        Ok(edges)
+    }    
+
+    pub fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
+        match self.db.get(key)? {
+            Some(serialized_edge) => {
+                let edge: DualHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
+                println!("🔍 Retrieved Dual Hyperedge: {:?}", edge); // Debug log
+                Ok(Some(edge))
+            }
+            None => {
+                println!("❌ No Dual Hyperedge found for key: {}", key); // Debug log
+                Ok(None)
+            }
+        }
+    }             
 
     pub fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-        // Serialize the dual edge
-        let serialized_dual_edge = serde_json::to_string(&dual_edge)?;
-
-        // Store the dual edge in the repository (using its unique ID)
-        self.db.put(dual_edge.id, serialized_dual_edge)?;
-
+        let key = dual_edge.id.clone();
+        println!("💾 Saving Dual Hyperedge with Key: {}", key); // Debug log
+        
+        let serialized_dual_edge = serde_json::to_vec(&dual_edge)?;
+        self.db.put(&key, serialized_dual_edge)?;
+        println!("✅ Successfully saved Dual Hyperedge with Key: {}", key); // Debug log
+    
         Ok(())
-    }
+    }      
+          
 }
