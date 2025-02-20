@@ -12,6 +12,7 @@ impl<'a> DualHyperEdgeService<'a> {
         DualHyperEdgeService { repository }
     }
 
+    // method to create the dual edge based on the simple edge
     pub fn create_dual_h_edge(&self, id: &str) -> Result<(), Box<dyn Error>> {
         let simple_h_edge = self.repository.get_by_key(id)?;
     
@@ -88,6 +89,7 @@ impl<'a> DualHyperEdgeService<'a> {
         transposed
     }    
 
+    // method to print the matrix information
     pub fn print_matrix(&self, matrix: &Vec<Vec<bool>>) {
         println!("🔢 Matrix [{}x{}]:", matrix.len(), if matrix.is_empty() { 0 } else { matrix[0].len() });
         for row in matrix {

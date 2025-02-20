@@ -90,6 +90,7 @@ impl SimpleHyperEdgeRepository {
         Ok(edges)
     }    
 
+    // method to get the dual edge by key
     pub fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
         match self.db.get(key)? {
             Some(serialized_edge) => {
@@ -104,6 +105,7 @@ impl SimpleHyperEdgeRepository {
         }
     }             
 
+    // method to save the dual edge key
     pub fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         let key = dual_edge.id.clone();
         println!("💾 Saving Dual Hyperedge with Key: {}", key); // Debug log
