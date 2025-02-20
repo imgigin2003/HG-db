@@ -1,11 +1,13 @@
+use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
+use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
+
 #[cfg(test)]
 mod tests {
-    use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
-    use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
+    use super::*;
     use std::error::Error;
     use std::fs::remove_dir_all;
 
-    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/data"; // RocksDB path
+    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/simple-h-edge"; // RocksDB path
 
     #[test]
     fn test_simple_h_edge_crud_operations() -> Result<(), Box<dyn Error>> {
@@ -18,7 +20,7 @@ mod tests {
         // Define test data
         let test_key = "test_edge";
         let test_edge = SimpleHyperEdge {
-            id: "edge1".to_string(),
+            id: test_key.to_string(),
             name: "Friendship".to_string(),
             main_properties: vec![
                 Property {
