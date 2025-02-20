@@ -6,11 +6,15 @@ mod tests {
     use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
     use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
     use std::error::Error;
+    use std::fs::remove_dir_all;
 
     const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/data"; // Your RocksDB path
     
     #[test]
     fn test_light_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
+        // Delete the database folder before running the test to ensure clean slate
+        let _ = remove_dir_all(DB_PATH);
+
         // Initialize repository
         let repository = LightHyperEdgeRepository::new(DB_PATH)?;
 
@@ -51,11 +55,11 @@ mod tests {
 
         // Retrieve all edges and assert there's at least one
         let all_edges_before = repository.get_all()?;
-        assert!(all_edges_before.len() >= 1, "Not all edges were retrieved");
+        assert!(all_edges_before.len() >= 1, "❌ Not all edges were retrieved");
 
         // Retrieve by key again and verify
         let retrieved_edge = repository.get_by_key(test_key)?;
-        assert!(retrieved_edge.is_some(), "Edge was not found in database");
+        assert!(retrieved_edge.is_some(), "❌ Edge was not found in database");
         assert_eq!(retrieved_edge.unwrap().id, "edge1", "Retrieved edge ID mismatch");
 
         // Update
@@ -107,10 +111,10 @@ mod tests {
         
         // Debugging line to check the state before and after delete
         let deleted_edge = repository.get_by_key(test_key)?;
-        assert!(deleted_edge.is_none(), "Edge was not deleted");
+        assert!(deleted_edge.is_none(), "❌ Edge was not deleted");
 
         let all_edges_after_delete = repository.get_all()?;
-        println!("Edges after delete: {:?}", all_edges_after_delete); // Debugging line
+        println!("✅ Edges after delete: {:?}", all_edges_after_delete); // Debugging line
         assert_eq!(all_edges_after_delete.len(), 0, "There should be no edges after deletion");
 
         Ok(())

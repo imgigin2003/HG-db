@@ -3,11 +3,15 @@ mod tests {
     use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
     use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
     use std::error::Error;
+    use std::fs::remove_dir_all;
 
     const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/data"; // RocksDB path
 
     #[test]
     fn test_simple_h_edge_crud_operations() -> Result<(), Box<dyn Error>> {
+        // Delete the database folder before running the test to ensure clean slate
+        let _ = remove_dir_all(DB_PATH);
+
         // Initialize repository
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
 
