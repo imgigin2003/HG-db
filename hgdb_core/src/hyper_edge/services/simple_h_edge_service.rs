@@ -43,7 +43,7 @@ impl<'a> DualHyperEdgeService<'a> {
                 dual_properties: original_edge.main_properties.clone(),
                 traversable: original_edge.traversable,
                 head_hyper_nodes: original_edge.head_hyper_nodes.clone(),
-                tail_hyper_nodes: Some(Box::new(Vec::new())),
+                tail_hyper_nodes: Some(original_edge.tail_hyper_nodes.clone().expect("REASON")),
             };
     
             println!("🛠 Attempting to save Dual Hyperedge with Key: {}", dual_edge.id);
