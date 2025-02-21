@@ -27,9 +27,10 @@ mod test {
                     value: vec!["friends".to_string()],
                 }
             ],
-            traversable: false,
-            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
-            tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
+            traversable: true,
+            directed: true,
+            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
+            tail_hyper_nodes: Some(Box::new(vec!["v3".to_string()])),
         };
         repository.create(test_key, &test_edge)?;
 
@@ -86,7 +87,7 @@ mod test {
 
         // Check if matrix contains correct boolean values
         for (i, node) in test_nodes.iter().enumerate() {
-            let is_in_edge = test_edge.head_hyper_nodes.contains(node) || test_edge.tail_hyper_nodes.contains(node);
+            let is_in_edge = test_edge.head_hyper_nodes.contains(node) || test_edge.tail_hyper_nodes.clone().expect("REASON").contains(node);
             
             assert_eq!(
                 incidence_matrix[i][0],

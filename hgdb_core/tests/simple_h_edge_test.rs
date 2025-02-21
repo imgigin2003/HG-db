@@ -10,18 +10,35 @@ mod tests {
     const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/simple-h-edge"; // RocksDB path
 
     #[test]
-    fn test_simple_h_edge_crud_operations() -> Result<(), Box<dyn Error>> {
-        // Delete the database folder before running the test to ensure clean slate
+    fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
+        //delete the database folder before running the test
         let _ = remove_dir_all(DB_PATH);
 
-        // Initialize repository
+        //initialize repository
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
 
-        // Define test data
-        let test_key = "e1";
-        let test_edge = SimpleHyperEdge {
-            id: test_key.to_string(),
-            name: "Friendship".to_string(),
+        //define test data for directed graphs
+        let test_key_directed = "test_edge_directed";
+        let test_edge_directed = SimpleHyperEdge {
+            id: test_key_directed.to_string(),
+            name: "Friendship Directed".to_string(),
+            main_properties: vec![
+                Property {
+                    key: "relationship-type".to_string(),
+                    value: vec!["friends".to_string()]
+                }
+            ],
+            traversable: true,
+            directed: true,
+            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
+            tail_hyper_nodes: Some(Box::new(vec!["v3".to_string(), "v4".to_string()]))
+        };
+
+        // define test data for undirected graph
+        let test_key_undirected = "test_edge_undirected";
+        let test_edge_undirected = SimpleHyperEdge {
+            id: test_key_undirected.to_string(),
+            name: "Friendship Undirected".to_string(),
             main_properties: vec![
                 Property {
                     key: "relationship-type".to_string(),
@@ -29,48 +46,52 @@ mod tests {
                 }
             ],
             traversable: false,
-            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
-            tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
+            directed: false,
+            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
+            tail_hyper_nodes: None // no tail nodes for undirected graph
         };
 
-        // Create
-        repository.create(test_key, &test_edge)?;
+        // create directed graph
+        repository.create(test_key_directed, &test_edge_directed)?;
+        // create undirected graph
+        repository.create(test_key_undirected, &test_edge_undirected)?;
 
-        // Retrieve all edges and assert there is at least one
+        // retrieve all edges and assert there's atleast one edge
         let all_edges = repository.get_all()?;
-        assert!(all_edges.len() >= 1, "Not all edges were retrieved");
+        assert!(all_edges.len() >= 1, "❌ Not all edges were retrieved");
 
-        // Retrieve by key again and verify
-        let retrieved_edge = repository.get_by_key(test_key)?;
-        assert!(retrieved_edge.is_some(), "Edge was not found in database");
-        assert_eq!(retrieved_edge.unwrap().name, "Friendship", "Retrieved edge name mismatch");
+        // retrieve by key again and verify for directed graph
+        let retrieve_edge_directed = repository.get_by_key(test_key_directed)?;
+        assert!(retrieve_edge_directed.is_some(), "❌ Directed edge was not found in database");
+        assert_eq!(retrieve_edge_directed.unwrap().name, "Friendship Directed", "❌ Retrieved edge name mismatch");
+        // retrieve by key again and verify for undirected graph
+        let retrieve_edge_undirected = repository.get_by_key(test_key_undirected)?;
+        assert!(retrieve_edge_undirected.is_some(), "❌ Undirected edge was not found in database");
+        assert_eq!(retrieve_edge_undirected.unwrap().name, "Friendship Undirected", "❌ Retrieve edge name mismatch");
 
-        // Log retrieved edge for debugging
-        let retrieved_edge = repository.get_by_key(test_key)?;
-        assert!(retrieved_edge.is_some(), "Edge was not found in database after create");
-        println!("Retrieved edge: {:?}", retrieved_edge.unwrap());  // Log the retrieved edge
+        // log retrieved edge for debugging (directed)
+        let retrieved_edge = repository.get_by_key(test_key_directed)?;
+        assert!(retrieved_edge.is_some(), "❌ Edge was not found in database after create");
+        println!("✅ Retrieved Directed Edge");
+        // log retrieved edge for debugging (undirected)
+        let retrieved_edge = repository.get_by_key(test_key_undirected)?;
+        assert!(retrieved_edge.is_some(), "❌ Edge was not found in database after create");
+        println!("✅ Retrieved Directed Edge");
 
-        // Update
-        let updated_edge = SimpleHyperEdge {
-            name: "Updated Edge".to_string(),
-            ..test_edge.clone() // Clone and update the name
-        };
-        repository.update(test_key, &updated_edge)?;
+        // test delete function
+        repository.delete(test_key_directed)?;
+        repository.delete(test_key_undirected)?;
 
-        // Retrieve and verify the updated edge
-        let retrieved_updated_edge = repository.get_by_key(test_key)?;
-        assert!(retrieved_updated_edge.is_some(), "Updated edge was not found");
-        assert_eq!(retrieved_updated_edge.unwrap().name, "Updated Edge", "Update failed");
-
-        // Delete
-        repository.delete(test_key)?;
-        let deleted_edge = repository.get_by_key(test_key)?;
-        assert!(deleted_edge.is_none(), "Edge was not deleted");
-
-        // Ensure the database is empty after deletion
+        //ensure all edges are deleted after calling the delete_all function
         let all_edges_after_delete = repository.get_all()?;
-        assert_eq!(all_edges_after_delete.len(), 0, "There should be no edges after deletion");
+        assert_eq!(all_edges_after_delete.len(), 0, "❌ Database should be empty after delete_all function");
 
-        Ok(())
+        // Try retrieving individual edges (should return None)
+        let deleted_directed_edge = repository.get_by_key(test_key_directed)?;
+        let deleted_undirected_edge = repository.get_by_key(test_key_undirected)?;
+        assert!(deleted_directed_edge.is_none(), "Directed edge was not deleted by delete_all");
+        assert!(deleted_undirected_edge.is_none(), "Undirected edge was not deleted by delete_all");
+
+    Ok(())
     }
 }

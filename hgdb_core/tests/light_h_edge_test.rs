@@ -27,30 +27,32 @@ mod tests {
         let test_edge = LightHyperEdge {
             id: test_key.to_string(),
             simple_hyper_edge: SimpleHyperEdge {
-                id: test_key.to_string(), // 🔹 Ensure consistency
+                id: test_key.to_string(),
                 name: "Friendship".to_string(),
                 main_properties: vec![
                     Property {
                         key: "relationship-type".to_string(),
-                        value: vec!["friends".to_string()]
+                        value: vec!["friends".to_string()],
                     }
                 ],
-                traversable: false,
-                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
-                tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
+                traversable: true,
+                directed: true, // Ensure the directed field is correctly set
+                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
+                tail_hyper_nodes: Some(Box::new(vec!["v3".to_string(), "v4".to_string()])),
             },
             structural_properties: vec![
                 StructuralProperty {
-                    address: "123 Friendship st".to_string()
+                    address: vec!["123 Friendship st".to_string()],
                 }
             ],
             relationship: Relationship {
                 node_1: "v1".to_string(),
                 node_2: "v2".to_string(),
-                edge_properties: vec!["friends".to_string()]
+                directed: true,
+                edge_properties: vec!["friends".to_string()],
             },
             traverse: Traverse {
-                path: vec!["start".to_string(), "friendship".to_string(), "end".to_string()]
+                path: vec!["start".to_string(), "friendship".to_string(), "end".to_string()],
             }
         };
 
@@ -60,15 +62,8 @@ mod tests {
         // Retrieve and verify
         let retrieved_edge = repository.get_by_key(test_key)?;
         assert!(retrieved_edge.is_some(), "❌ Edge was not found in database");
-
-        // Debugging output
-        println!("✅ Retrieved Edge Before Update: {:?}", retrieved_edge);
-
         assert_eq!(
-            retrieved_edge.as_ref().unwrap().id,
-            test_key,
-            "❌ Retrieved edge ID mismatch"
-        );
+            retrieved_edge.as_ref().unwrap().id, test_key,"❌ Retrieved edge ID mismatch");
 
         // Update
         let updated_edge = LightHyperEdge {
@@ -79,25 +74,27 @@ mod tests {
                 main_properties: vec![
                     Property {
                         key: "relationship-type".to_string(),
-                        value: vec!["best friends".to_string()]
+                        value: vec!["best friends".to_string()],
                     }
                 ],
-                traversable: true,
+                traversable: false,
+                directed: false, // Change directed flag to false for the update
                 head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
-                tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
+                tail_hyper_nodes: None, // Tail nodes should be empty for undirected graph
             },
             structural_properties: vec![
                 StructuralProperty {
-                    address: "updated_address".to_string()
+                    address: vec!["updated_address".to_string()],
                 }
             ],
             relationship: Relationship {
                 node_1: "v1".to_string(),
                 node_2: "v3".to_string(),
-                edge_properties: vec!["updated_properties".to_string()]
+                edge_properties: vec!["updated_properties".to_string()],
+                directed: false,
             },
             traverse: Traverse {
-                path: vec!["updated_path".to_string(), "friendship_evolution".to_string()]
+                path: vec!["updated_path".to_string(), "friendship_evolution".to_string()],
             }
         };
 
@@ -107,17 +104,11 @@ mod tests {
         let retrieved_updated_edge = repository.get_by_key(test_key)?;
         assert!(retrieved_updated_edge.is_some(), "❌ Updated edge was not found");
 
-        // Debugging output
-        println!("✅ Retrieved Edge After Update: {:?}", retrieved_updated_edge);
-
         let expected = vec![StructuralProperty {
-            address: "updated_address".to_string(),
+            address: vec!["updated_address".to_string()],
         }];
         assert_eq!(
-            retrieved_updated_edge.unwrap().structural_properties,
-            expected,
-            "❌ Update failed"
-        );
+            retrieved_updated_edge.unwrap().structural_properties, expected,"❌ Update failed");
 
         // Delete
         repository.delete(test_key)?;
