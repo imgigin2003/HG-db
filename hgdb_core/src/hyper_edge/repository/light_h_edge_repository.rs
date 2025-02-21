@@ -1,5 +1,5 @@
 use rocksdb::{DB, Options};
-use serde_json::{self, to_vec};
+use serde_json::{self, to_string_pretty};
 use crate::hyper_edge::entity::light_h_edge::LightHyperEdge;
 use std::error::Error;
 
@@ -23,7 +23,7 @@ impl LightHyperEdgeRepository {
     }
 
     pub fn create(&self, key: &str, edge: &LightHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-        let serialized_edge = to_vec(edge).map_err(|e| {
+        let serialized_edge = to_string_pretty(edge).map_err(|e| {
             eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
             Box::new(e) as Box<dyn Error>
         })?;

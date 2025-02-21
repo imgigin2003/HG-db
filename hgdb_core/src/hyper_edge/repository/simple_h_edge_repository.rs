@@ -1,5 +1,5 @@
 use rocksdb::{DB, Options};
-use serde_json::{self, to_vec};
+use serde_json::{self, to_string_pretty};
 use crate::hyper_edge::entity::simple_h_edge::SimpleHyperEdge;
 use crate::hyper_edge::entity::dual_h_edge::DualHyperEdge;
 use std::error::Error;  // Import general error trait
@@ -28,7 +28,7 @@ impl SimpleHyperEdgeRepository {
     /// Method to create (insert) a SimpleHyperEdge
     pub fn create(&self, key: &str, edge: &SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         // Serialize the SimpleHyperEdge to Vec<u8>
-        let serialized_edge = to_vec(edge).map_err(|e| {
+        let serialized_edge = to_string_pretty(edge).map_err(|e| {
             eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
             Box::new(e) as Box<dyn Error> // Return as a Boxed error
         })?;
@@ -89,7 +89,7 @@ impl SimpleHyperEdgeRepository {
 
         Ok(edges)
     }    
-
+    
     // method to get the dual edge by key
     pub fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
         match self.db.get(key)? {
@@ -107,14 +107,14 @@ impl SimpleHyperEdgeRepository {
 
     // method to save the dual edge key
     pub fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-        let key = dual_edge.id.clone();
+        let key = dual_edge.id.to_string().clone();
         println!("💾 Saving Dual Hyperedge with Key: {}", key); // Debug log
         
-        let serialized_dual_edge = serde_json::to_vec(&dual_edge)?;
+        let serialized_dual_edge = to_string_pretty(&dual_edge)?;
         self.db.put(&key, serialized_dual_edge)?;
         println!("✅ Successfully saved Dual Hyperedge with Key: {}", key); // Debug log
     
         Ok(())
-    }      
+    } 
           
 }
