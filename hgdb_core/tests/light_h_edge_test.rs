@@ -23,11 +23,11 @@ mod tests {
         let repository = LightHyperEdgeRepository::new(DB_PATH)?;
 
         // Define test data
-        let test_key = "test edge";
+        let test_key = "e1";
         let test_edge = LightHyperEdge {
             id: test_key.to_string(),
             simple_hyper_edge: SimpleHyperEdge {
-                id: "edge1".to_string(), // 🔹 Ensure consistency
+                id: test_key.to_string(), // 🔹 Ensure consistency
                 name: "Friendship".to_string(),
                 main_properties: vec![
                     Property {
@@ -36,8 +36,8 @@ mod tests {
                     }
                 ],
                 traversable: false,
-                head_hyper_nodes: Box::new(vec!["alice".to_string(), "bob".to_string()]),
-                tail_hyper_nodes: Box::new(vec!["charlie".to_string()]),
+                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
+                tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
             },
             structural_properties: vec![
                 StructuralProperty {
@@ -45,8 +45,8 @@ mod tests {
                 }
             ],
             relationship: Relationship {
-                node_1: "alice".to_string(),
-                node_2: "bob".to_string(),
+                node_1: "v1".to_string(),
+                node_2: "v2".to_string(),
                 edge_properties: vec!["friends".to_string()]
             },
             traverse: Traverse {
@@ -74,17 +74,17 @@ mod tests {
         let updated_edge = LightHyperEdge {
             id: test_key.to_string(),
             simple_hyper_edge: SimpleHyperEdge {
-                id: "updated_simple_edge_id".to_string(),
+                id: "e2".to_string(),
                 name: "UpdatedSimpleEdge".to_string(),
                 main_properties: vec![
                     Property {
                         key: "relationship-type".to_string(),
-                        value: vec!["close friends".to_string()]
+                        value: vec!["best friends".to_string()]
                     }
                 ],
                 traversable: true,
-                head_hyper_nodes: Box::new(vec!["alice".to_string(), "bob".to_string()]),
-                tail_hyper_nodes: Box::new(vec!["charlie".to_string()]),
+                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
+                tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
             },
             structural_properties: vec![
                 StructuralProperty {
@@ -92,8 +92,8 @@ mod tests {
                 }
             ],
             relationship: Relationship {
-                node_1: "alice".to_string(),
-                node_2: "charlie".to_string(),
+                node_1: "v1".to_string(),
+                node_2: "v3".to_string(),
                 edge_properties: vec!["updated_properties".to_string()]
             },
             traverse: Traverse {

@@ -18,7 +18,7 @@ mod tests {
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
 
         // Define test data
-        let test_key = "test_edge";
+        let test_key = "e1";
         let test_edge = SimpleHyperEdge {
             id: test_key.to_string(),
             name: "Friendship".to_string(),
@@ -29,8 +29,8 @@ mod tests {
                 }
             ],
             traversable: false,
-            head_hyper_nodes: Box::new(vec!["alice".to_string(), "bob".to_string()]),
-            tail_hyper_nodes: Box::new(vec!["charlie".to_string()]),
+            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
+            tail_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
         };
 
         // Create
