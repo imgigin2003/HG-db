@@ -4,5 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct Relationship<T, U, V> {
     pub node_1: T,
     pub node_2: U,
+    pub directed: bool,
     pub edge_properties: Vec<V>
 }

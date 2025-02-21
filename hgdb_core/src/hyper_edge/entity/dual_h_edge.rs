@@ -10,5 +10,5 @@ pub struct DualHyperEdge <T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> {
     pub dual_properties: Vec<Property<K, V>>,
     pub traversable: bool,
     pub head_hyper_nodes: Box<Vec<String>>,
-    pub tail_hyper_nodes: Box<Vec<String>>
+    pub tail_hyper_nodes: Option<Box<Vec<String>>>
 }

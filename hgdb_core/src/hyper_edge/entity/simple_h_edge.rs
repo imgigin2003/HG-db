@@ -16,6 +16,7 @@ pub struct SimpleHyperEdge<T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> 
     pub name: T, // The name of the hyperedge
     pub main_properties: Vec<Property<K,V>>, // A list of properties associated with the hyperedge
     pub traversable: bool, // A flag to mark whether the hyperedge is traversable
+    pub directed: bool, // a flag to set wheter a graph is directed or undirected
     pub head_hyper_nodes: Box<Vec<T>>, // A vector of head hypernodes (recursive structure)
-    pub tail_hyper_nodes: Box<Vec<T>>, // A vector of tail hypernodes (recursive structure)
+    pub tail_hyper_nodes: Option<Box<Vec<T>>>, // A vector of tail hypernodes (recursive structure)
 }
