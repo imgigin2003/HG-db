@@ -16,14 +16,18 @@ impl<'a> DualHyperEdgeService<'a> {
     pub fn create_dual_h_edge(&self, id: &str) -> Result<(), Box<dyn Error>> {
         let simple_h_edge = self.repository.get_by_key(id)?;
     
+        // check if the simple hyperedge was found
         if let Some(original_edge) = simple_h_edge {
             let mut nodes_set = original_edge.head_hyper_nodes.clone();
-            nodes_set.extend_from_slice(&original_edge.tail_hyper_nodes);
+            
+            if let Some(ref tail_nodes) = original_edge.tail_hyper_nodes {
+                nodes_set.extend_from_slice(&tail_nodes);
+            }
     
             let incidence_matrix = self.create_incidence_matrix(&nodes_set, &original_edge);
             let transposed_matrix = self.transpose_matrix(&incidence_matrix);
     
-            // ✅ Debugging: Print matrices in a readable format
+            // Debugging: Print matrices in a readable format
             println!("🔢 Original Incidence Matrix:");
             self.print_matrix(&incidence_matrix);
     
@@ -39,7 +43,7 @@ impl<'a> DualHyperEdgeService<'a> {
                 dual_properties: original_edge.main_properties.clone(),
                 traversable: original_edge.traversable,
                 head_hyper_nodes: original_edge.head_hyper_nodes.clone(),
-                tail_hyper_nodes: original_edge.tail_hyper_nodes.clone(),
+                tail_hyper_nodes: Some(Box::new(Vec::new())),
             };
     
             println!("🛠 Attempting to save Dual Hyperedge with Key: {}", dual_edge.id);
@@ -62,7 +66,7 @@ impl<'a> DualHyperEdgeService<'a> {
             let node_str = node.to_string();
         
 
-        if original_edge.head_hyper_nodes.contains(&node_str) || original_edge.tail_hyper_nodes.contains(&node_str) {
+        if original_edge.head_hyper_nodes.contains(&node_str) || original_edge.tail_hyper_nodes.as_ref().expect("REASON").contains(&node_str) {
             matrix [i][0] = true;
         }
     }
