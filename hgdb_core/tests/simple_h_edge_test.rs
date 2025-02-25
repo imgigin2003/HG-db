@@ -12,7 +12,11 @@ mod tests {
     #[test]
     fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
         //delete the database folder before running the test
-        let _ = remove_dir_all(DB_PATH);
+        if let Err(e) = remove_dir_all(DB_PATH) {
+            if e.kind() != std::io::ErrorKind::NotFound {
+                eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
+            }
+        }
 
         //initialize repository
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
@@ -69,14 +73,14 @@ mod tests {
         assert!(retrieve_edge_undirected.is_some(), "❌ Undirected edge was not found in database");
         assert_eq!(retrieve_edge_undirected.unwrap().name, "Friendship Undirected", "❌ Retrieve edge name mismatch");
 
-        // log retrieved edge for debugging (directed)
+        // Log directed edge
         let retrieved_edge = repository.get_by_key(test_key_directed)?;
-        assert!(retrieved_edge.is_some(), "❌ Edge was not found in database after create");
-        println!("✅ Retrieved Directed Edge");
-        // log retrieved edge for debugging (undirected)
+        assert!(retrieved_edge.is_some(), "❌ Directed edge not found after create");
+        println!("✅ Retrieved Directed Edge: {:?}", retrieved_edge.unwrap());
+        // Log undirected edge
         let retrieved_edge = repository.get_by_key(test_key_undirected)?;
-        assert!(retrieved_edge.is_some(), "❌ Edge was not found in database after create");
-        println!("✅ Retrieved Directed Edge");
+        assert!(retrieved_edge.is_some(), "❌ Undirected edge not found after create");
+        println!("✅ Retrieved Undirected Edge: {:?}", retrieved_edge.unwrap());
 
         // test delete function
         repository.delete(test_key_directed)?;

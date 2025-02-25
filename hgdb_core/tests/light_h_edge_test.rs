@@ -14,9 +14,12 @@ mod tests {
 
     #[test]
     fn test_light_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        // Ensure clean DB state
+        //delete the database folder before running the test
         if let Err(e) = remove_dir_all(DB_PATH) {
-            eprintln!("⚠️ Warning: Could not delete DB directory: {:?}", e);
+            if e.kind() != std::io::ErrorKind::NotFound {
+                return Err(format!("Failed to remove DB directory: {:?}", e).into());
+            }
+            eprintln!("⚠️ DB directory not found, proceeding with test");
         }
 
         // Initialize repository
@@ -58,6 +61,8 @@ mod tests {
 
         // Create entry
         repository.create(test_key, &test_edge)?;
+        let created_edge = repository.get_by_key(test_key)?;
+        println!("✅ Created Edge: {:?}", created_edge.unwrap());
 
         // Retrieve and verify
         let retrieved_edge = repository.get_by_key(test_key)?;

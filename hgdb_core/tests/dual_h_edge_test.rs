@@ -43,10 +43,10 @@ mod test {
         service.create_dual_h_edge(test_key)?;
 
         let dual_edge = repository.get_dual_by_key(&format!("dual_{}", test_key))?;
-        match dual_edge {
-            Some(_) => println!("Dual Hyperedge found✅"),
-            None => println!("❌ Failed to find Dual Hyperedge with the expected key"),
-        }
+        assert!(dual_edge.is_some(), "❌ Dual hyperedge not found");
+        let dual = dual_edge.unwrap();
+        println!("✅ Dual Hyperedge: {:?}", dual);
+        assert_eq!(dual.name, "Friendship", "❌ Dual edge name mismatch");
 
         // Define test nodes dynamically
         let test_nodes = vec![
@@ -87,8 +87,8 @@ mod test {
 
         // Check if matrix contains correct boolean values
         for (i, node) in test_nodes.iter().enumerate() {
-            let is_in_edge = test_edge.head_hyper_nodes.contains(node) || test_edge.tail_hyper_nodes.clone().expect("REASON").contains(node);
-            
+            let is_in_edge = test_edge.head_hyper_nodes.contains(node) || test_edge.tail_hyper_nodes.as_ref().map_or(false, |nodes| nodes.contains(node));
+        
             assert_eq!(
                 incidence_matrix[i][0],
                 is_in_edge,
