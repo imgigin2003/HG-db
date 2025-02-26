@@ -24,6 +24,8 @@ impl<'a> DualHyperEdgeService<'a> {
                 nodes_set.extend_from_slice(&tail_nodes);
             }
     
+            println!("🧩 Nodes Set: {:?}", nodes_set);
+            
             let incidence_matrix = self.create_incidence_matrix(&nodes_set, &original_edge);
             let transposed_matrix = self.transpose_matrix(&incidence_matrix);
     
@@ -43,9 +45,9 @@ impl<'a> DualHyperEdgeService<'a> {
                 dual_properties: original_edge.main_properties.clone(),
                 traversable: original_edge.traversable,
                 head_hyper_nodes: original_edge.head_hyper_nodes.clone(),
-                tail_hyper_nodes: Some(original_edge.tail_hyper_nodes.clone().expect("REASON")),
+                tail_hyper_nodes: Some(original_edge.tail_hyper_nodes.clone().unwrap_or_default()),
             };
-    
+
             println!("🛠 Attempting to save Dual Hyperedge with Key: {}", dual_edge.id);
             self.repository.save_dual(dual_edge)?;
 
@@ -55,23 +57,27 @@ impl<'a> DualHyperEdgeService<'a> {
     }            
 
     // Simulate matrix creation based on head and tail nodes
-    pub fn create_incidence_matrix<T: ToString> (
+    pub fn create_incidence_matrix<T: ToString>(
         &self,
         nodes: &[T],
-        original_edge: &SimpleHyperEdge<String, String, String>
+        original_edge: &SimpleHyperEdge<String, String, String>,
     ) -> Vec<Vec<bool>> {
         let mut matrix = vec![vec![false; 1]; nodes.len()];
-
+    
         for (i, node) in nodes.iter().enumerate() {
             let node_str = node.to_string();
-        
-
-        if original_edge.head_hyper_nodes.contains(&node_str) || original_edge.tail_hyper_nodes.as_ref().expect("REASON").contains(&node_str) {
-            matrix [i][0] = true;
+    
+            let is_in_head = original_edge.head_hyper_nodes.contains(&node_str);
+            let is_in_tail = original_edge.tail_hyper_nodes.as_ref()
+                .map_or(false, |tail| tail.contains(&node_str)); // Safely handle None case
+    
+            if is_in_head || is_in_tail {
+                matrix[i][0] = true;
+            }
         }
-    }
-    matrix
-    }
+    
+        matrix
+    }    
 
     // Function to transpose the matrix
     pub fn transpose_matrix(&self, matrix: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
