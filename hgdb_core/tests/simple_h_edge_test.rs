@@ -11,91 +11,88 @@ mod tests {
 
     #[test]
     fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        //delete the database folder before running the test
+        // Delete the database folder before running the test
         if let Err(e) = remove_dir_all(DB_PATH) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
             }
         }
 
-        //initialize repository
+        // Initialize repository
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
 
-        //define test data for directed graphs
-        let test_key_directed = "test_edge_directed";
-        let test_edge_directed = SimpleHyperEdge {
-            id: test_key_directed.to_string(),
-            name: "Friendship Directed".to_string(),
-            main_properties: vec![
-                Property {
-                    key: "relationship-type".to_string(),
-                    value: vec!["friends".to_string()]
-                }
-            ],
-            traversable: true,
-            directed: true,
-            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
-            tail_hyper_nodes: Some(Box::new(vec!["v3".to_string(), "v4".to_string()]))
-        };
+        // Define test edges with unique keys
+        let edges = vec![
+            ("test_edge_1", SimpleHyperEdge {
+                id: "test_edge_1".to_string(),
+                name: "e1".to_string(),
+                main_properties: vec![
+                    Property {
+                        key: "type".to_string(),
+                        value: vec!["linked".to_string()]
+                    }
+                ],
+                traversable: true,
+                directed: true,
+                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
+                tail_hyper_nodes: Some(Box::new(vec!["v3".to_string()]))
+            }),
+            ("test_edge_2", SimpleHyperEdge {
+                id: "test_edge_2".to_string(),
+                name: "e2".to_string(),
+                main_properties: vec![
+                    Property {
+                        key: "type".to_string(),
+                        value: vec!["not-linked".to_string()]
+                    }
+                ],
+                traversable: false,
+                directed: false,
+                head_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
+                tail_hyper_nodes: None
+            }),
+            ("test_edge_3", SimpleHyperEdge {
+                id: "test_edge_3".to_string(),
+                name: "e3".to_string(),
+                main_properties: vec![
+                    Property {
+                        key: "type".to_string(),
+                        value: vec!["not-linked".to_string()]
+                    }
+                ],
+                traversable: true,
+                directed: false,
+                head_hyper_nodes: Box::new(vec!["v6".to_string(), "v7".to_string(), "v8".to_string()]),
+                tail_hyper_nodes: None
+            })
+        ];
 
-        // define test data for undirected graph
-        let test_key_undirected = "test_edge_undirected";
-        let test_edge_undirected = SimpleHyperEdge {
-            id: test_key_undirected.to_string(),
-            name: "Friendship Undirected".to_string(),
-            main_properties: vec![
-                Property {
-                    key: "relationship-type".to_string(),
-                    value: vec!["friends".to_string()]
-                }
-            ],
-            traversable: false,
-            directed: false,
-            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
-            tail_hyper_nodes: None // no tail nodes for undirected graph
-        };
+        // Create edges
+        for (key, edge) in &edges {
+            repository.create(key, edge)?;
+        }
 
-        // create directed graph
-        repository.create(test_key_directed, &test_edge_directed)?;
-        // create undirected graph
-        repository.create(test_key_undirected, &test_edge_undirected)?;
-
-        // retrieve all edges and assert there's atleast one edge
+        // Retrieve all edges and verify count
         let all_edges = repository.get_all()?;
-        assert!(all_edges.len() >= 1, "❌ Not all edges were retrieved");
+        assert_eq!(all_edges.len(), edges.len(), "❌ Not all edges were stored correctly");
 
-        // retrieve by key again and verify for directed graph
-        let retrieve_edge_directed = repository.get_by_key(test_key_directed)?;
-        assert!(retrieve_edge_directed.is_some(), "❌ Directed edge was not found in database");
-        assert_eq!(retrieve_edge_directed.unwrap().name, "Friendship Directed", "❌ Retrieved edge name mismatch");
-        // retrieve by key again and verify for undirected graph
-        let retrieve_edge_undirected = repository.get_by_key(test_key_undirected)?;
-        assert!(retrieve_edge_undirected.is_some(), "❌ Undirected edge was not found in database");
-        assert_eq!(retrieve_edge_undirected.unwrap().name, "Friendship Undirected", "❌ Retrieve edge name mismatch");
+        // Retrieve and validate each edge
+        for (key, original_edge) in &edges {
+            let retrieved_edge = repository.get_by_key(key)?;
+            assert!(retrieved_edge.is_some(), "❌ Edge {} was not found", key);
+            let retrieved_edge = retrieved_edge.unwrap();
+            assert_eq!(retrieved_edge.name, original_edge.name, "❌ Retrieved edge name mismatch");
+        }
 
-        // Log directed edge
-        let retrieved_edge = repository.get_by_key(test_key_directed)?;
-        assert!(retrieved_edge.is_some(), "❌ Directed edge not found after create");
-        println!("✅ Retrieved Directed Edge: {:?}", retrieved_edge.unwrap());
-        // Log undirected edge
-        let retrieved_edge = repository.get_by_key(test_key_undirected)?;
-        assert!(retrieved_edge.is_some(), "❌ Undirected edge not found after create");
-        println!("✅ Retrieved Undirected Edge: {:?}", retrieved_edge.unwrap());
+        // Delete all edges
+        for (key, _) in &edges {
+            repository.delete(key)?;
+        }
 
-        // test delete function
-        repository.delete(test_key_directed)?;
-        repository.delete(test_key_undirected)?;
-
-        //ensure all edges are deleted after calling the delete_all function
+        // Verify database is empty
         let all_edges_after_delete = repository.get_all()?;
-        assert_eq!(all_edges_after_delete.len(), 0, "❌ Database should be empty after delete_all function");
+        assert!(all_edges_after_delete.is_empty(), "❌ Database should be empty after deleting all edges");
 
-        // Try retrieving individual edges (should return None)
-        let deleted_directed_edge = repository.get_by_key(test_key_directed)?;
-        let deleted_undirected_edge = repository.get_by_key(test_key_undirected)?;
-        assert!(deleted_directed_edge.is_none(), "Directed edge was not deleted by delete_all");
-        assert!(deleted_undirected_edge.is_none(), "Undirected edge was not deleted by delete_all");
-
-    Ok(())
+        Ok(())
     }
 }

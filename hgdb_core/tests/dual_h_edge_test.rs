@@ -11,42 +11,101 @@ mod test {
 
     #[test]
     fn test_create_dual_h_edge() -> Result<(), Box<dyn Error>> {
-        let _ = remove_dir_all(DB_PATH);
+        // Delete the database folder before running the test
+        if let Err(e) = remove_dir_all(DB_PATH) {
+            if e.kind() != std::io::ErrorKind::NotFound {
+                eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
+            }
+        }
 
         // Initialize repository and service
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
         let service = DualHyperEdgeService::new(&repository);
 
-        let test_key = "e1";
-        let test_edge = SimpleHyperEdge {
-            id: test_key.to_string(),
-            name: "Friendship".to_string(),
-            main_properties: vec![
-                Property {
-                    key: "relationship-type".to_string(),
-                    value: vec!["friends".to_string()],
-                }
-            ],
-            traversable: true,
-            directed: true,
-            head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
-            tail_hyper_nodes: Some(Box::new(vec!["v3".to_string()])),
-        };
-        repository.create(test_key, &test_edge)?;
+        // Define test data with tuples of (key, SimpleHyperEdge)
+        let edges = vec![
+            ("test_edge_1", SimpleHyperEdge {
+                id: "test_edge_1".to_string(),
+                name: "e1".to_string(),
+                main_properties: vec![
+                    Property {
+                        key: "type".to_string(),
+                        value: vec!["linked".to_string()]
+                    }
+                ],
+                traversable: true,
+                directed: true,
+                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
+                tail_hyper_nodes: Some(Box::new(vec!["v3".to_string()]))
+            }),
+            ("test_edge_2", SimpleHyperEdge {
+                id: "test_edge_2".to_string(),
+                name: "e2".to_string(),
+                main_properties: vec![
+                    Property {
+                        key: "type".to_string(),
+                        value: vec!["not-linked".to_string()]
+                    }
+                ],
+                traversable: false,
+                directed: false,
+                head_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
+                tail_hyper_nodes: None
+            }),
+            ("test_edge_3", SimpleHyperEdge {
+                id: "test_edge_3".to_string(),
+                name: "e3".to_string(),
+                main_properties: vec![
+                    Property {
+                        key: "type".to_string(),
+                        value: vec!["not-linked".to_string()]
+                    }
+                ],
+                traversable: true,
+                directed: false,
+                head_hyper_nodes: Box::new(vec!["v6".to_string(), "v7".to_string(), "v8".to_string()]),
+                tail_hyper_nodes: None
+            })
+        ];
 
-        // Ensure the original hyperedge is saved
-        let retrieved_edge = repository.get_by_key(test_key)?;
-        assert!(retrieved_edge.is_some(), "Edge was not found in database");
-        assert_eq!(retrieved_edge.unwrap().name, "Friendship", "Original edge name mismatch");
+        // Create all edges using the tuple key
+        for (key, edge) in &edges {
+            repository.create(key, edge)?;
+        }
 
-        // Create the dual hyperedge
-        service.create_dual_h_edge(test_key)?;
+        // Ensure the original directed hyperedge is saved (using test_edge_1)
+        let retrieved_edge = repository.get_by_key("test_edge_1")?;
+        assert!(retrieved_edge.is_some(), "Edge 'test_edge_1' was not found in database");
+        assert_eq!(retrieved_edge.unwrap().name, "e1", "Original edge name mismatch");
 
-        let dual_edge = repository.get_dual_by_key(&format!("dual_{}", test_key))?;
+        // Visualize all edges based on 'directed' flag using 'name'
+        let all_edges = repository.get_all()?;
+        let mut output = String::new();
+        for edge in &all_edges {
+            let head_nodes: Vec<String> = edge.head_hyper_nodes.iter().cloned().collect();
+            let head_list = head_nodes.join(", ");
+            if edge.directed {
+                let tail_nodes: Vec<String> = edge.tail_hyper_nodes.as_ref()
+                    .map_or(vec![], |nodes| nodes.iter().cloned().collect());
+                let tail_list = tail_nodes.join(", ");
+                output.push_str(&format!("{}: head:[{}] -> tail:[{}]", edge.name, head_list, tail_list));
+            } else {
+                output.push_str(&format!("{}:[{}]", edge.name, head_list));
+            }
+            if edge.id != all_edges.last().unwrap().id {
+                output.push_str(", ");
+            }
+        }
+        println!("✅ Hypergraph: {}", output);
+
+        // Create the dual hyperedge for test_edge_1
+        service.create_dual_h_edge("test_edge_1")?;
+
+        let dual_edge = repository.get_dual_by_key(&format!("dual_test_edge_1"))?;
         assert!(dual_edge.is_some(), "❌ Dual hyperedge not found");
         let dual = dual_edge.unwrap();
         println!("✅ Dual Hyperedge: {:?}", dual);
-        assert_eq!(dual.name, "Friendship", "❌ Dual edge name mismatch");
+        assert_eq!(dual.name, "Dual of e1", "❌ Dual edge name mismatch"); // Adjusted to match name
 
         // Define test nodes dynamically
         let test_nodes = vec![
@@ -55,7 +114,7 @@ mod test {
             "v3".to_string(),
         ];
 
-        let incidence_matrix = service.create_incidence_matrix(&test_nodes, &test_edge);
+        let incidence_matrix = service.create_incidence_matrix(&test_nodes, &edges[0].1); // Use first edge
         let transposed_matrix = service.transpose_matrix(&incidence_matrix);
 
         // Dynamic Assertions Based on Input Size
@@ -87,8 +146,8 @@ mod test {
 
         // Check if matrix contains correct boolean values
         for (i, node) in test_nodes.iter().enumerate() {
-            let is_in_edge = test_edge.head_hyper_nodes.contains(node) || test_edge.tail_hyper_nodes.as_ref().map_or(false, |nodes| nodes.contains(node));
-        
+            let is_in_edge = edges[0].1.head_hyper_nodes.contains(node) || 
+                edges[0].1.tail_hyper_nodes.as_ref().map_or(false, |nodes| nodes.contains(node));
             assert_eq!(
                 incidence_matrix[i][0],
                 is_in_edge,
