@@ -5,7 +5,9 @@ use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
 mod tests {
     use super::*;
     use std::error::Error;
-    use std::fs::remove_dir_all;
+    use std::fs::{remove_dir_all, File, metadata};
+    use std::io::Write;
+    use serde_json::to_string_pretty;
 
     const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/simple-h-edge"; // RocksDB path
 
@@ -83,6 +85,46 @@ mod tests {
             let retrieved_edge = retrieved_edge.unwrap();
             assert_eq!(retrieved_edge.name, original_edge.name, "❌ Retrieved edge name mismatch");
         }
+
+        // Generate JSON file after operations
+        let all_edges_for_json = repository.get_all()?;
+
+        // Serialize the edges to a JSON string
+        let json_data = to_string_pretty(&all_edges_for_json)?;
+
+        // Specify the file path for the JSON file
+        let json_path = format!("{}/test_edge.json", DB_PATH);
+
+        // Write the JSON data to a file
+        let mut file = File::create(json_path.clone())?;
+        file.write_all(json_data.as_bytes())?;
+
+        // Assert the JSON file was created
+        let data = metadata(&json_path)?;
+        assert!(data.is_file(), "❌ JSON file was not created at expected path");
+
+        // Update an existing edge (test update)
+        let updated_edge = SimpleHyperEdge {
+            id: "test_edge_1".to_string(),
+            name: "e1_updated".to_string(),
+            main_properties: vec![
+                Property {
+                    key: "type".to_string(),
+                    value: vec!["updated-linked".to_string()],
+                },
+            ],
+            traversable: false,
+            directed: false,
+            head_hyper_nodes: Box::new(vec!["v1_updated".to_string()]),
+            tail_hyper_nodes: Some(Box::new(vec!["v3_updated".to_string()])),
+        };
+
+        // Update the edge in the repository
+        repository.update("test_edge_1", &updated_edge)?;
+
+        // Verify update
+        let updated_retrieved_edge = repository.get_by_key("test_edge_1")?.unwrap();
+        assert_eq!(updated_retrieved_edge.name, "e1_updated", "❌ Updated edge name mismatch");
 
         // Delete all edges
         for (key, _) in &edges {
