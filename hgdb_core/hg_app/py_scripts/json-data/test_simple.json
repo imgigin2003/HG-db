@@ -25,7 +25,7 @@
       ],
       "traversable": false,
       "directed": false,
-      "head_hyper_nodes": ["v4", "v5"],
+      "head_hyper_nodes": ["v3", "v4", "v5"],
       "tail_hyper_nodes": null
     },
     {
@@ -39,8 +39,8 @@
       ],
       "traversable": true,
       "directed": true,
-      "head_hyper_nodes": ["v9", "v10"],
-      "tail_hyper_nodes": ["v11"]
+      "head_hyper_nodes": ["v6", "v7"],
+      "tail_hyper_nodes": ["v8"]
     }
   ],
   "hypergraph_2": [
@@ -53,10 +53,10 @@
           "value": ["linked"]
         }
       ],
-      "traversable": true,
-      "directed": true,
-      "head_hyper_nodes": ["v14"],
-      "tail_hyper_nodes": ["v15", "v16"]
+      "traversable": false,
+      "directed": false,
+      "head_hyper_nodes": ["v9", "v10"],
+      "tail_hyper_nodes": null
     },
     {
       "id": "test_edge_7",
@@ -67,10 +67,10 @@
           "value": ["not-linked"]
         }
       ],
-      "traversable": false,
-      "directed": false,
-      "head_hyper_nodes": ["v17", "v18"],
-      "tail_hyper_nodes": null
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": ["v11"],
+      "tail_hyper_nodes": ["v12", "v13", "v14"]
     },
     {
       "id": "test_edge_8",
@@ -83,8 +83,8 @@
       ],
       "traversable": true,
       "directed": true,
-      "head_hyper_nodes": ["v19"],
-      "tail_hyper_nodes": ["v20"]
+      "head_hyper_nodes": ["v15", "v16"],
+      "tail_hyper_nodes": ["v17"]
     }
   ]
 }

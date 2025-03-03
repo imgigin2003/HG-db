@@ -7,8 +7,6 @@ import pandas as pd
 import json
 
 def main():
-    # Set page config to wide layout
-    st.set_page_config(layout="wide")
 
     # Initialize session state for hyperedges
     if "hyperedges" not in st.session_state:
@@ -42,7 +40,7 @@ def main():
 
     with tabs[2]:  # Dual HyperGraph Visualization Tab
         st.write("### Dual HyperGraph Visualization")
-        H_dual, _ = create_dual_hypergraph()
+        H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)  # Pass hyperedges here
         if st.button("Visualize Dual HyperGraph✨"):
             fig = draw_dual_hypergraph(H_dual)
             if fig:
@@ -52,13 +50,13 @@ def main():
         st.write("### Graphs Properties")
         H = hnx.Hypergraph(st.session_state.hyperedges)
         display_properties(H, "HyperGraph")
-        H_dual, _ = create_dual_hypergraph()
+        H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)  # Pass hyperedges here
         display_properties(H_dual, "Dual HyperGraph")
 
     with tabs[4]:  # Graph Table Tab
         st.write("### Graphs Tables")
         display_table(st.session_state.hyperedges, "HyperGraph")
-        H_dual, dual_hyperedges = create_dual_hypergraph()
+        H_dual, dual_hyperedges = create_dual_hypergraph(st.session_state.hyperedges)  # Pass hyperedges here
         display_table(dual_hyperedges, "Dual HyperGraph")
 
     with tabs[5]:  # Graph Edit Tab
