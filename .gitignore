@@ -2,7 +2,6 @@ hgdb_core/target/
 
 hgdb_core/hg_app/target/
 hgdb_core/hg_app/myenv/
-hgdb_core/hg_app/py_scripts/json-data/
 hgdb_core/hg_app/py_scripts/__pycache__
 
 .DS_Store
