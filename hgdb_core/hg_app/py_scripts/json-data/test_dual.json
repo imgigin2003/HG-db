@@ -1,0 +1,107 @@
+{
+  "dual_hypergraph_1": [
+    {
+      "id": "dual_edge_v1_v2",
+      "name": "v1_v2",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": ["e1"],
+      "tail_hyper_nodes": []
+    },
+    {
+      "id": "dual_edge_v3",
+      "name": "v3",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [],
+      "tail_hyper_nodes": ["e1"]
+    },
+    {
+      "id": "dual_edge_v4_v5",
+      "name": "v4_v5",
+      "main_properties": [{ "key": "type", "value": ["not-linked"] }],
+      "traversable": false,
+      "directed": false,
+      "head_hyper_nodes": ["e2"],
+      "tail_hyper_nodes": null
+    },
+    {
+      "id": "dual_edge_v9_v10",
+      "name": "v9_v10",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": ["e3"],
+      "tail_hyper_nodes": []
+    },
+    {
+      "id": "dual_edge_v11",
+      "name": "v11",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [],
+      "tail_hyper_nodes": ["e3"]
+    }
+  ],
+  "dual_hypergraph_2": [
+    {
+      "id": "dual_edge_v14",
+      "name": "v14",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [],
+      "tail_hyper_nodes": ["e6"]
+    },
+    {
+      "id": "dual_edge_v15_v16",
+      "name": "v15_v16",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": ["e6"],
+      "tail_hyper_nodes": []
+    },
+    {
+      "id": "dual_edge_v17_v18",
+      "name": "v17_v18",
+      "main_properties": [{ "key": "type", "value": ["not-linked"] }],
+      "traversable": false,
+      "directed": false,
+      "head_hyper_nodes": ["e7"],
+      "tail_hyper_nodes": null
+    },
+    {
+      "id": "dual_edge_v19",
+      "name": "v19",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [],
+      "tail_hyper_nodes": ["e8"]
+    },
+    {
+      "id": "dual_edge_v20",
+      "name": "v20",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": ["e8"],
+      "tail_hyper_nodes": []
+    }
+  ],
+  "dual_hypergraph_3": [
+    {
+      "id": "dual_edge_v21_v22",
+      "name": "v21_v22",
+      "main_properties": [{ "key": "type", "value": ["linked"] }],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": ["e9"],
+      "tail_hyper_nodes": []
+    }
+  ]
+}
