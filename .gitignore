@@ -1,0 +1,7 @@
+hgdb_core/target/
+
+hg_app/target/
+hg_app/myenv/
+hg_app/py_scripts/json-data/
+
+.DS_Store
