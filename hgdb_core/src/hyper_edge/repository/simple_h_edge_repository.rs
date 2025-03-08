@@ -114,7 +114,7 @@ impl SimpleHyperEdgeRepository {
         
         let serialized_dual_edge = to_string_pretty(&dual_edge)?;
         self.db.put(&key, serialized_dual_edge)?;
-        println!("✅ Successfully saved Dual Hyperedge with Key: {}", key); // Debug log
+        println!("✅ Successfully saved Dual Hyperedge with Key: {}\n", key); // Debug log
     
         Ok(())
     } 
