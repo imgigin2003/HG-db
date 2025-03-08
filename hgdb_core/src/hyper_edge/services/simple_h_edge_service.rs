@@ -26,18 +26,22 @@ impl<'a> DualHyperEdgeService<'a> {
     
             println!("🧩 Nodes Set: {:?}", nodes_set);
             
+            // Create incidence matrix and transpose it
             let incidence_matrix = self.create_incidence_matrix(&nodes_set, &original_edge);
             let transposed_matrix = self.transpose_matrix(&incidence_matrix);
     
-            // Debugging: Print matrices in a readable format
+            // Print the matrices
             println!("🔢 Original Incidence Matrix:");
             self.print_matrix(&incidence_matrix);
     
+            // Print the transposed matrix
             println!("🔄 Transposed Matrix:");
             self.print_matrix(&transposed_matrix);
     
+            // Create the dual hyperedge
             let dual_edge_id = format!("dual_{}", id);
     
+            // create the dual hyperedge
             let dual_edge = DualHyperEdge {
                 id: dual_edge_id.clone(),
                 name: format!("Dual of {}", original_edge.name),
@@ -48,6 +52,7 @@ impl<'a> DualHyperEdgeService<'a> {
                 tail_hyper_nodes: Some(original_edge.tail_hyper_nodes.clone().unwrap_or_default()),
             };
 
+            // print the dual hyperedge
             println!("🛠 Attempting to save Dual Hyperedge with Key: {}", dual_edge.id);
             self.repository.save_dual(dual_edge)?;
 
@@ -62,15 +67,22 @@ impl<'a> DualHyperEdgeService<'a> {
         nodes: &[T],
         original_edge: &SimpleHyperEdge<String, String, String>,
     ) -> Vec<Vec<bool>> {
+        // Create a matrix with the same number of rows as nodes and 1 column
         let mut matrix = vec![vec![false; 1]; nodes.len()];
     
+        // Iterate over nodes and mark the matrix based on their presence in head or tail
         for (i, node) in nodes.iter().enumerate() {
+            // Convert node to string for comparison
             let node_str = node.to_string();
     
+            // Check if the node is in the head or tail of the original edge
             let is_in_head = original_edge.head_hyper_nodes.contains(&node_str);
+            // Check if the node is in the tail of the original edge
             let is_in_tail = original_edge.tail_hyper_nodes.as_ref()
+                // Use as_ref() to safely handle Option
                 .map_or(false, |tail| tail.contains(&node_str)); // Safely handle None case
     
+            // Mark the matrix cell as true if the node is in head or tail
             if is_in_head || is_in_tail {
                 matrix[i][0] = true;
             }
@@ -81,6 +93,7 @@ impl<'a> DualHyperEdgeService<'a> {
 
     // Function to transpose the matrix
     pub fn transpose_matrix(&self, matrix: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+        // Check if the matrix is empty
         if matrix.is_empty() || matrix[0].is_empty() {
             return Vec::new(); // Return empty if matrix is empty
         }
@@ -90,8 +103,11 @@ impl<'a> DualHyperEdgeService<'a> {
     
         let mut transposed = vec![vec![false; rows]; cols]; // Flip row/column sizes
     
+        // Iterate over the original matrix and fill the transposed matrix
         for (i, row) in matrix.iter().enumerate() {
+            // Iterate over each row and column
             for (j, &val) in row.iter().enumerate() {
+                // Assign the value to the transposed position
                 transposed[j][i] = val;
             }
         }
@@ -101,12 +117,19 @@ impl<'a> DualHyperEdgeService<'a> {
 
     // method to print the matrix information
     pub fn print_matrix(&self, matrix: &Vec<Vec<bool>>) {
+        // Check if the matrix is empty
         println!("🔢 Matrix [{}x{}]:", matrix.len(), if matrix.is_empty() { 0 } else { matrix[0].len() });
+        // Iterate over the matrix and print each row
         for row in matrix {
+            // Convert each boolean value to a string representation
             let row_str: String = row.iter()
+                // Use map to convert each boolean to "1" or "0"
                 .map(|&val| if val { "1" } else { "0" })
+                // Collect the strings into a single string with spaces
                 .collect::<Vec<&str>>()
+                // Join the strings with spaces
                 .join(" ");
+            // Print the row
             println!("[ {} ]", row_str);
         }
     } 
