@@ -1,5 +1,5 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
-use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
+use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property};
 use hgdb_core::hyper_edge::services::simple_h_edge_service::DualHyperEdgeService;
 
 #[cfg(test)]
@@ -104,7 +104,6 @@ mod test {
         let dual_edge = repository.get_dual_by_key(&format!("dual_test_edge_1"))?;
         assert!(dual_edge.is_some(), "❌ Dual hyperedge not found");
         let dual = dual_edge.unwrap();
-        println!("✅ Dual Hyperedge: {:?}", dual);
         assert_eq!(dual.name, "Dual of e1", "❌ Dual edge name mismatch"); // Adjusted to match name
 
         // Define test nodes dynamically

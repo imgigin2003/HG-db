@@ -1,6 +1,6 @@
-use hgdb_core::hyper_edge::entity::simple_h_edge::{SimpleHyperEdge, Property};
+use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property};
 use hgdb_core::hyper_edge::repository::light_h_edge_repository::LightHyperEdgeRepository;
-use hgdb_core::hyper_edge::entity::light_h_edge::LightHyperEdge;
+use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
 

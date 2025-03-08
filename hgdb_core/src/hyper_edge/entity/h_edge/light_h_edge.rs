@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
-use crate::hyper_edge::entity::simple_h_edge::SimpleHyperEdge;
+use crate::hyper_edge::entity::h_edge::simple_h_edge::SimpleHyperEdge;
 use crate::hyper_edge::entity::relationship::relationship::Relationship;
 use crate::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 

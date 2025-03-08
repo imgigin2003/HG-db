@@ -1,6 +1,6 @@
 use crate::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
-use crate::hyper_edge::entity::simple_h_edge::SimpleHyperEdge;
-use crate::hyper_edge::entity::dual_h_edge::DualHyperEdge;
+use crate::hyper_edge::entity::h_edge::simple_h_edge::SimpleHyperEdge;
+use crate::hyper_edge::entity::h_edge::dual_h_edge::DualHyperEdge;
 use std::error::Error;
 
 pub struct DualHyperEdgeService<'a> {

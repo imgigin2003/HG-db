@@ -1,6 +1,6 @@
 use rocksdb::{DB, Options};
 use serde_json::{self, to_string_pretty};
-use crate::hyper_edge::entity::light_h_edge::LightHyperEdge;
+use crate::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use std::error::Error;
 
 #[allow(dead_code)]

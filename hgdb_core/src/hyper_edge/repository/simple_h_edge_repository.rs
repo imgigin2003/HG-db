@@ -1,15 +1,17 @@
-use rocksdb::{DB, Options};
-use serde_json::{self, to_string_pretty};
-use crate::hyper_edge::entity::simple_h_edge::SimpleHyperEdge;
-use crate::hyper_edge::entity::dual_h_edge::DualHyperEdge;
-use std::error::Error;  // Import general error trait
+use rocksdb::{DB, Options}; // Import RocksDB
+use serde_json::{self, to_string_pretty}; // Import serde_json
+use crate::hyper_edge::entity::h_edge::simple_h_edge::SimpleHyperEdge; // Import SimpleHyperEdge
+use crate::hyper_edge::entity::h_edge::dual_h_edge::DualHyperEdge; // Import DualHyperEdge
+use std::error::Error; // Import Error trait
 
 #[allow(dead_code)]
+// SimpleHyperEdgeRepository struct
 pub struct SimpleHyperEdgeRepository {
     pub db: DB,
     db_path: String,
 }
 
+// Implementation of SimpleHyperEdgeRepository
 impl SimpleHyperEdgeRepository {
     /// Constructor for creating a new repository
     pub fn new(db_path: &str) -> Result<Self, Box<dyn Error>> {  // Return Boxed error type
