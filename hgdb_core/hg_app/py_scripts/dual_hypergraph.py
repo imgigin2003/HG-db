@@ -6,21 +6,25 @@ def compute_dual_hypergraph(hyperedges):
     if not hyperedges:
         return {}
 
-    # In the dual, original nodes become hyperedges, and original edges become nodes
+    # In the dual, original edges become nodes, and original nodes become hyperedges
     dual_hyperedges = {}
-    all_nodes = set().union(*hyperedges.values())  # All unique nodes from original hypergraph
+    all_nodes = set().union(*[data["nodes"] for data in hyperedges.values()])  # All unique nodes from original hypergraph
 
     # For each node in the original hypergraph, create a hyperedge in the dual
     # containing all original edges that include this node
     for node in all_nodes:
-        dual_hyperedges[node] = {edge_name for edge_name, nodes in hyperedges.items() if node in nodes}
+        dual_edges = set()
+        for edge_name, edge_data in hyperedges.items():
+            if node in edge_data["nodes"]:
+                dual_edges.add(edge_name)
+        dual_hyperedges[node] = dual_edges
         
     return dual_hyperedges
 
 def create_dual_hypergraph(hyperedges=None):
     """Create a dual hypergraph using provided hyperedges (or None for default behavior)."""
     if hyperedges is None:
-        return None, None  # Return None if no hyperedges provided (handle in main.py)
+        return None, None
 
     dual_hyperedges = compute_dual_hypergraph(hyperedges)
     if not dual_hyperedges:

@@ -9,7 +9,7 @@
           "value": ["linked"]
         }
       ],
-      "traversable": true,
+      "traversable": false,
       "directed": true,
       "head_hyper_nodes": ["v1", "v2"],
       "tail_hyper_nodes": ["v3"]
@@ -23,7 +23,7 @@
           "value": ["not-linked"]
         }
       ],
-      "traversable": false,
+      "traversable": true,
       "directed": false,
       "head_hyper_nodes": ["v3", "v4", "v5"],
       "tail_hyper_nodes": null
@@ -67,7 +67,7 @@
           "value": ["not-linked"]
         }
       ],
-      "traversable": true,
+      "traversable": false,
       "directed": true,
       "head_hyper_nodes": ["v11"],
       "tail_hyper_nodes": ["v12", "v13", "v14"]
