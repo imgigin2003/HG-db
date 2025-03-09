@@ -5,7 +5,7 @@ import os
 import numpy as np
 import networkx as nx
 
-JSON_FILE_PATH = "/Users/gigin/Documents/Github/HG-DB/hgdb_core/hg_app/py_scripts/json-data/test_simple.json"
+JSON_FILE_PATH = "py_scripts/json-data/test_simple.json"
 
 def load_hyperedges_from_json(json_file_path):
     """Load hyperedges from a JSON file with full metadata."""
