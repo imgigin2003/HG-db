@@ -11,5 +11,7 @@ pub struct DualHyperEdge <T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> {
     pub dual_properties: Vec<Property<K, V>>, // Properties associated with the dual hyper edge
     pub traversable: bool, // Indicates if the dual hyper edge is traversable
     pub head_hyper_nodes: Box<Vec<T>>, // List of head hyper nodes associated with this dual hyper edge
-    pub tail_hyper_nodes: Option<Box<Vec<T>>> // Optional list of tail hyper nodes associated with this dual hyper edge
+    pub tail_hyper_nodes: Option<Box<Vec<T>>>, // Optional list of tail hyper nodes associated with this dual hyper edge
+    pub incidence_matrix: Vec<Vec<i8>>, // Stores the incidence matrix
+    pub transposed_matrix: Vec<Vec<i8>>, // Stores the transposed incidence matrix
 }
