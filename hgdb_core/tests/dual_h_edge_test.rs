@@ -24,8 +24,8 @@ mod test {
 
         // Define test data with tuples of (key, SimpleHyperEdge)
         let edges = vec![
-            ("test_edge_1", SimpleHyperEdge {
-                id: "test_edge_1".to_string(),
+            ("Prime_test_edge_1", SimpleHyperEdge {
+                id: "Prime_test_edge_1".to_string(),
                 name: "e1".to_string(),
                 main_properties: vec![
                     Property {
@@ -38,8 +38,8 @@ mod test {
                 head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
                 tail_hyper_nodes: Some(Box::new(vec!["v3".to_string()]))
             }),
-            ("test_edge_2", SimpleHyperEdge {
-                id: "test_edge_2".to_string(),
+            ("Prime_test_edge_2", SimpleHyperEdge {
+                id: "Prime_test_edge_2".to_string(),
                 name: "e2".to_string(),
                 main_properties: vec![
                     Property {
@@ -52,8 +52,8 @@ mod test {
                 head_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
                 tail_hyper_nodes: None
             }),
-            ("test_edge_3", SimpleHyperEdge {
-                id: "test_edge_3".to_string(),
+            ("Prime_test_edge_3", SimpleHyperEdge {
+                id: "Prime_test_edge_3".to_string(),
                 name: "e3".to_string(),
                 main_properties: vec![
                     Property {
@@ -74,105 +74,74 @@ mod test {
         }
 
         // Ensure the original directed hyperedge is saved (using test_edge_1)
-        let retrieved_edge = repository.get_by_key("test_edge_1")?;
-        assert!(retrieved_edge.is_some(), "Edge 'test_edge_1' was not found in database");
+        let retrieved_edge = repository.get_by_key("Prime_test_edge_1")?;
+        assert!(retrieved_edge.is_some(), "Edge 'Prime_test_edge_1' was not found in database");
         assert_eq!(retrieved_edge.unwrap().name, "e1", "Original edge name mismatch");
 
         // Validate stored edges
         let all_edges = repository.get_all()?;
         assert_eq!(all_edges.len(), edges.len(), "❌ Not all edges were stored correctly!");
 
-        // Process each edge dynamically
         for (key, edge) in &edges {
             let retrieved_edge = repository.get_by_key(key)?;
-            assert!(
-                retrieved_edge.is_some(),
-                "❌ Edge '{}' not found in database",
-                edge.id
-            );
-            assert_eq!(
-                retrieved_edge.as_ref().unwrap().name,
-                edge.name,
-                "❌ Mismatch for edge '{}'",
-                edge.id
-            );
+            assert!(retrieved_edge.is_some(), "❌ Edge '{}' not found", edge.id);
+            assert_eq!(retrieved_edge.as_ref().unwrap().name, edge.name, "❌ Mismatch for edge '{}'", edge.id);
 
-            // Create dual hyperedge dynamically
             let dual_id = format!("dual_{}", edge.id);
             service.create_dual_h_edge(&edge.id)?;
 
             let dual_edge = repository.get_dual_by_key(&dual_id)?;
             assert!(dual_edge.is_some(), "❌ Dual hyperedge '{}' not found", dual_id);
-            assert_eq!(
-                dual_edge.unwrap().name,
-                format!("Dual of {}", edge.name),
-                "❌ Dual edge name mismatch"
-            );
+            let dual_edge = dual_edge.unwrap();
+            assert_eq!(dual_edge.name, format!("Dual of {}", edge.name), "❌ Dual edge name mismatch");
 
-            // Collect test nodes dynamically
             let mut test_nodes: Vec<String> = edge.head_hyper_nodes.iter().cloned().collect();
-            if let Some(tail_nodes) = &retrieved_edge.as_ref().unwrap().tail_hyper_nodes {
+            if let Some(tail_nodes) = &edge.tail_hyper_nodes {
                 test_nodes.extend(tail_nodes.iter().cloned());
             }
 
             let incidence_matrix = service.create_incidence_matrix(&test_nodes, edge);
             let transposed_matrix = service.transpose_matrix(&incidence_matrix);
 
-            // Validate matrix sizes dynamically
+            // Validate stored matrices
+            assert_eq!(dual_edge.incidence_matrix, incidence_matrix, "❌ Incidence matrix mismatch for '{}'", dual_id);
+            assert_eq!(dual_edge.transposed_matrix, transposed_matrix, "❌ Transposed matrix mismatch for '{}'", dual_id);
+
+            // Validate matrix dimensions
             let expected_rows = test_nodes.len();
             let expected_cols = 1;
             let expected_transposed_rows = expected_cols;
             let expected_transposed_cols = expected_rows;
 
-            assert_eq!(
-                incidence_matrix.len(),
-                expected_rows,
-                "❌ Incidence matrix row count incorrect for '{}'",
-                edge.id
-            );
-            assert_eq!(
-                incidence_matrix[0].len(),
-                expected_cols,
-                "❌ Incidence matrix column count incorrect for '{}'",
-                edge.id
-            );
-            assert_eq!(
-                transposed_matrix.len(),
-                expected_transposed_rows,
-                "❌ Transposed matrix row count incorrect for '{}'",
-                edge.id
-            );
-            assert_eq!(
-                transposed_matrix[0].len(),
-                expected_transposed_cols,
-                "❌ Transposed matrix column count incorrect for '{}'",
-                edge.id
-            );
+            assert_eq!(incidence_matrix.len(), expected_rows, "❌ Incidence matrix rows incorrect");
+            assert_eq!(incidence_matrix[0].len(), expected_cols, "❌ Incidence matrix cols incorrect");
+            assert_eq!(transposed_matrix.len(), expected_transposed_rows, "❌ Transposed matrix rows incorrect");
+            assert_eq!(transposed_matrix[0].len(), expected_transposed_cols, "❌ Transposed matrix cols incorrect");
 
-            // Check incidence matrix values dynamically
+            // Validate weighted values
             for (i, node) in test_nodes.iter().enumerate() {
-                let is_in_edge = edge.head_hyper_nodes.contains(node)
-                    || edge.tail_hyper_nodes.as_ref().map_or(false, |nodes| nodes.contains(node));
+                let is_in_head = edge.head_hyper_nodes.contains(node);
+                let is_in_tail = edge.tail_hyper_nodes.as_ref().map_or(false, |nodes| nodes.contains(node));
+                let expected_weight = match (is_in_head, is_in_tail) {
+                    (true, false) => 1,
+                    (false, true) => 2,
+                    (true, true) => 3,
+                    (false, false) => 0,
+                };
                 assert_eq!(
-                    incidence_matrix[i][0],
-                    is_in_edge,
-                    "❌ Incorrect value at [{}][0] for node '{}' in edge '{}'",
-                    i,
-                    node,
-                    edge.id
+                    incidence_matrix[i][0], expected_weight,
+                    "❌ Incorrect weight at [{}][0] for node '{}' in edge '{}'",
+                    i, node, edge.id
                 );
             }
 
-            // Validate transposed matrix logic
+            // Validate transposed matrix
             for row in 0..expected_transposed_rows {
                 for col in 0..expected_transposed_cols {
                     assert_eq!(
-                        transposed_matrix[row][col],
-                        incidence_matrix[col][row],
+                        transposed_matrix[row][col], incidence_matrix[col][row],
                         "❌ Transposed matrix value mismatch at [{}][{}] in edge '{}'",
-                        row,
-                        col,
-                        edge.id
+                        row, col, edge.id
                     );
                 }
             }
