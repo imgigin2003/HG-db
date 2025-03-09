@@ -107,16 +107,29 @@ impl SimpleHyperEdgeRepository {
         }
     }             
 
-    // method to save the dual edge key
     pub fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         let key = dual_edge.id.to_string().clone();
-        println!("💾 Saving Dual Hyperedge with Key: {}", key); // Debug log
-        
+        println!("💾 Saving Dual Hyperedge with Key: {}", key);
+
+        // Log the incidence matrix
+        println!("🔢 Incidence Matrix for {} (weights: 0 = none, >0 = importance):", key);
+        for row in &dual_edge.incidence_matrix {
+            let row_str: String = row.iter().map(|&val| val.to_string()).collect::<Vec<String>>().join(" ");
+            println!("[ {} ]", row_str);
+        }
+
+        // Log the transposed matrix
+        println!("🔄 Transposed Matrix for {} (weights: 0 = none, >0 = importance):", key);
+        for row in &dual_edge.transposed_matrix {
+            let row_str: String = row.iter().map(|&val| val.to_string()).collect::<Vec<String>>().join(" ");
+            println!("[ {} ]", row_str);
+        }
+
         let serialized_dual_edge = to_string_pretty(&dual_edge)?;
         self.db.put(&key, serialized_dual_edge)?;
-        println!("✅ Successfully saved Dual Hyperedge with Key: {}\n", key); // Debug log
-    
+        println!("✅ Successfully saved Dual Hyperedge with Key: {}", key);
+
         Ok(())
-    } 
+    }
           
 }

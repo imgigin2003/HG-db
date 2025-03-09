@@ -15,49 +15,42 @@ impl<'a> DualHyperEdgeService<'a> {
     // method to create the dual edge based on the simple edge
     pub fn create_dual_h_edge(&self, id: &str) -> Result<(), Box<dyn Error>> {
         let simple_h_edge = self.repository.get_by_key(id)?;
-    
-        // check if the simple hyperedge was found
-        if let Some(original_edge) = simple_h_edge {
-            let mut nodes_set = original_edge.head_hyper_nodes.clone();
-            
-            if let Some(ref tail_nodes) = original_edge.tail_hyper_nodes {
-                nodes_set.extend_from_slice(&tail_nodes);
-            }
-    
-            println!("🧩 Nodes Set: {:?}", nodes_set);
-            
-            // Create incidence matrix and transpose it
-            let incidence_matrix = self.create_incidence_matrix(&nodes_set, &original_edge);
-            let transposed_matrix = self.transpose_matrix(&incidence_matrix);
-    
-            // Print the matrices
-            println!("🔢 Original Incidence Matrix:");
-            self.print_matrix(&incidence_matrix);
-    
-            // Print the transposed matrix
-            println!("🔄 Transposed Matrix:");
-            self.print_matrix(&transposed_matrix);
-    
-            // Create the dual hyperedge
-            let dual_edge_id = format!("dual_{}", id);
-    
-            // create the dual hyperedge
-            let dual_edge = DualHyperEdge {
-                id: dual_edge_id.clone(),
-                name: format!("Dual of {}", original_edge.name),
-                simple_hyper_edge: original_edge.clone(),
-                dual_properties: original_edge.main_properties.clone(),
-                traversable: original_edge.traversable,
-                head_hyper_nodes: original_edge.head_hyper_nodes.clone(),
-                tail_hyper_nodes: Some(original_edge.tail_hyper_nodes.clone().unwrap_or_default()),
-            };
+        let original_edge = simple_h_edge.ok_or_else(|| {
+            let msg = format!("No SimpleHyperEdge found for key: {}", id);
+            eprintln!("❌ {}", msg);
+            Box::<dyn Error>::from(msg)
+        })?;
 
-            // print the dual hyperedge
-            println!("🛠 Attempting to save Dual Hyperedge with Key: {}", dual_edge.id);
-            self.repository.save_dual(dual_edge)?;
-
+        let mut nodes_set = original_edge.head_hyper_nodes.as_ref().clone();
+        if let Some(tail_nodes) = &original_edge.tail_hyper_nodes {
+            nodes_set.extend_from_slice(tail_nodes);
         }
-    
+        println!("🧩 Nodes Set: {:?}", nodes_set);
+
+        let incidence_matrix = self.create_incidence_matrix(&nodes_set, &original_edge);
+        let transposed_matrix = self.transpose_matrix(&incidence_matrix);
+        println!("🔢 Original Incidence Matrix:");
+        self.print_matrix(&incidence_matrix);
+        println!("🔄 Transposed Matrix:");
+        self.print_matrix(&transposed_matrix);
+
+        let dual_edge_id = format!("dual_{}", id);
+        let dual_edge = DualHyperEdge {
+            id: dual_edge_id.clone(),
+            name: format!("Dual of {}", original_edge.name),
+            simple_hyper_edge: original_edge.clone(),
+            dual_properties: original_edge.main_properties.clone(),
+            traversable: original_edge.traversable,
+            head_hyper_nodes: Box::new(original_edge.head_hyper_nodes.as_ref().clone()),
+            tail_hyper_nodes: original_edge.tail_hyper_nodes.clone(),
+            incidence_matrix,
+            transposed_matrix,
+        };
+
+        println!("🛠 Saving Dual Hyperedge with Key: {}", dual_edge.id);
+        self.repository.save_dual(dual_edge)?;
+        println!("✅ Dual Hyperedge saved successfully");
+
         Ok(())
     }            
 
@@ -66,71 +59,46 @@ impl<'a> DualHyperEdgeService<'a> {
         &self,
         nodes: &[T],
         original_edge: &SimpleHyperEdge<String, String, String>,
-    ) -> Vec<Vec<bool>> {
-        // Create a matrix with the same number of rows as nodes and 1 column
-        let mut matrix = vec![vec![false; 1]; nodes.len()];
-    
-        // Iterate over nodes and mark the matrix based on their presence in head or tail
-        for (i, node) in nodes.iter().enumerate() {
-            // Convert node to string for comparison
-            let node_str = node.to_string();
-    
-            // Check if the node is in the head or tail of the original edge
-            let is_in_head = original_edge.head_hyper_nodes.contains(&node_str);
-            // Check if the node is in the tail of the original edge
-            let is_in_tail = original_edge.tail_hyper_nodes.as_ref()
-                // Use as_ref() to safely handle Option
-                .map_or(false, |tail| tail.contains(&node_str)); // Safely handle None case
-    
-            // Mark the matrix cell as true if the node is in head or tail
-            if is_in_head || is_in_tail {
-                matrix[i][0] = true;
-            }
-        }
-    
-        matrix
-    }    
+    ) -> Vec<Vec<i8>> {
+        let mut matrix = vec![vec![0i8; 1]; nodes.len()]; // Single column for one edge, initialized to 0
 
-    // Function to transpose the matrix
-    pub fn transpose_matrix(&self, matrix: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
-        // Check if the matrix is empty
-        if matrix.is_empty() || matrix[0].is_empty() {
-            return Vec::new(); // Return empty if matrix is empty
+        for (i, node) in nodes.iter().enumerate() {
+            let node_str = node.to_string();
+            let is_in_head = original_edge.head_hyper_nodes.contains(&node_str);
+            let is_in_tail = original_edge.tail_hyper_nodes.as_ref()
+                .map_or(false, |tail| tail.contains(&node_str));
+
+            matrix[i][0] = match (is_in_head, is_in_tail) {
+                (true, false) => 1,  // Weight for head node
+                (false, true) => 2,  // Weight for tail node
+                (true, true) => 3,   // Weight if in both (e.g., higher importance)
+                (false, false) => 0, // No connection
+            };
         }
-    
+
+        matrix
+    } 
+
+    pub fn transpose_matrix(&self, matrix: &Vec<Vec<i8>>) -> Vec<Vec<i8>> {
+        if matrix.is_empty() || matrix[0].is_empty() {
+            return Vec::new();
+        }
         let rows = matrix.len();
         let cols = matrix[0].len();
-    
-        let mut transposed = vec![vec![false; rows]; cols]; // Flip row/column sizes
-    
-        // Iterate over the original matrix and fill the transposed matrix
-        for (i, row) in matrix.iter().enumerate() {
-            // Iterate over each row and column
-            for (j, &val) in row.iter().enumerate() {
-                // Assign the value to the transposed position
-                transposed[j][i] = val;
+        let mut transposed = vec![vec![0i8; rows]; cols];
+        for i in 0..rows {
+            for j in 0..cols {
+                transposed[j][i] = matrix[i][j];
             }
         }
-    
         transposed
-    }    
+    }
 
-    // method to print the matrix information
-    pub fn print_matrix(&self, matrix: &Vec<Vec<bool>>) {
-        // Check if the matrix is empty
+    pub fn print_matrix(&self, matrix: &Vec<Vec<i8>>) {
         println!("🔢 Matrix [{}x{}]:", matrix.len(), if matrix.is_empty() { 0 } else { matrix[0].len() });
-        // Iterate over the matrix and print each row
         for row in matrix {
-            // Convert each boolean value to a string representation
-            let row_str: String = row.iter()
-                // Use map to convert each boolean to "1" or "0"
-                .map(|&val| if val { "1" } else { "0" })
-                // Collect the strings into a single string with spaces
-                .collect::<Vec<&str>>()
-                // Join the strings with spaces
-                .join(" ");
-            // Print the row
+            let row_str: String = row.iter().map(|&val| val.to_string()).collect::<Vec<String>>().join(" ");
             println!("[ {} ]", row_str);
         }
-    } 
+    }
 }
