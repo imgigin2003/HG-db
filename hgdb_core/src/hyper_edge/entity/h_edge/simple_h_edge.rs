@@ -1,11 +1,21 @@
 use serde::{Serialize, Deserialize}; // For serializing and deserializing data
 use std::hash::Hash; // For implementing hash-based collections
 
+// Deriving Serialize, Deserialize, and Debug traits for the PropertyType enum
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)] 
+pub enum PropertyType {
+    Simple,
+    Main,
+    Structure,
+    ExtraInfo,
+}
+
 // Deriving Serialize, Deserialize, and Debug traits for the Property struct
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Property<K: Eq + Hash, V: Eq + Hash> {
     pub key: K, // The key for the property
     pub value: Vec<V>, // The value associated with the key
+    pub p_type: PropertyType, // The type of the property
 }
 
 // Deriving Serialize, Deserialize, and Debug traits for the SimpleHyperEdge struct

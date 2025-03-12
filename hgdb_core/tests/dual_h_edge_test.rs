@@ -1,5 +1,5 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
-use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property};
+use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::services::simple_h_edge_service::DualHyperEdgeService;
 
 #[cfg(test)]
@@ -30,7 +30,8 @@ mod test {
                 main_properties: vec![
                     Property {
                         key: "type".to_string(),
-                        value: vec!["linked".to_string()]
+                        value: vec!["linked".to_string()],
+                        p_type: PropertyType::Simple
                     }
                 ],
                 traversable: true,
@@ -44,7 +45,8 @@ mod test {
                 main_properties: vec![
                     Property {
                         key: "type".to_string(),
-                        value: vec!["not-linked".to_string()]
+                        value: vec!["not-linked".to_string()],
+                        p_type: PropertyType::Structure
                     }
                 ],
                 traversable: false,
@@ -58,7 +60,8 @@ mod test {
                 main_properties: vec![
                     Property {
                         key: "type".to_string(),
-                        value: vec!["not-linked".to_string()]
+                        value: vec!["not-linked".to_string()],
+                        p_type: PropertyType::Simple
                     }
                 ],
                 traversable: true,

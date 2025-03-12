@@ -1,4 +1,4 @@
-use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property};
+use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::repository::light_h_edge_repository::LightHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
@@ -34,7 +34,8 @@ mod tests {
                 name: "test_edge_1".to_string(),
                 main_properties: vec![Property {
                     key: "type".to_string(),
-                    value: vec!["linked".to_string()]
+                    value: vec!["linked".to_string()],
+                    p_type: PropertyType::Simple
                 }],
                 traversable: true,
                 directed: false,
@@ -71,6 +72,7 @@ mod tests {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["strongly linked".to_string()],
+                    p_type: PropertyType::Main
                 }],
                 traversable: false,
                 directed: true, //set the directed flag to true

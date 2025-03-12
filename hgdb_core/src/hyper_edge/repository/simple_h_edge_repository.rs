@@ -1,8 +1,12 @@
 use rocksdb::{DB, Options}; // Import RocksDB
 use serde_json::{self, to_string_pretty}; // Import serde_json
-use crate::hyper_edge::entity::h_edge::simple_h_edge::SimpleHyperEdge; // Import SimpleHyperEdge
+use crate::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property}; // Import SimpleHyperEdge
 use crate::hyper_edge::entity::h_edge::dual_h_edge::DualHyperEdge; // Import DualHyperEdge
 use std::error::Error; // Import Error trait
+
+/****************************************************** CRUD Operation for Hyper Edge ************************************************+/
+                        Here we are going to list all methods regarding creating a new Hyper Edge in the Database
+****************************************************************************************************************************/
 
 #[allow(dead_code)]
 // SimpleHyperEdgeRepository struct
@@ -20,7 +24,6 @@ impl SimpleHyperEdgeRepository {
         
         // Open RocksDB with the provided path
         let db = DB::open(&opts, db_path)?;
-
         Ok(SimpleHyperEdgeRepository {
             db,
             db_path: db_path.to_string(),
@@ -92,6 +95,11 @@ impl SimpleHyperEdgeRepository {
         Ok(edges)
     }    
     
+    /****************************************************** Operations for DualHyperEdge ************************************************+/
+                                Here we are going to list all methods to Process and Save a dual key
+****************************************************************************************************************************/
+
+
     // method to get the dual edge by key
     pub fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
         match self.db.get(key)? {
@@ -108,7 +116,7 @@ impl SimpleHyperEdgeRepository {
     }             
 
     pub fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-        let key = dual_edge.id.to_string().clone();
+        let key = dual_edge.id.to_string();
         println!("💾 Saving Dual Hyperedge with Key: {}", key);
 
         // Log the incidence matrix
@@ -131,5 +139,65 @@ impl SimpleHyperEdgeRepository {
 
         Ok(())
     }
-          
+
+    /*******************************************CRUD Operation for Property Field in Hyper Edge ************************************************+/
+                        Here we are going to list all methods to Create, Update, Delete and Retrieve a Property Field
+****************************************************************************************************************************/
+    // Method to add a property to a HyperEdge
+    pub fn add_property(&self, key: &str, property: Property<String, String>) -> Result<(), Box<dyn Error>> {
+        match self.db.get(key)? { // Retrieve the HyperEdge by key
+            Some(serialized_edge) => { // If the HyperEdge is found
+                // Deserialize the HyperEdge 
+                let mut edge: SimpleHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
+                edge.main_properties.push(property); // Add the new property
+                self.create(key, &edge)?; // Reuse create to update the edge in the DB
+                Ok(())
+            }
+            None => {
+                // Return an error if no hyperedge was found for the provided key
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, format!("No Hyperedge found for key: {}", key))))
+            }
+        }
+    }
+
+    // Method to Get a property in a HyperEdge
+    pub fn get_property(&self, key: &str) -> Result<Option<Vec<Property<String, String>>>, Box<dyn Error>> {
+        // Retrieve the HyperEdge by key
+        if let Some(edge) = self.get_by_key(key)? {
+            // Return the main properties if the HyperEdge is found
+            Ok(Some(edge.main_properties))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Method to Update a property in a HyperEdge
+    pub fn update_property(&self, key: &str, property_key: &str, new_property: Property<String, String>) -> Result<(), Box<dyn Error>> {
+        if let Some(mut edge) = self.get_by_key(key)? {
+            if let Some(pos) = edge.main_properties.iter_mut().position(|p| p.key == property_key) {
+                edge.main_properties[pos] = new_property;
+                self.update(key, &edge)?;
+                Ok(())
+            } else {
+                Err("Property not found".into())
+            }
+        } else {
+            Err("Edge not found".into())
+        }
+    }
+
+    // Method to Delete a property in a HyperEdge
+    pub fn delete_property(&self, key: &str, property_key: &str) -> Result<(), Box<dyn Error>> {
+        if let Some(mut edge) = self.get_by_key(key)? {
+            if let Some(pos) = edge.main_properties.iter().position(|p| p.key == property_key) {
+                edge.main_properties.remove(pos);
+                self.update(key, &edge)?;
+                Ok(())
+            } else {
+                Err("Property not found".into()) // If property doesn't exist
+            }
+        } else {
+            Err("Edge not found".into()) // If the edge doesn't exist
+        }
+    }
 }
