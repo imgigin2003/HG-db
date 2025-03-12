@@ -1,0 +1,77 @@
+[
+  {
+    "id": "e1",
+    "name": "e1",
+    "main_properties": [
+      {
+        "key": "type",
+        "value": ["linked"],
+        "p_type": "Simple"
+      }
+    ],
+    "traversable": false,
+    "directed": true,
+    "head_hyper_nodes": ["v1", "v2"],
+    "tail_hyper_nodes": ["v3"]
+  },
+  {
+    "id": "e2",
+    "name": "e2",
+    "main_properties": [
+      {
+        "key": "type",
+        "value": ["not-linked"],
+        "p_type": "Simple"
+      }
+    ],
+    "traversable": false,
+    "directed": false,
+    "head_hyper_nodes": ["v3", "v4", "v5"],
+    "tail_hyper_nodes": null
+  },
+  {
+    "id": "e3",
+    "name": "e3",
+    "main_properties": [
+      {
+        "key": "type",
+        "value": ["not-linked"],
+        "p_type": "ExtraInfo"
+      }
+    ],
+    "traversable": true,
+    "directed": false,
+    "head_hyper_nodes": ["v6", "v7"],
+    "tail_hyper_nodes": null
+  },
+  {
+    "id": "e4",
+    "name": "e4",
+    "main_properties": [
+      {
+        "key": "type",
+        "value": ["linked"],
+        "p_type": "Simple"
+      }
+    ],
+    "traversable": true,
+    "directed": true,
+    "head_hyper_nodes": ["v8", "v9", "v10"],
+    "tail_hyper_nodes": ["v11"]
+  },
+  {
+    "id": "e5",
+    "name": "e5",
+    "main_properties": [
+      {
+        "key": "type",
+        "value": ["not-linked"],
+        "p_type": "Structural"
+      }
+    ],
+    "traversable": false,
+    "directed": false,
+    "head_hyper_nodes": ["v12", "v13", "v14"],
+    "tail_hyper_nodes": null
+  }
+]
