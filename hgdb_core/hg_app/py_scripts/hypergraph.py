@@ -5,36 +5,25 @@ import os
 import numpy as np
 import networkx as nx
 
-JSON_FILE_PATH = "py_scripts/json-data/test_simple.json"
+JSON_FILE_PATH = "py_scripts/json-data/test_edge.json"
 
 def load_hyperedges_from_json(json_file_path):
-    """Load hyperedges from a JSON file with full metadata."""
-    if not os.path.exists(json_file_path):
-        print(f"Error: JSON file not found at {json_file_path}")
-        return {}
-
     with open(json_file_path, 'r') as file:
-        try:
-            data = json.load(file)
-        except json.JSONDecodeError as e:
-            print(f"Error: Invalid JSON format - {e}")
-            return {}
+        data = json.load(file)
+    
+    hyperedges = {}  # This will store your hyperedges data
+    for edge in data:  # Directly iterate over the list
+        edge_id = edge["id"]
+        # You can then extract relevant information from each edge
+        hyperedges[edge_id] = {
+            "nodes": set(edge["head_hyper_nodes"] + (edge.get("tail_hyper_nodes") or [])),  # Collect head and tail nodes
+            "head": set(edge["head_hyper_nodes"]),  # Add head nodes
+            "tail": set(edge.get("tail_hyper_nodes") or []),  # Add tail nodes
+            "traversable": edge["traversable"],
+            "directed": edge["directed"],
+            "type": edge["main_properties"][0]["value"][0],  # Assuming the first property is the type
+        }
 
-    hyperedges = {}
-    for hypergraph_key in data:
-        for edge in data[hypergraph_key]:
-            edge_name = edge["name"]
-            head_nodes = edge["head_hyper_nodes"]
-            tail_nodes = edge["tail_hyper_nodes"] if edge["tail_hyper_nodes"] is not None else []
-            nodes = head_nodes + tail_nodes
-            hyperedges[edge_name] = {
-                "nodes": set(nodes),
-                "head": set(head_nodes),
-                "tail": set(tail_nodes),
-                "traversable": edge["traversable"],
-                "directed": edge["directed"],
-                "type": edge["main_properties"][0]["value"][0]
-            }
     return hyperedges
 
 def create_hypergraph():
@@ -44,6 +33,7 @@ def create_hypergraph():
         return None, None
     H = hnx.Hypergraph({k: v["nodes"] for k, v in hyperedges.items()})
     return H, hyperedges
+
 
 def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
     """Draw the hypergraph with custom handling for directed edges and traversable filter."""
@@ -70,7 +60,6 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
     for node, (x, y) in node_pos.items():
         ax.scatter(x, y, s=100, color="black")
         ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
-
 
     # Filter and draw based on visualize_mode
     for edge_name, edge_data in hyperedges.items():
