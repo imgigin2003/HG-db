@@ -171,22 +171,18 @@ impl SimpleHyperEdgeRepository {
         }
     }
 
-    // Method to Update a property in a HyperEdge
+    // Method to Update a property
     pub fn update_property(&self, key: &str, property_key: &str, new_property: Property<String, String>) -> Result<(), Box<dyn Error>> {
-        if let Some(mut edge) = self.get_by_key(key)? {
-            if let Some(pos) = edge.main_properties.iter_mut().position(|p| p.key == property_key) {
-                edge.main_properties[pos] = new_property;
-                self.update(key, &edge)?;
-                Ok(())
-            } else {
-                Err("Property not found".into())
-            }
-        } else {
-            Err("Edge not found".into())
-        }
+        let mut edge = self.get_by_key(key)?.ok_or_else(|| Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Edge not found")))?;
+        let property = edge.main_properties.iter_mut()
+            .find(|p| p.key == property_key)
+            .ok_or_else(|| Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Property not found")))?;
+        *property = new_property;
+        self.update(key, &edge)?;
+        Ok(())
     }
 
-    // Method to Delete a property in a HyperEdge
+    // Method to Delete a property
     pub fn delete_property(&self, key: &str, property_key: &str) -> Result<(), Box<dyn Error>> {
         if let Some(mut edge) = self.get_by_key(key)? {
             if let Some(pos) = edge.main_properties.iter().position(|p| p.key == property_key) {
@@ -194,10 +190,10 @@ impl SimpleHyperEdgeRepository {
                 self.update(key, &edge)?;
                 Ok(())
             } else {
-                Err("Property not found".into()) // If property doesn't exist
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Property not found")))
             }
         } else {
-            Err("Edge not found".into()) // If the edge doesn't exist
+            Err(Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Edge not found")))
         }
     }
 }
