@@ -77,8 +77,12 @@ mod tests {
 
         // Create edges
         for (key, edge) in &edges {
-            repository.create(key, edge)?;
+            match repository.create(key, edge) {
+                Ok(_) => println!("✅ Successfully created edge: {}", key),
+                Err(e) => eprintln!("❌ Failed to create edge {}: {:?}", key, e),
+            }
         }
+        
 
         // Retrieve all edges and verify count
         let all_edges = repository.get_all()?;
@@ -148,10 +152,7 @@ mod tests {
                 eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
             }
         }
-
-        // Give it a moment before reopening the database
-        sleep(Duration::from_secs(1));
-
+        
         // Initialize repository
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
         
@@ -164,7 +165,7 @@ mod tests {
 
         // define an edge
         let edge = SimpleHyperEdge {
-            id: "test_edge".to_string(),
+            id: "test_edge_1".to_string(),
             name: "e1".to_string(),
             main_properties: vec![property],
             traversable: true,
@@ -174,10 +175,10 @@ mod tests {
         };
 
         // create the edge
-        repository.create("test_edge", &edge)?;
+        repository.create("test_edge_1", &edge)?;
 
         // retrieve the edge
-        let retrieved_edge = repository.get_by_key("test_edge")?.unwrap();
+        let retrieved_edge = repository.get_by_key("test_edge_1")?.unwrap();
         assert_eq!(
             retrieved_edge.main_properties.len(),
             1,
@@ -195,10 +196,10 @@ mod tests {
             value: vec!["not-linked".to_string()],
             p_type: PropertyType::Main
         };
-        repository.update_property("test_edge", "type", updated_property.clone())?;
+        repository.update_property("test_edge_1", "type", updated_property.clone())?;
 
         // retrieve the updated edge
-        let updated_edge = repository.get_by_key("test_edge")?.unwrap();
+        let updated_edge = repository.get_by_key("test_edge_1")?.unwrap();
         assert_eq!(
             updated_edge.main_properties[0].value[0],
             "not-linked",
@@ -211,10 +212,10 @@ mod tests {
         );
 
         // delete the property
-        repository.delete_property("test_edge", "type")?;
+        repository.delete_property("test_edge_1", "type")?;
 
         // retrieve the edge and verify if its deleted
-        let final_edge = repository.get_by_key("test_edge")?.unwrap();
+        let final_edge = repository.get_by_key("test_edge_1")?.unwrap();
         assert_eq!(
             final_edge.main_properties.len(),
             0,
