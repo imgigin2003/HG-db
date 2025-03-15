@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize}; // For serialization and deserialization
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)] 
 /// Represents a relationship between two nodes in a hypergraph
 pub struct Relationship<T, U, V> {
     pub node_1: T, // The first node in the relationship

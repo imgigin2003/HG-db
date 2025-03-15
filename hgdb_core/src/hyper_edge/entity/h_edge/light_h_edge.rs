@@ -4,7 +4,7 @@ use crate::hyper_edge::entity::h_edge::simple_h_edge::SimpleHyperEdge; // import
 use crate::hyper_edge::entity::relationship::relationship::Relationship; // import relationship
 use crate::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse}; // import structural properties and traverse
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash)]
 /// A struct representing a light hyper edge in a graph database
 pub struct LightHyperEdge<T: Eq + Hash + std::fmt::Display, U: Eq + Hash, V: Eq + Hash> {
     pub id: T, // Unique identifier for the hyper edge

@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize}; // For serialization and deserialization
 use std::hash::Hash; // For hashing
 use crate::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property}; // import the SimpleHyperEdge and Property structs
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Hash)]
 // This struct represents a dual hyper edge in the graph database.
 pub struct DualHyperEdge <T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> {
     pub id: T, // Unique identifier for the dual hyper edge
