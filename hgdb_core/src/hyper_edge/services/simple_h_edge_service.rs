@@ -38,7 +38,7 @@ impl<'a> DualHyperEdgeService<'a> {
         let dual_edge = DualHyperEdge {
             id: dual_edge_id.clone(),
             name: format!("Dual of {}", original_edge.name),
-            simple_hyper_edge: original_edge.clone(),
+            prime_simple_hyper_edge: std::borrow::Cow::Borrowed(&original_edge),
             dual_properties: original_edge.main_properties.clone(),
             traversable: original_edge.traversable,
             head_hyper_nodes: Box::new(original_edge.head_hyper_nodes.as_ref().clone()),
@@ -49,48 +49,48 @@ impl<'a> DualHyperEdgeService<'a> {
 
         println!("🛠 Saving Dual Hyperedge with Key: {}", dual_edge.id);
         self.repository.save_dual(dual_edge)?;
-        println!("✅ Dual Hyperedge saved successfully");
+        println!("✅ Dual Hyperedge saved successfully \n");
 
         Ok(())
     }            
 
-    // Simulate matrix creation based on head and tail nodes
     pub fn create_incidence_matrix<T: ToString>(
         &self,
         nodes: &[T],
         original_edge: &SimpleHyperEdge<String, String, String>,
     ) -> Vec<Vec<i8>> {
-        let mut matrix = vec![vec![0i8; 1]; nodes.len()]; // Single column for one edge, initialized to 0
-
+        let mut matrix = vec![vec![0i8; 1]; nodes.len()];  // Initialize with 1 column for one edge
+    
         for (i, node) in nodes.iter().enumerate() {
             let node_str = node.to_string();
             let is_in_head = original_edge.head_hyper_nodes.contains(&node_str);
             let is_in_tail = original_edge.tail_hyper_nodes.as_ref()
                 .map_or(false, |tail| tail.contains(&node_str));
-
+    
+            // Assign the weight based on head and tail nodes
             matrix[i][0] = match (is_in_head, is_in_tail) {
-                (true, false) => 1,  // Weight for head node
-                (false, true) => 2,  // Weight for tail node
-                (true, true) => 3,   // Weight if in both (e.g., higher importance)
+                (true, false) => 1,  // Head node weight
+                (false, true) => 2,  // Tail node weight
+                (true, true) => 3,   // Both head and tail node weight
                 (false, false) => 0, // No connection
             };
         }
-
+    
         matrix
-    } 
+    }     
 
     pub fn transpose_matrix(&self, matrix: &Vec<Vec<i8>>) -> Vec<Vec<i8>> {
-        if matrix.is_empty() || matrix[0].is_empty() {
-            return Vec::new();
-        }
-        let rows = matrix.len();
-        let cols = matrix[0].len();
-        let mut transposed = vec![vec![0i8; rows]; cols];
-        for i in 0..rows {
-            for j in 0..cols {
-                transposed[j][i] = matrix[i][j];
+        let mut transposed: Vec<Vec<i8>> = Vec::new();
+
+        // Transpose logic: Convert rows to columns and columns to rows
+        for col_idx in 0..matrix[0].len() {
+            let mut new_row: Vec<i8> = Vec::new();
+            for row in matrix.iter() {
+                new_row.push(row[col_idx]);
             }
+            transposed.push(new_row);
         }
+
         transposed
     }
 

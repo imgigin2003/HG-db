@@ -29,7 +29,7 @@ mod tests {
         let test_key = "e1";
         let test_edge = LightHyperEdge {
             id: test_key.to_string(),
-            simple_hyper_edge: SimpleHyperEdge {
+            prime_simple_hyper_edge: SimpleHyperEdge {
                 id: test_key.to_string(),
                 name: "test_edge_1".to_string(),
                 main_properties: vec![Property {
@@ -66,7 +66,7 @@ mod tests {
         // Create updated hyperedge
         let updated_edge = LightHyperEdge {
             id: test_key.to_string(),
-            simple_hyper_edge: SimpleHyperEdge {
+            prime_simple_hyper_edge: SimpleHyperEdge {
                 id: test_key.to_string(),
                 name: "UpdatedConnection".to_string(),
                 main_properties: vec![Property {

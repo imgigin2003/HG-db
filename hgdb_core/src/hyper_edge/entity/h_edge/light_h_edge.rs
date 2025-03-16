@@ -8,7 +8,7 @@ use crate::hyper_edge::entity::structure::structure::{StructuralProperty, Traver
 /// A struct representing a light hyper edge in a graph database
 pub struct LightHyperEdge<T: Eq + Hash + std::fmt::Display, U: Eq + Hash, V: Eq + Hash> {
     pub id: T, // Unique identifier for the hyper edge
-    pub simple_hyper_edge: SimpleHyperEdge<T, U, V>, // The simple hyper edge associated with this light hyper edge
+    pub prime_simple_hyper_edge: SimpleHyperEdge<T, U, V>, // The simple hyper edge associated with this light hyper edge
     pub structural_properties: Vec<StructuralProperty>, // Properties that define the structure of the hyper edge
     pub relationship: Relationship<T, U, V>, // The relationship associated with this hyper edge
     pub traverse: Traverse // The traversal information for this hyper edge

@@ -10,7 +10,7 @@ mod test {
     const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/dual-h-edge"; // RocksDB path
 
     #[test]
-    fn test_create_dual_h_edge() -> Result<(), Box<dyn Error>> {
+    fn test_dual_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
         // Delete the database folder before running the test
         if let Err(e) = remove_dir_all(DB_PATH) {
             if e.kind() != std::io::ErrorKind::NotFound {
