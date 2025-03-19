@@ -11,77 +11,79 @@ mod test {
 
     #[test]
     fn test_dual_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        // Delete the database folder before running the test
         if let Err(e) = remove_dir_all(DB_PATH) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
             }
         }
 
-        // Initialize repository and service
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
         let service = DualHyperEdgeService::new(&repository);
 
-        // Define test data with tuples of (key, SimpleHyperEdge)
+        // Define nodes as SimpleHyperEdge instances
+        let nodes = vec![
+            ("v1", "v1"), ("v2", "v2"), ("v3", "v3"), ("v4", "v4"),
+            ("v5", "v5"), ("v6", "v6"), ("v7", "v7"), ("v8", "v8"),
+        ].into_iter().map(|(id, name)| SimpleHyperEdge {
+            id: id.to_string(),
+            name: name.to_string(),
+            main_properties: vec![],
+            traversable: false,
+            directed: false,
+            head_hyper_nodes: None,
+            tail_hyper_nodes: None,
+        }).collect::<Vec<_>>();
+
         let edges = vec![
             ("Prime_test_edge_1", SimpleHyperEdge {
                 id: "Prime_test_edge_1".to_string(),
                 name: "e1".to_string(),
-                main_properties: vec![
-                    Property {
-                        key: "type".to_string(),
-                        value: vec!["linked".to_string()],
-                        p_type: PropertyType::Simple
-                    }
-                ],
+                main_properties: vec![Property {
+                    key: "type".to_string(),
+                    value: vec!["linked".to_string()],
+                    p_type: PropertyType::Simple,
+                }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
-                tail_hyper_nodes: Some(Box::new(vec!["v3".to_string()]))
+                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
+                tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])),
             }),
             ("Prime_test_edge_2", SimpleHyperEdge {
                 id: "Prime_test_edge_2".to_string(),
                 name: "e2".to_string(),
-                main_properties: vec![
-                    Property {
-                        key: "type".to_string(),
-                        value: vec!["not-linked".to_string()],
-                        p_type: PropertyType::Structure
-                    }
-                ],
+                main_properties: vec![Property {
+                    key: "type".to_string(),
+                    value: vec!["not-linked".to_string()],
+                    p_type: PropertyType::Structure,
+                }],
                 traversable: false,
                 directed: false,
-                head_hyper_nodes: Box::new(vec!["v4".to_string(), "v5".to_string()]),
-                tail_hyper_nodes: None
+                head_hyper_nodes: Some(Box::new(vec![nodes[3].clone(), nodes[4].clone()])),
+                tail_hyper_nodes: None,
             }),
             ("Prime_test_edge_3", SimpleHyperEdge {
                 id: "Prime_test_edge_3".to_string(),
                 name: "e3".to_string(),
-                main_properties: vec![
-                    Property {
-                        key: "type".to_string(),
-                        value: vec!["not-linked".to_string()],
-                        p_type: PropertyType::Simple
-                    }
-                ],
+                main_properties: vec![Property {
+                    key: "type".to_string(),
+                    value: vec!["not-linked".to_string()],
+                    p_type: PropertyType::Simple,
+                }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Box::new(vec!["v6".to_string()]),
-                tail_hyper_nodes: Some(Box::new(vec!["v7".to_string(), "v8".to_string()]))
-            })
+                head_hyper_nodes: Some(Box::new(vec![nodes[5].clone()])),
+                tail_hyper_nodes: Some(Box::new(vec![nodes[6].clone(), nodes[7].clone()])),
+            }),
         ];
 
-        // Create all edges using the tuple key
         for (key, edge) in &edges {
             repository.create(key, edge)?;
         }
 
-        // Ensure the original directed hyperedge is saved (using test_edge_1)
         let retrieved_edge = repository.get_by_key("Prime_test_edge_1")?;
         assert!(retrieved_edge.is_some(), "Edge 'Prime_test_edge_1' was not found in database");
         assert_eq!(retrieved_edge.unwrap().name, "e1", "Original edge name mismatch");
 
-        // Validate stored edges
         let all_edges = repository.get_all()?;
         assert_eq!(all_edges.len(), edges.len(), "❌ Not all edges were stored correctly!");
 
@@ -98,19 +100,18 @@ mod test {
             let dual_edge = dual_edge.unwrap();
             assert_eq!(dual_edge.name, format!("Dual of {}", edge.name), "❌ Dual edge name mismatch");
 
-            let mut test_nodes: Vec<String> = edge.head_hyper_nodes.iter().cloned().collect();
+            let mut test_nodes: Vec<String> = edge.head_hyper_nodes.as_ref()
+                .map_or(vec![], |nodes| nodes.iter().map(|n| n.id.clone()).collect());
             if let Some(tail_nodes) = &edge.tail_hyper_nodes {
-                test_nodes.extend(tail_nodes.iter().cloned());
+                test_nodes.extend(tail_nodes.iter().map(|n| n.id.clone()));
             }
 
             let incidence_matrix = service.create_incidence_matrix(&test_nodes, edge);
             let transposed_matrix = service.transpose_matrix(&incidence_matrix);
 
-            // Validate stored matrices
             assert_eq!(dual_edge.incidence_matrix, incidence_matrix, "❌ Incidence matrix mismatch for '{}'", dual_id);
             assert_eq!(dual_edge.transposed_matrix, transposed_matrix, "❌ Transposed matrix mismatch for '{}'", dual_id);
 
-            // Validate matrix dimensions
             let expected_rows = test_nodes.len();
             let expected_cols = 1;
             let expected_transposed_rows = expected_cols;
@@ -121,10 +122,11 @@ mod test {
             assert_eq!(transposed_matrix.len(), expected_transposed_rows, "❌ Transposed matrix rows incorrect");
             assert_eq!(transposed_matrix[0].len(), expected_transposed_cols, "❌ Transposed matrix cols incorrect");
 
-            // Validate weighted values
             for (i, node) in test_nodes.iter().enumerate() {
-                let is_in_head = edge.head_hyper_nodes.contains(node);
-                let is_in_tail = edge.tail_hyper_nodes.as_ref().map_or(false, |nodes| nodes.contains(node));
+                let is_in_head = edge.head_hyper_nodes.as_ref()
+                    .map_or(false, |nodes| nodes.iter().any(|n| n.id == *node));
+                let is_in_tail = edge.tail_hyper_nodes.as_ref()
+                    .map_or(false, |nodes| nodes.iter().any(|n| n.id == *node));
                 let expected_weight = match (is_in_head, is_in_tail) {
                     (true, false) => 1,
                     (false, true) => 2,
@@ -138,7 +140,6 @@ mod test {
                 );
             }
 
-            // Validate transposed matrix
             for row in 0..expected_transposed_rows {
                 for col in 0..expected_transposed_cols {
                     assert_eq!(

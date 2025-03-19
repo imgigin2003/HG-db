@@ -7,6 +7,6 @@ use std::fmt::Display; // import Display from std::fmt
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)] 
 pub struct HyperEdge<T: Eq + Hash + Display, U: Eq + Hash, V: Eq + Hash> {
     pub id: T, // must be a combination of important info about hn, for example where it is stored
-    pub light_hyper_node: LightHyperEdge<T, U, V>, // a LightHyperEdge with generic types T, U, V
+    pub light_hyper_edge: LightHyperEdge<T, U, V>, // a LightHyperEdge with generic types T, U, V
     pub attachments: Vec<PathBuf> // a vector of PathBuf which is a struct that represents a path in the filesystem
 }

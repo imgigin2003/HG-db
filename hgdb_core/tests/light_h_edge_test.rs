@@ -1,6 +1,6 @@
-use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::repository::light_h_edge_repository::LightHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
+use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
 
@@ -10,11 +10,10 @@ mod tests {
     use std::error::Error;
     use std::fs::remove_dir_all;
 
-    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/light-h-edge"; // Your RocksDB path
+    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/light-h-edge";
 
     #[test]
     fn test_light_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        //delete the database folder before running the test
         if let Err(e) = remove_dir_all(DB_PATH) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 return Err(format!("Failed to remove DB directory: {:?}", e).into());
@@ -22,10 +21,20 @@ mod tests {
             eprintln!("⚠️ DB directory not found, proceeding with test");
         }
 
-        // Initialize repository
         let repository = LightHyperEdgeRepository::new(DB_PATH)?;
 
-        // Define test data
+        let nodes = vec![
+            "v1", "v2", "v3", "v4"
+        ].into_iter().map(|id| SimpleHyperEdge {
+            id: id.to_string(),
+            name: id.to_string(),
+            main_properties: vec![],
+            traversable: false,
+            directed: false,
+            head_hyper_nodes: None,
+            tail_hyper_nodes: None,
+        }).collect::<Vec<_>>();
+
         let test_key = "e1";
         let test_edge = LightHyperEdge {
             id: test_key.to_string(),
@@ -35,35 +44,31 @@ mod tests {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple
+                    p_type: PropertyType::Simple,
                 }],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Box::new(vec!["v1".to_string()]),
+                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone()])),
                 tail_hyper_nodes: None,
             },
-            structural_properties: vec![
-                StructuralProperty {
-                    address: vec!["123 Main St".to_string(), "Apt 4B".to_string()]
-                }
-            ],
+            structural_properties: vec![StructuralProperty {
+                address: vec!["123 Main St".to_string(), "Apt 4B".to_string()],
+            }],
             relationship: Relationship {
                 node_1: "v1".to_string(),
                 node_2: "v2".to_string(),
                 directed: true,
-                edge_properties: vec!["weight: 5".to_string(), "type: strong".to_string()]
+                edge_properties: vec!["weight: 5".to_string(), "type: strong".to_string()],
             },
             traverse: Traverse {
-                path: vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]
-            }
+                path: vec!["v1".to_string(), "v2".to_string(), "v3".to_string()],
+            },
         };
 
-        // Create entry
         repository.create(test_key, &test_edge)?;
         let retrieved_edge = repository.get_by_key(test_key)?;
         assert!(retrieved_edge.is_some(), "❌ Edge was not found");
 
-        // Create updated hyperedge
         let updated_edge = LightHyperEdge {
             id: test_key.to_string(),
             prime_simple_hyper_edge: SimpleHyperEdge {
@@ -72,12 +77,12 @@ mod tests {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["strongly linked".to_string()],
-                    p_type: PropertyType::Main
+                    p_type: PropertyType::Main,
                 }],
                 traversable: false,
-                directed: true, //set the directed flag to true
-                head_hyper_nodes: Box::new(vec!["v1".to_string(), "v2".to_string()]),
-                tail_hyper_nodes: Some(Box::new(vec!["v3".to_string(), "v4".to_string()])),
+                directed: true,
+                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
+                tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone(), nodes[3].clone()])),
             },
             structural_properties: vec![
                 StructuralProperty {
