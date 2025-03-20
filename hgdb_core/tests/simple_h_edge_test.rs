@@ -1,47 +1,42 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
-use serde_json::to_string_pretty;
+use hgdb_core::hyper_edge::services::simple_h_edge_service::DualHyperEdgeService;
+use hgdb_core::hyper_edge::repository::*;
 
 #[cfg(test)]
-mod tests {
+mod test {
     use super::*;
-    use std::error::Error;
-    use std::fs::{remove_dir_all, File, metadata};
-    use std::io::Write;
-    use serde_json::json;
+    use std::{error::Error, fs::remove_dir_all};
 
-    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/simple-h-edge"; // RocksDB path
-    const JSON_PATH: &str = "/users/gigin/documents/github/HG-DB/hgdb_core/hg_app/py_scripts/json-data"; // JSON data path
+    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/dual-h-edge";
 
     #[test]
-    fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        // Delete the database folder before running the test
+    fn test_dual_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
         if let Err(e) = remove_dir_all(DB_PATH) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
             }
         }
 
-        // Initialize repository
         let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
+        let service = DualHyperEdgeService::new(&repository);
 
-        // Define all nodes in a Vec
-        let nodes: Vec<SimpleHyperEdge<String, String, String>> = vec![
-            "v1", "v2", "v3", "v4", "v5", "v6", "v7"
-        ].into_iter().map(|id| SimpleHyperEdge {
+        let nodes = vec![
+            ("v1", "v1"), ("v2", "v2"), ("v3", "v3"), ("v4", "v4"),
+            ("v5", "v5"), ("v6", "v6"), ("v7", "v7"), ("v8", "v8"),
+        ].into_iter().map(|(id, name)| SimpleHyperEdge {
             id: id.to_string(),
-            name: id.to_string(),
+            name: name.to_string(),
             main_properties: vec![],
             traversable: false,
             directed: false,
             head_hyper_nodes: None,
             tail_hyper_nodes: None,
-        }).collect();
+        }).collect::<Vec<_>>();
 
-        // Define edges for three hypergraphs
-        let hypergraph_1 = vec![
-            ("e1", SimpleHyperEdge {
-                id: "e1".to_string(),
+        let edges = vec![
+            ("Prime_test_edge_1", SimpleHyperEdge {
+                id: "Prime_test_edge_1".to_string(),
                 name: "e1".to_string(),
                 main_properties: vec![Property {
                     key: "type".to_string(),
@@ -49,147 +44,123 @@ mod tests {
                     p_type: PropertyType::Simple,
                 }],
                 traversable: true,
-                directed: true, // Directed edge with head and tail
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[0].clone(), // v1
-                    nodes[1].clone(), // v2
-                    nodes[2].clone(), // v3
-                ])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])), // v3
+                directed: true,
+                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
+                tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])),
             }),
-            ("e2", SimpleHyperEdge {
-                id: "e2".to_string(),
+            ("Prime_test_edge_2", SimpleHyperEdge {
+                id: "Prime_test_edge_2".to_string(),
                 name: "e2".to_string(),
                 main_properties: vec![Property {
                     key: "type".to_string(),
-                    value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    value: vec!["not-linked".to_string()],
+                    p_type: PropertyType::Structure,
                 }],
-                traversable: true,
-                directed: false, // Undirected edge
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[0].clone(), // v1
-                    nodes[1].clone(), // v2
-                    nodes[6].clone(), // v7
-                ])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[6].clone()])), // v7
+                traversable: false,
+                directed: false,
+                head_hyper_nodes: Some(Box::new(vec![nodes[3].clone(), nodes[4].clone()])),
+                tail_hyper_nodes: None,
             }),
-        ];
-
-        let hypergraph_2 = vec![
-            ("e3", SimpleHyperEdge {
-                id: "e3".to_string(),
+            ("Prime_test_edge_3", SimpleHyperEdge {
+                id: "Prime_test_edge_3".to_string(),
                 name: "e3".to_string(),
                 main_properties: vec![Property {
                     key: "type".to_string(),
-                    value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
-                }],
-                traversable: true,
-                directed: false,
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[5].clone(), // v6
-                    nodes[6].clone(), // v7
-                ])),
-                tail_hyper_nodes: None,
-            }),
-            ("e6", SimpleHyperEdge {
-                id: "e6".to_string(),
-                name: "e6".to_string(),
-                main_properties: vec![Property {
-                    key: "type".to_string(),
-                    value: vec!["linked".to_string()],
+                    value: vec!["not-linked".to_string()],
                     p_type: PropertyType::Simple,
                 }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])), // v3
-                tail_hyper_nodes: Some(Box::new(vec![nodes[3].clone()])), // v4
-            }),
-            ("e7", SimpleHyperEdge {
-                id: "e7".to_string(),
-                name: "e7".to_string(),
-                main_properties: vec![Property {
-                    key: "type".to_string(),
-                    value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
-                }],
-                traversable: true,
-                directed: true,
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[3].clone(), // v4
-                    nodes[6].clone(), // v7
-                ])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[3].clone()])), // v4
+                head_hyper_nodes: Some(Box::new(vec![nodes[5].clone()])),
+                tail_hyper_nodes: Some(Box::new(vec![nodes[6].clone(), nodes[7].clone()])),
             }),
         ];
 
-        let hypergraph_3 = vec![
-            ("e4", SimpleHyperEdge {
-                id: "e4".to_string(),
-                name: "e4".to_string(),
-                main_properties: vec![Property {
-                    key: "type".to_string(),
-                    value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
-                }],
-                traversable: true,
-                directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[4].clone()])), // v5
-                tail_hyper_nodes: None,
-            }),
-            ("e5", SimpleHyperEdge {
-                id: "e5".to_string(),
-                name: "e5".to_string(),
-                main_properties: vec![Property {
-                    key: "type".to_string(),
-                    value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
-                }],
-                traversable: true,
-                directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[3].clone()])), // v4
-                tail_hyper_nodes: None,
-            }),
-        ];
-
-        // Combine all edges for repository operations
-        let all_edges: Vec<_> = hypergraph_1.iter().chain(hypergraph_2.iter()).chain(hypergraph_3.iter()).collect();
-
-        // Create edges
-        for (key, edge) in &all_edges {
-            match repository.create(key, edge) {
-                Ok(_) => println!("✅ Successfully created edge: {}", key),
-                Err(e) => eprintln!("❌ Failed to create edge {}: {:?}", key, e),
-            }
+        for (key, edge) in &edges {
+            repository.create(key, edge.clone())?;
         }
 
-        // Retrieve all edges and verify count
-        let stored_edges = repository.get_all()?;
-        assert_eq!(stored_edges.len(), all_edges.len(), "❌ Not all edges were stored correctly");
+        let retrieved_edge = repository.get_by_key("Prime_test_edge_1")?;
+        assert!(retrieved_edge.is_some(), "Edge 'Prime_test_edge_1' was not found in database");
+        assert_eq!(retrieved_edge.unwrap().name, "e1", "Original edge name mismatch");
 
-        // Structure the JSON with labels for each hypergraph
-        let json_structure = json!({
-            "hypergraph1": hypergraph_1.iter().map(|(_, edge)| edge).collect::<Vec<_>>(),
-            "hypergraph2": hypergraph_2.iter().map(|(_, edge)| edge).collect::<Vec<_>>(),
-            "hypergraph3": hypergraph_3.iter().map(|(_, edge)| edge).collect::<Vec<_>>()
-        });
+        let all_edges = repository.get_all()?;
+        assert_eq!(all_edges.len(), edges.len(), "❌ Not all edges were stored correctly!");
 
-        // Serialize to a pretty-printed JSON string
-        let json_data = to_string_pretty(&json_structure)?;
-        let json_path = format!("{}/test_hypergraphs.json", JSON_PATH);
-        let mut file = File::create(&json_path)?;
-        file.write_all(json_data.as_bytes())?;
-        assert!(metadata(&json_path)?.is_file(), "❌ JSON file was not created at expected path");
+        for (key, edge) in &edges {
+            let retrieved_edge = repository.get_by_key(key)?;
+            assert!(retrieved_edge.is_some(), "❌ Edge '{}' not found", edge.id);
+            assert_eq!(retrieved_edge.as_ref().unwrap().name, edge.name, "❌ Mismatch for edge '{}'", edge.id);
 
-        // Clean up: Delete all edges
-        for (key, _) in &all_edges {
+            let dual_id = format!("dual_{}", edge.id);
+            service.create_dual_h_edge(&edge.id)?;
+
+            let dual_edge = repository.get_dual_by_key(&dual_id)?;
+            assert!(dual_edge.is_some(), "❌ Dual hyperedge '{}' not found", dual_id);
+            let dual_edge = dual_edge.unwrap();
+            assert_eq!(dual_edge.name, format!("Dual of {}", edge.name), "❌ Dual edge name mismatch");
+
+            let mut test_nodes: Vec<String> = edge.head_hyper_nodes.as_ref()
+                .map_or(vec![], |nodes| nodes.iter().map(|n| n.id.clone()).collect());
+            if let Some(tail_nodes) = &edge.tail_hyper_nodes {
+                test_nodes.extend(tail_nodes.iter().map(|n| n.id.clone()));
+            }
+
+            let incidence_matrix = service.create_incidence_matrix(&test_nodes, edge);
+            let transposed_matrix = service.transpose_matrix(&incidence_matrix);
+
+            assert_eq!(dual_edge.incidence_matrix, incidence_matrix, "❌ Incidence matrix mismatch for '{}'", dual_id);
+            assert_eq!(dual_edge.transposed_matrix, transposed_matrix, "❌ Transposed matrix mismatch for '{}'", dual_id);
+
+            let expected_rows = test_nodes.len();
+            let expected_cols = 1;
+            let expected_transposed_rows = expected_cols;
+            let expected_transposed_cols = expected_rows;
+
+            assert_eq!(incidence_matrix.len(), expected_rows, "❌ Incidence matrix rows incorrect");
+            assert_eq!(incidence_matrix[0].len(), expected_cols, "❌ Incidence matrix cols incorrect");
+            assert_eq!(transposed_matrix.len(), expected_transposed_rows, "❌ Transposed matrix rows incorrect");
+            assert_eq!(transposed_matrix[0].len(), expected_transposed_cols, "❌ Transposed matrix cols incorrect");
+
+            for (i, node) in test_nodes.iter().enumerate() {
+                let is_in_head = edge.head_hyper_nodes.as_ref()
+                    .map_or(false, |nodes| nodes.iter().any(|n| n.id == *node));
+                let is_in_tail = edge.tail_hyper_nodes.as_ref()
+                    .map_or(false, |nodes| nodes.iter().any(|n| n.id == *node));
+                let expected_weight = match (is_in_head, is_in_tail) {
+                    (true, false) => 1,
+                    (false, true) => 2,
+                    (true, true) => 3,
+                    (false, false) => 0,
+                };
+                assert_eq!(
+                    incidence_matrix[i][0], expected_weight,
+                    "❌ Incorrect weight at [{}][0] for node '{}' in edge '{}'",
+                    i, node, edge.id
+                );
+            }
+
+            for row in 0..expected_transposed_rows {
+                for col in 0..expected_transposed_cols {
+                    assert_eq!(
+                        transposed_matrix[row][col], incidence_matrix[col][row],
+                        "❌ Transposed matrix value mismatch at [{}][{}] in edge '{}'",
+                        row, col, edge.id
+                    );
+                }
+            }
+
+            // Clean up dual edge
+            repository.delete(&dual_id)?;
+        }
+
+        // Clean up original edges
+        for (key, _) in &edges {
             repository.delete(key)?;
         }
 
-        // Verify database is empty
         let all_edges_after_delete = repository.get_all()?;
-        assert!(all_edges_after_delete.is_empty(), "❌ Database should be empty after deleting all edges");
+        assert!(all_edges_after_delete.is_empty(), "❌ Database should be empty after deletion");
 
         Ok(())
     }
