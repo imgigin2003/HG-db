@@ -1,77 +1,277 @@
-[
-  {
-    "id": "e1",
-    "name": "e1",
-    "main_properties": [
-      {
-        "key": "type",
-        "value": ["linked"],
-        "p_type": "Simple"
-      }
-    ],
-    "traversable": false,
-    "directed": true,
-    "head_hyper_nodes": ["v1", "v2"],
-    "tail_hyper_nodes": ["v3"]
-  },
-  {
-    "id": "e2",
-    "name": "e2",
-    "main_properties": [
-      {
-        "key": "type",
-        "value": ["not-linked"],
-        "p_type": "Simple"
-      }
-    ],
-    "traversable": false,
-    "directed": false,
-    "head_hyper_nodes": ["v3", "v4", "v5"],
-    "tail_hyper_nodes": null
-  },
-  {
-    "id": "e3",
-    "name": "e3",
-    "main_properties": [
-      {
-        "key": "type",
-        "value": ["not-linked"],
-        "p_type": "ExtraInfo"
-      }
-    ],
-    "traversable": true,
-    "directed": false,
-    "head_hyper_nodes": ["v6", "v7"],
-    "tail_hyper_nodes": null
-  },
-  {
-    "id": "e4",
-    "name": "e4",
-    "main_properties": [
-      {
-        "key": "type",
-        "value": ["linked"],
-        "p_type": "Simple"
-      }
-    ],
-    "traversable": true,
-    "directed": true,
-    "head_hyper_nodes": ["v8", "v9", "v10"],
-    "tail_hyper_nodes": ["v11"]
-  },
-  {
-    "id": "e5",
-    "name": "e5",
-    "main_properties": [
-      {
-        "key": "type",
-        "value": ["not-linked"],
-        "p_type": "Structural"
-      }
-    ],
-    "traversable": false,
-    "directed": false,
-    "head_hyper_nodes": ["v12", "v13", "v14"],
-    "tail_hyper_nodes": null
-  }
-]
+{
+  "hypergraph1": [
+    {
+      "id": "e1",
+      "name": "e1",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [
+        {
+          "id": "v1",
+          "name": "v1",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        },
+        {
+          "id": "v2",
+          "name": "v2",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        },
+        {
+          "id": "v3",
+          "name": "v3",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": [
+        {
+          "id": "v3",
+          "name": "v3",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ]
+    },
+    {
+      "id": "e2",
+      "name": "e2",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [
+        {
+          "id": "v1",
+          "name": "v1",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        },
+        {
+          "id": "v2",
+          "name": "v2",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        },
+        {
+          "id": "v7",
+          "name": "v7",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": [
+        {
+          "id": "v7",
+          "name": "v7",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ]
+    }
+  ],
+  "hypergraph2": [
+    {
+      "id": "e3",
+      "name": "e3",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [
+        {
+          "id": "v6",
+          "name": "v6",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        },
+        {
+          "id": "v7",
+          "name": "v7",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": null
+    },
+    {
+      "id": "e6",
+      "name": "e6",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [
+        {
+          "id": "v3",
+          "name": "v3",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": [
+        {
+          "id": "v4",
+          "name": "v4",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ]
+    },
+    {
+      "id": "e7",
+      "name": "e7",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [
+        {
+          "id": "v4",
+          "name": "v4",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        },
+        {
+          "id": "v7",
+          "name": "v7",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": [
+        {
+          "id": "v4",
+          "name": "v4",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ]
+    }
+  ],
+  "hypergraph3": [
+    {
+      "id": "e4",
+      "name": "e4",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [
+        {
+          "id": "v5",
+          "name": "v5",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": null
+    },
+    {
+      "id": "e5",
+      "name": "e5",
+      "main_properties": [
+        {
+          "key": "type",
+          "p_type": "Simple",
+          "value": ["linked"]
+        }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [
+        {
+          "id": "v4",
+          "name": "v4",
+          "main_properties": [],
+          "traversable": false,
+          "directed": false,
+          "head_hyper_nodes": null,
+          "tail_hyper_nodes": null
+        }
+      ],
+      "tail_hyper_nodes": null
+    }
+  ]
+}
