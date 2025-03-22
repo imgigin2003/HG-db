@@ -37,9 +37,7 @@ def main():
     with tabs[1]:
         st.write("### Layered HyperGraph Visualization")
         if st.button("Visualize Layered HyperGraph✨"):
-            # Pass only the node sets to draw_layered_hypergraph
-            simple_hyperedges = {k: v["nodes"] for k, v in st.session_state.hyperedges.items()}
-            fig = draw_layered_hypergraph(simple_hyperedges)
+            fig = draw_layered_hypergraph(st.session_state.hyperedges)  # Pass the full hyperedges dictionary
             if fig:
                 st.pyplot(fig)
 
@@ -70,36 +68,41 @@ def main():
 
         with edit_sub_tabs[0]:
             st.write("#### Add Hyperedge")
-            new_edge_id = st.text_input("Enter new edge ID (e.g., e7):", key="new_edge_id")
+            new_edge_id = st.text_input("Enter new edge ID (e.g., e8):", key="new_edge_id")
             new_nodes = st.text_input("Enter nodes for the new edge (comma-separated):", key="new_nodes")
-            is_directed = st.checkbox("Directed", value=False, key="new_directed")
+            new_layer = st.selectbox("Select layer for the new edge:", options=["Top", "Middle", "Lower"], key="new_layer")
+            is_traverse = st.checkbox("Traversable", value=False, key="traverse")
             if st.button("Add Hyperedge"):
                 if new_edge_id and new_nodes:
                     nodes_set = set(new_nodes.split(","))
                     if new_edge_id in st.session_state.hyperedges:
                         st.warning("Edge ID already exists!")
                     else:
+                        layer_map = {"Top": 0, "Middle": 1, "Lower": 2}
                         st.session_state.hyperedges[new_edge_id] = {
                             "nodes": nodes_set,
                             "head": nodes_set,
                             "tail": set(),
-                            "traversable": True,
-                            "directed": is_directed,
-                            "type": "linked"
+                            "traversable": is_traverse,
+                            "type": "linked",
+                            "layer": layer_map[new_layer]  # Add layer attribute
                         }
-                        st.success(f"Hyperedge '{new_edge_id}' added with nodes {nodes_set}!")
+                        st.success(f"Hyperedge '{new_edge_id}' added with nodes {nodes_set} in {new_layer} layer!")
 
         with edit_sub_tabs[1]:
             st.write("### Edit Hyperedge")
             edge_to_edit = st.selectbox("Select an edge to edit:", options=list(st.session_state.hyperedges.keys()))
             edited_nodes = st.text_input("Enter new nodes for the selected edge (comma-separated):", key="edit_nodes")
+            edited_layer = st.selectbox("Select new layer for the selected edge:", options=["Top", "Middle", "Lower"], key="edit_layer")
             if st.button("Edit Hyperedge"):
                 if edge_to_edit and edited_nodes:
                     new_nodes_set = set(edited_nodes.split(","))
+                    layer_map = {"Top": 0, "Middle": 1, "Lower": 2}
                     st.session_state.hyperedges[edge_to_edit]["nodes"] = new_nodes_set
                     st.session_state.hyperedges[edge_to_edit]["head"] = new_nodes_set
                     st.session_state.hyperedges[edge_to_edit]["tail"] = set()
-                    st.success(f"Hyperedge '{edge_to_edit}' updated with nodes '{new_nodes_set}'")
+                    st.session_state.hyperedges[edge_to_edit]["layer"] = layer_map[edited_layer]  # Update layer
+                    st.success(f"Hyperedge '{edge_to_edit}' updated with nodes '{new_nodes_set}' in {edited_layer} layer!")
 
         with edit_sub_tabs[2]:
             st.write("### Delete Hyperedge")
@@ -124,7 +127,7 @@ def display_table(graph, graph_type):
     if graph_type == "HyperGraph":
         edge_data = [
             {"Edge": edge, "Nodes": ", ".join(sorted(data["nodes"])), 
-             "Directed": data["directed"], "Traversable": data["traversable"]}
+            "Traversable": data["traversable"]}
             for edge, data in graph.items()
         ]
     else:  # Dual HyperGraph

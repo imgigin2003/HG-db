@@ -10,6 +10,7 @@ extern "C" {
 }
 
 pub fn main() {
+    println!("Streamlit app is running..");
     unsafe {
         // Initialize the Python interpreter
         Py_Initialize();
@@ -51,7 +52,7 @@ sys.path.insert(0, py_script_path)
         .expect("Failed to start Streamlit server");
 
         if streamlit_command.success() {
-            println!("Streamlit app is running.");
+            ()
         } else {
             eprintln!("Failed to run the Streamlit app. Check if Streamlit is installed and the path is correct.");
         }
