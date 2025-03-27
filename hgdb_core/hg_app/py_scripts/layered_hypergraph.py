@@ -47,7 +47,7 @@ def draw_layered_hypergraph(hyperedges):
                     G.add_edge(nodes[i], nodes[j])
 
         # Compute 2D positions using spring layout with adjusted parameters
-        pos_2d = nx.spring_layout(G, scale=1.5, k=0.5, iterations=50, seed=42)  # Reduced scale and k for compactness
+        pos_2d = nx.spring_layout(G, scale=1.5, k=0.5, iterations=50, seed=42)
 
         # Manually adjust positions for single-node hyperedges to avoid overlap
         edge_positions = {}  # Track the center position of each hyperedge
@@ -96,22 +96,28 @@ def draw_layered_hypergraph(hyperedges):
         node_list = list(edge_data["nodes"])
         points = np.array([node_positions[(node, layer)][:2] for node in node_list])  # 2D points (x, y)
         
-        # Modification: Adjust sizes for the bottom layer
-        size_multiplier = 3.0 if layer == 2 else 1.0  # Keep the multiplier for multi-node hyperedges
-        base_size = 0.5 if layer == 2 else 0.2  # Increase base size for single-node hyperedges in bottom layer
+        # Define size parameters
+        size_multiplier = 1.2  # Consistent multiplier across all layers
+        min_size = 1.0  # Increased minimum size to match default ellipse size
+        min_max_dist = 0.3  # Minimum max_dist to ensure reasonable ellipse size
+        base_size = 0.3  # Base size for single-node hyperedges
         
         if len(points) == 1:
-            # Single node: Draw a circle with a larger base size for the bottom layer
-            circle = Ellipse(points[0], base_size * size_multiplier, base_size * size_multiplier, zorder=z, color=layer_colors[layer], alpha=0.6)
+            # Single node: Draw a circle with a minimum size
+            width = max(base_size * size_multiplier, min_size)
+            height = width
+            circle = Ellipse(points[0], width, height, zorder=z, color=layer_colors[layer], alpha=0.6)
             ax.add_patch(circle)
             from mpl_toolkits.mplot3d import art3d
             art3d.pathpatch_2d_to_3d(circle, z=z, zdir="z")
         else:
-            # Multiple nodes: Draw an ellipse
+            # Multiple nodes: Draw an ellipse with a minimum size
             center = np.mean(points, axis=0)
             max_dist = max(np.linalg.norm(p - center) for p in points)
-            width = max_dist * 2.9 * size_multiplier
-            height = width * 1.5
+            # Apply minimum max_dist
+            max_dist = max(max_dist, min_max_dist)
+            width = max(max_dist * 2.9 * size_multiplier, min_size)
+            height = max(width * 1.5, min_size)
             angle = np.degrees(np.arctan2(points[1][1] - points[0][1], points[1][0] - points[0][0])) if len(points) >= 2 else 0
             ellipse = Ellipse(center, width, height, angle=angle, zorder=z, color=layer_colors[layer], alpha=0.7)
             ax.add_patch(ellipse)
@@ -130,7 +136,7 @@ def draw_layered_hypergraph(hyperedges):
         # Node labels without background, adjusted position
         ax.text(x, y + 0.1, z + 0.1, f"x{node}", fontsize=6, ha='center', va='bottom', zorder=1001)
 
-    # Draw inter-layer dashed lines between adjacent layers
+    # Draw inter-layer dashed lines between all layers where a node appears
     all_nodes = set()
     for edge_data in hyperedges.values():
         all_nodes.update(edge_data["nodes"])
@@ -144,15 +150,14 @@ def draw_layered_hypergraph(hyperedges):
                     node_layers.append((layer, edge))
         node_layers.sort()  # Sort by layer
 
-        # Connect the node between adjacent layers (0->1, 1->2)
+        # Connect the node between all layers where it appears
         for i in range(len(node_layers) - 1):
             layer1, edge1 = node_layers[i]
             layer2, edge2 = node_layers[i + 1]
-            if layer2 == layer1 + 1:  # Only connect adjacent layers
-                pos1 = node_positions[(node, layer1)]
-                pos2 = node_positions[(node, layer2)]
-                ax.plot([pos1[0], pos2[0]], [pos1[1], pos2[1]], [pos1[2], pos2[2]], 
-                        linestyle='--', color='black', alpha=0.7, lw=1)
+            pos1 = node_positions[(node, layer1)]
+            pos2 = node_positions[(node, layer2)]
+            ax.plot([pos1[0], pos2[0]], [pos1[1], pos2[1]], [pos1[2], pos2[2]], 
+                    linestyle='--', color='black', alpha=0.7, lw=1)
 
     # Configure axes
     ax.set_xlabel("X-axis")
