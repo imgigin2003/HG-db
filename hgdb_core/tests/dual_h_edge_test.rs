@@ -1,23 +1,27 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::services::simple_h_edge_service::DualHyperEdgeService;
+use hgdb_core::db_config::BASE_DB_PATH;
 
 #[cfg(test)]
 mod test {
     use super::*;
     use std::{error::Error, fs::remove_dir_all};
 
-    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/dual-h-edge"; // RocksDB path
+    const SUBFOLDER: &str = "dual_hyper-edge";
+    lazy_static::lazy_static! {
+        static ref DB_PATH: String = format!("{}/{}", BASE_DB_PATH, SUBFOLDER);
+    }
 
     #[test]
     fn test_dual_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        if let Err(e) = remove_dir_all(DB_PATH) {
+        if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
             }
         }
 
-        let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
+        let repository = SimpleHyperEdgeRepository::new(DB_PATH.as_str())?;
         let service = DualHyperEdgeService::new(&repository);
 
         // Define nodes as SimpleHyperEdge instances

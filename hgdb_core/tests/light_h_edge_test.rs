@@ -3,6 +3,7 @@ use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
+use hgdb_core::db_config::BASE_DB_PATH;
 
 #[cfg(test)]
 mod tests {
@@ -10,18 +11,21 @@ mod tests {
     use std::error::Error;
     use std::fs::remove_dir_all;
 
-    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/light-h-edge";
+    const SUBFOLDER: &str = "light-hyper-edge";
+    lazy_static::lazy_static! {
+        static ref DB_PATH: String = format!("{}/{}", BASE_DB_PATH, SUBFOLDER);
+    }
 
     #[test]
     fn test_light_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        if let Err(e) = remove_dir_all(DB_PATH) {
+        if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 return Err(format!("Failed to remove DB directory: {:?}", e).into());
             }
             eprintln!("⚠️ DB directory not found, proceeding with test");
         }
 
-        let repository = LightHyperEdgeRepository::new(DB_PATH)?;
+        let repository = LightHyperEdgeRepository::new(DB_PATH.as_str())?;
 
         let nodes = vec![
             "v1", "v2", "v3", "v4"

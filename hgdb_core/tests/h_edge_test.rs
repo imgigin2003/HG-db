@@ -4,25 +4,36 @@ use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
+use hgdb_core::db_config::BASE_DB_PATH;
 use std::error::Error;
-use std::fs::{self, File};
-
-const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/hyper-edge";
+use std::fs::{File, remove_dir_all};
+use std::io::Write;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::io::Read;
 
+    const SUBFOLDER: &str = "hyper-edge";
+    lazy_static::lazy_static! {
+        static ref DB_PATH: String = format!("{}/{}", BASE_DB_PATH, SUBFOLDER);
+    }
+
     #[test]
     fn test_hyper_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-        let repository = HyperEdgeRepository::new(DB_PATH)?;
+        // Clean up database directory before starting
+        if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
+            if e.kind() != std::io::ErrorKind::NotFound {
+                return Err(format!("Failed to remove DB directory '{}': {:?}", DB_PATH.as_str(), e).into());
+            }
+        }
 
-        let log_file_path = fs::read_dir(DB_PATH)?
-            .filter_map(Result::ok)
-            .map(|entry| entry.path())
-            .find(|path| path.is_file() && path.extension().map_or(false, |ext| ext == "log"))
-            .ok_or_else(|| format!("❌ No .log file found in {}", DB_PATH))?;
+        let repository = HyperEdgeRepository::new(DB_PATH.as_str())?;
+        // Create a dummy log file
+        let log_file_path = format!("{}/test.log", DB_PATH.as_str());
+        let mut file = File::create(&log_file_path)?;
+        file.write_all(b"Test log content")?;
+        let log_file_path = std::path::PathBuf::from(log_file_path);
 
         println!("Using log file: {}", log_file_path.display());
 

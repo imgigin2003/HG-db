@@ -1,3 +1,4 @@
+use hgdb_core::db_config::BASE_DB_PATH;
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use serde_json::to_string_pretty;
@@ -10,20 +11,23 @@ mod tests {
     use std::io::Write;
     use serde_json::json;
 
-    const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/simple-h-edge"; // RocksDB path
-    const JSON_PATH: &str = "/users/gigin/documents/github/HG-DB/hgdb_core/hg_app/py_scripts/json-data"; // JSON data path
+    const SUBFOLDER: &str = "simple-h-edge";
+    lazy_static::lazy_static! {
+        static ref DB_PATH: String = format!("{}/{}", BASE_DB_PATH, SUBFOLDER);
+        static ref JSON_PATH: String = format!("{}/test_hypergraphs.json", DB_PATH.as_str());
+    }
 
     #[test]
     fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
         // Delete the database folder before running the test
-        if let Err(e) = remove_dir_all(DB_PATH) {
+        if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
             }
         }
 
         // Initialize repository
-        let repository = SimpleHyperEdgeRepository::new(DB_PATH)?;
+        let repository = SimpleHyperEdgeRepository::new(DB_PATH.as_str())?;
 
         // Define all nodes in a Vec
         let nodes: Vec<SimpleHyperEdge<String, String, String>> = vec![
@@ -49,7 +53,7 @@ mod tests {
                     p_type: PropertyType::Simple,
                 }],
                 traversable: true,
-                directed: true, // Directed edge with head and tail
+                directed: true,
                 head_hyper_nodes: Some(Box::new(vec![
                     nodes[0].clone(), // v1
                     nodes[1].clone(), // v2
@@ -66,7 +70,7 @@ mod tests {
                     p_type: PropertyType::Simple,
                 }],
                 traversable: true,
-                directed: false, // Undirected edge
+                directed: false,
                 head_hyper_nodes: Some(Box::new(vec![
                     nodes[0].clone(), // v1
                     nodes[1].clone(), // v2
@@ -158,7 +162,7 @@ mod tests {
 
         // Create edges
         for (key, edge) in &all_edges {
-            match repository.create(key, edge) {
+            match repository.create(key, edge) {  // Clone edge here to avoid borrowing issues
                 Ok(_) => println!("✅ Successfully created edge: {}", key),
                 Err(e) => eprintln!("❌ Failed to create edge {}: {:?}", key, e),
             }
@@ -175,12 +179,11 @@ mod tests {
             "hypergraph3": hypergraph_3.iter().map(|(_, edge)| edge).collect::<Vec<_>>()
         });
 
-        // Serialize to a pretty-printed JSON string
+        // Serialize to a pretty-printed JSON string and write to DB_PATH
         let json_data = to_string_pretty(&json_structure)?;
-        let json_path = format!("{}/test_hypergraphs.json", JSON_PATH);
-        let mut file = File::create(&json_path)?;
+        let mut file = File::create(JSON_PATH.as_str())?;
         file.write_all(json_data.as_bytes())?;
-        assert!(metadata(&json_path)?.is_file(), "❌ JSON file was not created at expected path");
+        assert!(metadata(JSON_PATH.as_str())?.is_file(), "❌ JSON file was not created at expected path");
 
         // Clean up: Delete all edges
         for (key, _) in &all_edges {

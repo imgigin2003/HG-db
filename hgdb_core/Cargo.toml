@@ -9,3 +9,4 @@ quote = "1.0.39"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.140"
 rocksdb = { version = "0.23.0", features = ["snappy"] }
+lazy_static = "1.5.0"

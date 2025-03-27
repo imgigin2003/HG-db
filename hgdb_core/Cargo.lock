@@ -110,6 +110,7 @@ name = "hgdb_core"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "lazy_static",
  "quote",
  "rocksdb",
  "serde",
