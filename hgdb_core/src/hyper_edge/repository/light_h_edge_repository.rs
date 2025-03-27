@@ -1,7 +1,6 @@
 use rocksdb::{DB, Options}; // import the necessary modules from rocksdb
 use serde_json::{self, to_string_pretty}; // import the necessary modules from serde_json
 use crate::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge; // import the LightHyperEdge struct from the hyper_edge module
-use crate::hyper_edge::repository::*; // import the Repository trait 
 use std::error::Error; // import the Error trait from the std::error module
 
 #[allow(dead_code)]
@@ -12,9 +11,9 @@ pub struct LightHyperEdgeRepository {
 } 
 
 // It contains a database instance and a path to the database.
-impl Repository<LightHyperEdge<String, String, String>> for LightHyperEdgeRepository {
+impl LightHyperEdgeRepository {
     // It provides methods for creating, retrieving, updating, and deleting LightHyperEdge entities in the database.
-    fn new(db_path: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(db_path: &str) -> Result<Self, Box<dyn Error>> {
         // Create a new instance of LightHyperEdgeRepository with the given database path.
         let mut opts = Options::default();
         // Set the database path and options for the database.
@@ -31,9 +30,9 @@ impl Repository<LightHyperEdge<String, String, String>> for LightHyperEdgeReposi
     }
 
     // The create method takes a key and a LightHyperEdge entity as parameters and stores the entity in the database with the given key.
-    fn create(&self, key: &str, edge: LightHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+    pub fn create(&self, key: &str, edge: &LightHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         // Serialize the LightHyperEdge entity to a JSON string.
-        let serialized_edge = to_string_pretty(&edge).map_err(|e| {
+        let serialized_edge = to_string_pretty(edge).map_err(|e| {
             // If serialization fails, print an error message and return a boxed error.
             eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
             // Return a boxed error.
@@ -46,7 +45,7 @@ impl Repository<LightHyperEdge<String, String, String>> for LightHyperEdgeReposi
     }
 
     // The get_by_key method takes a key as a parameter and retrieves the LightHyperEdge entity associated with the key from the database.
-    fn get_by_key(&self, key: &str) -> Result<Option<LightHyperEdge<String, String, String>>, Box<dyn Error>> {
+    pub fn get_by_key(&self, key: &str) -> Result<Option<LightHyperEdge<String, String, String>>, Box<dyn Error>> {
         // Retrieve the serialized LightHyperEdge entity from the database with the given key.
         match self.db.get(key)? {
             // If the serialized entity is found, deserialize it to a LightHyperEdge entity.
@@ -65,7 +64,7 @@ impl Repository<LightHyperEdge<String, String, String>> for LightHyperEdgeReposi
     }
 
     // The get_all method retrieves all LightHyperEdge entities from the database and returns them as a vector.
-    fn get_all(&self) -> Result<Vec<LightHyperEdge<String, String, String>>, Box<dyn Error>> {
+    pub fn get_all(&self) -> Result<Vec<LightHyperEdge<String, String, String>>, Box<dyn Error>> {
         // Retrieve all LightHyperEdge entities from the database and return them as a vector.
         let mut edges = Vec::new();
 
@@ -97,11 +96,11 @@ impl Repository<LightHyperEdge<String, String, String>> for LightHyperEdgeReposi
     }
 
     // The update method takes a key and a LightHyperEdge entity as parameters and updates the entity in the database with the given key.
-    fn update(&self, key: &str, edge: &LightHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-        self.create(key, edge.clone())
+    pub fn update(&self, key: &str, edge: &LightHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+        self.create(key, edge)
     }
     // The delete method takes a key as a parameter and deletes the LightHyperEdge entity associated with the key from the database.
-    fn delete(&self, key: &str) -> Result<(), Box<dyn Error>> {
+    pub fn delete(&self, key: &str) -> Result<(), Box<dyn Error>> {
         self.db.delete(key)?;
         Ok(())
     }

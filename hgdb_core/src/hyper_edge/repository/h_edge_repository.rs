@@ -1,7 +1,6 @@
 use rocksdb::{DB, Options}; // Import RocksDB
 use serde_json::{self, to_string_pretty}; // Import serde_json
 use crate::hyper_edge::entity::h_edge::hyper_edge::HyperEdge; // Import HyperEdge
-use crate::hyper_edge::repository::*; // Import Repository trait
 use std::error::Error; // Import Error trait
 use std::fs::File; // Import File
 
@@ -17,9 +16,9 @@ pub struct HyperEdgeRepository {
 }
 
 // Implementation of HyperEdgeRepository
-impl Repository<HyperEdge<String, String, String>> for HyperEdgeRepository {
+impl HyperEdgeRepository {
     /// Constructore for creating a new repository
-    fn new(db_path: &str) -> Result<Self, Box<dyn Error>> { 
+    pub fn new(db_path: &str) -> Result<Self, Box<dyn Error>> { 
         // Create a new Options instance
         let mut opts = Options::default();
         // Set the option to create the database if it does not exist
@@ -35,9 +34,9 @@ impl Repository<HyperEdge<String, String, String>> for HyperEdgeRepository {
     }
 
     /// Method to create a HyperEdge
-    fn create(&self, key: &str, edge: HyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+    pub fn create(&self, key: &str, edge: &HyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         // Serialize the HyperEdge
-        let serialized_edge = to_string_pretty(&edge).map_err(|e| {
+        let serialized_edge = to_string_pretty(edge).map_err(|e| {
             // Print the error if serialization fails
             eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
             // Return the error as a Box<dyn Error>
@@ -50,32 +49,36 @@ impl Repository<HyperEdge<String, String, String>> for HyperEdgeRepository {
     }
 
     /// Method to retrieve a HyperEdge by key
-    fn get_by_key(&self, key: &str) -> Result<Option<HyperEdge<String, String, String>>, Box<dyn Error>> {
+    pub fn get_by_key(&self, key: &str) -> Result<(Option<HyperEdge<String, String, String>>, Vec<Box<File>>), Box<dyn Error>> {
         match self.db.get(key)? {
             Some(serialized_edge) => {
                 let edge: HyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge).map_err(|e| {
                     eprintln!("❌ Deserialization error for key '{}': {:?}", key, e);
                     Box::new(e) as Box<dyn Error>
                 })?;
-                Ok(Some(edge))
+                let files = edge.attachments
+                    .iter()
+                    .map(|path| File::open(path).map(Box::new))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok((Some(edge), files))
             }
-            None => Ok(None), // No edge found
+            None => Ok((None, Vec::new())), // No edge, no files
         }
     }
 
     /// Method to update an existing HyperEdge (simply calls `create`)
-    fn update(&self, key: &str, edge: &HyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+    pub fn update(&self, key: &str, edge: &HyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         // Check if the key exists
         if self.db.get(key)?.is_none() {
             // If the key does not exist, return an error
             return Err(format!("❌ Cannot update: Key '{}' not found", key).into());
         }
         // Call the `create` method to update the HyperEdge
-        self.create(key, edge.clone()) 
+        self.create(key, edge) 
     }    
 
     /// Method to delete a HyperEdge by key
-    fn delete(&self, key: &str) -> Result<(), Box<dyn Error>> {
+    pub fn delete(&self, key: &str) -> Result<(), Box<dyn Error>> {
         // Match the result of deleting the key from the database
         match self.db.delete(key) {
             Ok(_) => Ok(()),
@@ -85,7 +88,7 @@ impl Repository<HyperEdge<String, String, String>> for HyperEdgeRepository {
     }    
 
     /// Method to retrieve all HyperEdges
-    fn get_all(&self) -> Result<Vec<HyperEdge<String, String, String>>, Box<dyn Error>> {
+    pub fn get_all(&self) -> Result<Vec<HyperEdge<String, String, String>>, Box<dyn Error>> {
         // Create a new vector to store the HyperEdges
         let mut edges = Vec::new();
         // Create a new iterator for the database
@@ -106,9 +109,7 @@ impl Repository<HyperEdge<String, String, String>> for HyperEdgeRepository {
         }
         Ok(edges)
     }
-}
 
-impl HyperEdgeRepository {
     /// Method to retrieve all HyperEdges by a given source
     pub fn get_by_source(&self, source: &str) -> Result<Vec<HyperEdge<String, String, String>>, Box<dyn Error>> {
         // Create a new vector to store the HyperEdges
