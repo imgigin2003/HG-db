@@ -101,6 +101,21 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
         self.db.put(&key, serialized_dual_edge)?;
         Ok(())
     }
+
+    // method to get the dual edge by key
+    fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
+        match self.db.get(key)? {
+            Some(serialized_edge) => {
+                let edge: DualHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
+                println!("🔍 Retrieving Dual Hyperedge"); // Debug log
+                Ok(Some(edge))
+            }
+            None => {
+                println!("❌ No Dual Hyperedge found for key: {}", key); // Debug log
+                Ok(None)
+            }
+        }
+    }
 }
 
 impl SimpleHyperEdgeRepository {
@@ -161,18 +176,65 @@ impl SimpleHyperEdgeRepository {
         }
     }
 
-    // method to get the dual edge by key
-    pub fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
-        match self.db.get(key)? {
-            Some(serialized_edge) => {
-                let edge: DualHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
-                println!("🔍 Retrieving Dual Hyperedge"); // Debug log
-                Ok(Some(edge))
-            }
-            None => {
-                println!("❌ No Dual Hyperedge found for key: {}", key); // Debug log
-                Ok(None)
-            }
+    // Save method to explicitly save a SimpleHyperEdge (similar to save_dual)
+    pub fn save(&self, edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+        let key = edge.id.clone();
+        let mut edge_with_matrix = edge;
+        edge_with_matrix.incidence_matrix = self.create_incidence_matrix(&edge_with_matrix);
+        self.print_matrix(&edge_with_matrix.incidence_matrix, &format!("Incidence Matrix for {}", key));
+        
+        let serialized_edge = to_string_pretty(&edge_with_matrix).map_err(|e| {
+            eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
+            Box::new(e) as Box<dyn Error>
+        })?;
+        self.db.put(&key, serialized_edge)?;
+        Ok(())
+    }
+
+    // Helper method to create the incidence matrix
+    pub fn create_incidence_matrix(&self, edge: &SimpleHyperEdge<String, String, String>) -> Vec<Vec<i8>> {
+        let mut nodes_set: Vec<String> = Vec::new();
+        if let Some(head_nodes) = &edge.head_hyper_nodes {
+            nodes_set.extend(head_nodes.iter().map(|n| n.id.clone()));
+        }
+        if let Some(tail_nodes) = &edge.tail_hyper_nodes {
+            nodes_set.extend(tail_nodes.iter().map(|n| n.id.clone()));
+        }
+        nodes_set.sort();
+        nodes_set.dedup();
+
+        let mut matrix = vec![vec![0i8; 1]; nodes_set.len()];
+        let head_ids = edge.head_hyper_nodes.as_ref().map_or(vec![], |n| n.iter().map(|n| n.id.clone()).collect());
+        let tail_ids = edge.tail_hyper_nodes.as_ref().map_or(vec![], |n| n.iter().map(|n| n.id.clone()).collect());
+
+        for (i, node) in nodes_set.iter().enumerate() {
+            let is_in_head = head_ids.contains(node);
+            let is_in_tail = tail_ids.contains(node);
+            matrix[i][0] = match (is_in_head, is_in_tail) {
+                (true, false) => 1,
+                (false, true) => 2,
+                (true, true) => 3,
+                (false, false) => 0,
+            };
+        }
+        matrix
+    }
+
+    // Helper method to print the matrix
+    pub fn print_matrix(&self, matrix: &Vec<Vec<i8>>, label: &str) {
+        println!(
+            "🔢 {} [{}x{}]:",
+            label,
+            matrix.len(),
+            if matrix.is_empty() { 0 } else { matrix[0].len() }
+        );
+        for row in matrix {
+            let row_str: String = row
+                .iter()
+                .map(|&val| val.to_string())
+                .collect::<Vec<String>>()
+                .join(" ");
+            println!("[ {} ]", row_str);
         }
     }
 }

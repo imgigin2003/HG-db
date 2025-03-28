@@ -1,11 +1,8 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
+use hgdb_core::hyper_edge::repository::Repository;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::services::simple_h_edge_service::DualHyperEdgeService;
-<<<<<<< HEAD
 use hgdb_core::db_config::BASE_DB_PATH;
-=======
-use hgdb_core::hyper_edge::repository::*;
->>>>>>> parent of 6c9614f (Revert "Fixed methods")
 
 #[cfg(test)]
 mod test {
@@ -40,6 +37,7 @@ mod test {
             directed: false,
             head_hyper_nodes: None,
             tail_hyper_nodes: None,
+            incidence_matrix: vec![]
         }).collect::<Vec<_>>();
 
         let edges = vec![
@@ -55,6 +53,7 @@ mod test {
                 directed: true,
                 head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
                 tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])),
+                incidence_matrix: vec![]
             }),
             ("Prime_test_edge_2", SimpleHyperEdge {
                 id: "Prime_test_edge_2".to_string(),
@@ -68,6 +67,7 @@ mod test {
                 directed: false,
                 head_hyper_nodes: Some(Box::new(vec![nodes[3].clone(), nodes[4].clone()])),
                 tail_hyper_nodes: None,
+                incidence_matrix: vec![]
             }),
             ("Prime_test_edge_3", SimpleHyperEdge {
                 id: "Prime_test_edge_3".to_string(),
@@ -81,6 +81,7 @@ mod test {
                 directed: true,
                 head_hyper_nodes: Some(Box::new(vec![nodes[5].clone()])),
                 tail_hyper_nodes: Some(Box::new(vec![nodes[6].clone(), nodes[7].clone()])),
+                incidence_matrix: vec![]
             }),
         ];
 
@@ -162,7 +163,7 @@ mod test {
         println!("🔍 Listing all stored keys in RocksDB:");
         for item in repository.db.iterator(rocksdb::IteratorMode::Start) {
             match item {
-                Ok((key, _)) => println!("Stored Key: {}", String::from_utf8_lossy(&key)),
+                Ok((key, _)) => println!("Stored Key: {}", String::from_utf8_lossy(&*key)),
                 Err(e) => eprintln!("❌ Error iterating DB: {:?}", e),
             }
         }

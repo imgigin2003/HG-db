@@ -32,4 +32,7 @@ where
             Err("Saving dual edges is not supported by this repository".into())
         }
 
+        fn get_dual_by_key(&self, _key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
+            Err("Saving dual edges is not supported by this repository".into())
+        }
     }

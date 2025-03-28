@@ -28,4 +28,5 @@ pub struct SimpleHyperEdge<T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> 
     pub directed: bool, // a flag to set wheter a graph is directed or undirected
     pub head_hyper_nodes: Option<Box<Vec<SimpleHyperEdge<T, K, V>>>>, // A vector of head hypernodes (recursive structure)
     pub tail_hyper_nodes: Option<Box<Vec<SimpleHyperEdge<T, K, V>>>>, // A vector of tail hypernodes (recursive structure)
+    pub incidence_matrix: Vec<Vec<i8>> // A vector to save the matrices
 }

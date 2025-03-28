@@ -1,21 +1,14 @@
 use hgdb_core::hyper_edge::repository::h_edge_repository::HyperEdgeRepository;
+use hgdb_core::hyper_edge::repository::Repository;
 use hgdb_core::hyper_edge::entity::h_edge::hyper_edge::HyperEdge;
 use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
-<<<<<<< HEAD
 use hgdb_core::db_config::BASE_DB_PATH;
 use std::error::Error;
 use std::fs::{File, remove_dir_all};
 use std::io::Write;
-=======
-use hgdb_core::hyper_edge::repository::*;
-use std::error::Error;
-use std::fs::{self, remove_dir_all};
-
-const DB_PATH: &str = "/users/gigin/documents/mydbs/rocksdb/hyper-edge";
->>>>>>> parent of 6c9614f (Revert "Fixed methods")
 
 #[cfg(test)]
 mod tests {
@@ -29,23 +22,12 @@ mod tests {
 
     #[test]
     fn test_hyper_edge_crud_operation() -> Result<(), Box<dyn Error>> {
-<<<<<<< HEAD
         // Clean up database directory before starting
         if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
             if e.kind() != std::io::ErrorKind::NotFound {
                 return Err(format!("Failed to remove DB directory '{}': {:?}", DB_PATH.as_str(), e).into());
             }
         }
-=======
-        // Clean up database directory
-        if let Err(e) = remove_dir_all(DB_PATH) {
-            if e.kind() != std::io::ErrorKind::NotFound {
-                return Err(format!("Failed to remove DB directory: {:?}", e).into());
-            }
-        }
-
-        let repository = HyperEdgeRepository::new(DB_PATH)?;
->>>>>>> parent of 6c9614f (Revert "Fixed methods")
 
         let repository = HyperEdgeRepository::new(DB_PATH.as_str())?;
         // Create a dummy log file
@@ -66,6 +48,7 @@ mod tests {
                 directed: false,
                 head_hyper_nodes: None,
                 tail_hyper_nodes: None,
+                incidence_matrix: vec![]
             })
             .collect::<Vec<_>>();
 
@@ -85,6 +68,7 @@ mod tests {
                     directed: false,
                     head_hyper_nodes: Some(Box::new(vec![nodes[0].clone()])),
                     tail_hyper_nodes: None,
+                    incidence_matrix: vec![]
                 },
                 structural_properties: vec![StructuralProperty {
                     address: vec!["123 Main St".to_string(), "Apt 4B".to_string()],
@@ -132,6 +116,7 @@ mod tests {
                     directed: true,
                     head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
                     tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone(), nodes[3].clone()])),
+                    incidence_matrix: vec![]
                 },
                 structural_properties: vec![StructuralProperty {
                     address: vec!["789 Oak St".to_string()],

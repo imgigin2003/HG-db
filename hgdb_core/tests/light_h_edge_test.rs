@@ -1,13 +1,10 @@
 use hgdb_core::hyper_edge::repository::light_h_edge_repository::LightHyperEdgeRepository;
+use hgdb_core::hyper_edge::repository::Repository;
 use hgdb_core::hyper_edge::entity::h_edge::light_h_edge::LightHyperEdge;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::entity::structure::structure::{StructuralProperty, Traverse};
 use hgdb_core::hyper_edge::entity::relationship::relationship::Relationship;
-<<<<<<< HEAD
 use hgdb_core::db_config::BASE_DB_PATH;
-=======
-use hgdb_core::hyper_edge::repository::*;
->>>>>>> parent of 6c9614f (Revert "Fixed methods")
 
 #[cfg(test)]
 mod tests {
@@ -41,6 +38,7 @@ mod tests {
                 directed: false,
                 head_hyper_nodes: None,
                 tail_hyper_nodes: None,
+                incidence_matrix: vec![]
             })
             .collect::<Vec<_>>();
 
@@ -59,6 +57,7 @@ mod tests {
                 directed: false,
                 head_hyper_nodes: Some(Box::new(vec![nodes[0].clone()])),
                 tail_hyper_nodes: None,
+                incidence_matrix: vec![]
             },
             structural_properties: vec![StructuralProperty {
                 address: vec!["123 Main St".to_string(), "Apt 4B".to_string()],
@@ -92,6 +91,7 @@ mod tests {
                 directed: true,
                 head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
                 tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone(), nodes[3].clone()])),
+                incidence_matrix: vec![]
             },
             structural_properties: vec![
                 StructuralProperty {
