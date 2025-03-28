@@ -1,14 +1,20 @@
-use crate::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
 use crate::hyper_edge::entity::h_edge::simple_h_edge::SimpleHyperEdge;
 use crate::hyper_edge::entity::h_edge::dual_h_edge::DualHyperEdge;
+use crate::hyper_edge::repository::*; // Assuming Repository trait is defined here
 use std::error::Error;
 
-pub struct DualHyperEdgeService<'a> {
-    repository: &'a SimpleHyperEdgeRepository,
+pub struct DualHyperEdgeService<'a, R>
+where
+    R: Repository<SimpleHyperEdge<String, String, String>>,
+{
+    repository: &'a R,
 }
 
-impl<'a> DualHyperEdgeService<'a> {
-    pub fn new(repository: &'a SimpleHyperEdgeRepository) -> Self {
+impl<'a, R> DualHyperEdgeService<'a, R>
+where
+    R: Repository<SimpleHyperEdge<String, String, String>>,
+{
+    pub fn new(repository: &'a R) -> Self {
         DualHyperEdgeService { repository }
     }
 
@@ -20,7 +26,6 @@ impl<'a> DualHyperEdgeService<'a> {
             Box::<dyn Error>::from(msg)
         })?;
 
-        // Extract node IDs from head_hyper_nodes
         let head_nodes = original_edge
             .head_hyper_nodes
             .as_ref()
@@ -28,7 +33,6 @@ impl<'a> DualHyperEdgeService<'a> {
             .unwrap_or_default();
         let mut nodes_set = head_nodes.clone();
 
-        // Extend with tail_hyper_nodes if present
         if let Some(tail_nodes) = &original_edge.tail_hyper_nodes {
             nodes_set.extend(tail_nodes.iter().map(|node| node.id.clone()));
         }
@@ -69,8 +73,7 @@ impl<'a> DualHyperEdgeService<'a> {
         nodes: &[T],
         original_edge: &SimpleHyperEdge<String, String, String>,
     ) -> Vec<Vec<i8>> {
-        let mut matrix = vec![vec![0i8; 1]; nodes.len()]; // Initialize with 1 column for one edge
-
+        let mut matrix = vec![vec![0i8; 1]; nodes.len()];
         let head_node_ids: Vec<String> = original_edge
             .head_hyper_nodes
             .as_ref()
@@ -87,23 +90,18 @@ impl<'a> DualHyperEdgeService<'a> {
             let node_str = node.to_string();
             let is_in_head = head_node_ids.contains(&node_str);
             let is_in_tail = tail_node_ids.contains(&node_str);
-
-            // Assign the weight based on head and tail nodes
             matrix[i][0] = match (is_in_head, is_in_tail) {
-                (true, false) => 1,  // Head node weight
-                (false, true) => 2,  // Tail node weight
-                (true, true) => 3,   // Both head and tail node weight
-                (false, false) => 0, // No connection
+                (true, false) => 1,
+                (false, true) => 2,
+                (true, true) => 3,
+                (false, false) => 0,
             };
         }
-
         matrix
     }
 
     pub fn transpose_matrix(&self, matrix: &Vec<Vec<i8>>) -> Vec<Vec<i8>> {
         let mut transposed: Vec<Vec<i8>> = Vec::new();
-
-        // Transpose logic: Convert rows to columns and columns to rows
         for col_idx in 0..matrix[0].len() {
             let mut new_row: Vec<i8> = Vec::new();
             for row in matrix.iter() {
@@ -111,7 +109,6 @@ impl<'a> DualHyperEdgeService<'a> {
             }
             transposed.push(new_row);
         }
-
         transposed
     }
 

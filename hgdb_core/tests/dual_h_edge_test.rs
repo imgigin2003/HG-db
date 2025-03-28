@@ -1,7 +1,11 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
 use hgdb_core::hyper_edge::services::simple_h_edge_service::DualHyperEdgeService;
+<<<<<<< HEAD
 use hgdb_core::db_config::BASE_DB_PATH;
+=======
+use hgdb_core::hyper_edge::repository::*;
+>>>>>>> parent of 6c9614f (Revert "Fixed methods")
 
 #[cfg(test)]
 mod test {
@@ -81,7 +85,7 @@ mod test {
         ];
 
         for (key, edge) in &edges {
-            repository.create(key, edge)?;
+            repository.create(key, edge.clone())?;
         }
 
         let retrieved_edge = repository.get_by_key("Prime_test_edge_1")?;

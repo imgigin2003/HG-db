@@ -1,6 +1,11 @@
 use hgdb_core::hyper_edge::repository::simple_h_edge_repository::SimpleHyperEdgeRepository;
 use hgdb_core::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property, PropertyType};
+<<<<<<< HEAD
 use hgdb_core::db_config::BASE_DB_PATH;
+=======
+use hgdb_core::hyper_edge::repository::*;
+
+>>>>>>> parent of 6c9614f (Revert "Fixed methods")
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -22,17 +27,18 @@ mod tests {
 
         let repository = SimpleHyperEdgeRepository::new(DB_PATH.as_str())?;
 
-        let nodes = vec![
-            "v1", "v2", "v3"
-        ].into_iter().map(|id| SimpleHyperEdge {
-            id: id.to_string(),
-            name: id.to_string(),
-            main_properties: vec![],
-            traversable: false,
-            directed: false,
-            head_hyper_nodes: None,
-            tail_hyper_nodes: None,
-        }).collect::<Vec<_>>();
+        let nodes = vec!["v1", "v2", "v3"]
+            .into_iter()
+            .map(|id| SimpleHyperEdge {
+                id: id.to_string(),
+                name: id.to_string(),
+                main_properties: vec![],
+                traversable: false,
+                directed: false,
+                head_hyper_nodes: None,
+                tail_hyper_nodes: None,
+            })
+            .collect::<Vec<_>>();
 
         let property = Property {
             key: "type".to_string(),
@@ -50,7 +56,7 @@ mod tests {
             tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])),
         };
 
-        repository.create("test_edge_1", &edge)?;
+        repository.create("test_edge_1", edge)?;
 
         let retrieved_edge = repository.get_by_key("test_edge_1")?.unwrap();
         assert_eq!(retrieved_edge.main_properties.len(), 1, "❌ Property was not added correctly.");
