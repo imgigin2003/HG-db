@@ -25,7 +25,7 @@ def main():
         st.session_state.file_db = {}  # Key: filename, Value: file_path
 
     with st.sidebar:
-        choose = option_menu("HG-DB Project", ["Introduction", "Interactive Hypergraph", "Dual", "Files/Analysis"],
+        choose = option_menu("HG-DB Project", ["Introduction", "Interactive Hypergraph", "Dual Hypergraph", "Files/Analysis"],
                             icons=['house', 'bar-chart', 'kanban', 'cloud-upload'],
                             menu_icon="github", default_index=0,
                             styles={
@@ -73,8 +73,8 @@ def main():
                 if update_build_rs(python_lib_path, python_version):
                     st.success("""
                     build.rs updated successfully with correct paths! ✅
-                    - Python library linking (python{python_version})
-                    - Library search path (without python version suffix)
+                    - Python library linking
+                    - Library search path
                     - Rebuild trigger on Python changes
                     """)
                 else:
