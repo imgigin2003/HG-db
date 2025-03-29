@@ -65,7 +65,7 @@
     "main_properties": [
       { "key": "type", "p_type": "Simple", "value": ["linked"] }
     ],
-    "traversable": false,
+    "traversable": true,
     "directed": true,
     "head_hyper_nodes": [{ "id": "v3" }],
     "tail_hyper_nodes": [{ "id": "v4" }],
