@@ -124,17 +124,21 @@ def draw_layered_hypergraph(hyperedges):
             from mpl_toolkits.mplot3d import art3d
             art3d.pathpatch_2d_to_3d(ellipse, z=z, zdir="z")
 
-        # Label the edge near the centroid with a background
+        # Edge label with higher zorder and better positioning
         centroid_x = np.mean([node_positions[(node, layer)][0] for node in node_list])
         centroid_y = np.mean([node_positions[(node, layer)][1] for node in node_list])
-        ax.text(centroid_x, centroid_y, z + 0.4, edge_name, fontsize=10, color="black", ha="center", va="bottom",
-                bbox=dict(facecolor="white", alpha=0.8, edgecolor="none"))
+        ax.text(centroid_x, centroid_y, z + 0.5, edge_name, 
+                fontsize=12, color="black", ha="center", va="bottom",
+                bbox=dict(facecolor='none', alpha=0.7, edgecolor='none', pad=3),
+                zorder=10000)
 
-    # Draw nodes after ellipses with a higher zorder to ensure they are on top
+    # Draw nodes and labels with highest zorder
     for (node, layer), (x, y, z) in node_positions.items():
-        ax.scatter(x, y, z, color='black', s=60, zorder=1000)  # Increased zorder
-        # Node labels without background, adjusted position
-        ax.text(x, y + 0.1, z + 0.1, f"x{node}", fontsize=6, ha='center', va='bottom', zorder=1001)
+        ax.scatter(x, y, z, color='black', s=60, zorder=1000)
+        ax.text(x, y + 0.1, z + 0.15, f"x{node}", 
+                fontsize=10, ha='center', va='bottom',
+                bbox=dict(facecolor='none', alpha=0.7, edgecolor='none', pad=1),
+                zorder=10001)
 
     # Draw inter-layer dashed lines between all layers where a node appears
     all_nodes = set()
@@ -157,7 +161,7 @@ def draw_layered_hypergraph(hyperedges):
             pos1 = node_positions[(node, layer1)]
             pos2 = node_positions[(node, layer2)]
             ax.plot([pos1[0], pos2[0]], [pos1[1], pos2[1]], [pos1[2], pos2[2]], 
-                    linestyle='--', color='black', alpha=0.7, lw=1)
+                    linestyle='--', color='black', alpha=0.9, lw=1, zorder=20)
 
     # Configure axes
     ax.set_xlabel("X-axis")
@@ -167,7 +171,6 @@ def draw_layered_hypergraph(hyperedges):
     ax.set_ylim(-3, 3)
     ax.set_zlim(-0.5, 5)
     ax.view_init(elev=20, azim=60)
-    plt.title("Layers of a Hypergraph")
     plt.tight_layout()
 
     return fig
