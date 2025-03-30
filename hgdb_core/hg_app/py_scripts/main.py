@@ -10,9 +10,9 @@ import subprocess
 import os 
 from pathlib import Path
 
-# ---------------------------------------------- Basic Configuration Section ------------------------------------------------------------------
-
 def main():
+
+    # ---------------------------------------------- Basic Configuration Section ------------------------------------------------------------------
     if "hyperedges" not in st.session_state:
         H, hyperedges = create_hypergraph()
         st.session_state.hyperedges = hyperedges if hyperedges else {}
@@ -24,15 +24,17 @@ def main():
     if "file_db" not in st.session_state:
         st.session_state.file_db = {}  # Key: filename, Value: file_path
 
+# ---------------------------------------------- Sidebar Configuration Section ------------------------------------------------------------------
+
     with st.sidebar:
         choose = option_menu("HG-DB Project", ["Introduction", "Interactive Hypergraph", "Dual Hypergraph", "Files/Analysis"],
                             icons=['house', 'bar-chart', 'kanban', 'cloud-upload'],
                             menu_icon="github", default_index=0,
                             styles={
-            "container": {"padding": "5!important", "background-color": "#fafafa"},
+            "container": {"padding": "5!important"},
             "icon": {"color": "orange", "font-size": "25px"}, 
-            "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-            "nav-link-selected": {"background-color": "#7f827f"},
+            "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#A594F9"},
+            "nav-link-selected": {"background-color": "#7E60BF"},
         }
     )
 
