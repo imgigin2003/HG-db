@@ -1,6 +1,6 @@
 use rocksdb::{DB, Options}; // Import RocksDB
 use serde_json::{self, to_string_pretty}; // Import serde_json
-use crate::hyper_edge::entity::h_edge::simple_h_edge::{SimpleHyperEdge, Property}; // Import SimpleHyperEdge
+use crate::hyper_edge::entity::h_edge::simple_h_edge::{Property, PropertyType, SimpleHyperEdge}; // Import SimpleHyperEdge
 use crate::hyper_edge::repository::*; // Import Repository trait
 use std::error::Error; // Import Error trait
 
@@ -31,7 +31,19 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
     }
 
     /// Method to create (insert) a SimpleHyperEdge
-    fn create(&self, key: &str, edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+    fn create(&self, key: &str, mut edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
+
+        // Check and add default properties if missing
+        ["layer", "level", "aspect"].iter().for_each(|prop_key| {
+            if !edge.main_properties.iter().any(|p| p.key == *prop_key) {
+                edge.main_properties.push(Property {
+                    key: prop_key.to_string(),
+                    value: vec!["0".to_string()],
+                    p_type: PropertyType::Main
+                });
+            }
+        });
+
         // Serialize the SimpleHyperEdge to Vec<u8>
         let serialized_edge = to_string_pretty(&edge).map_err(|e| {
             eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
@@ -161,6 +173,66 @@ impl SimpleHyperEdgeRepository {
         Ok(())
     }
 
+    // Method to update a single layer property
+    pub fn update_single_layer_property(&self, key: &str, property_key: &str, value: String) -> Result<(), Box<dyn Error>> {
+        // Get edge by key, return error if not found
+        let mut edge = self.get_by_key(key)?.ok_or_else(|| {
+            Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Edge not found"))
+        })?;
+
+        // Try to find existing property to update
+        if let Some(prop) = edge.main_properties.iter_mut().find(|p| p.key == property_key) {
+            prop.value = vec![]; // Update existing property's value
+        } else {
+            // Property doesn't exist, create new one
+            edge.main_properties.push(Property {
+                key: property_key.to_string(),
+                value: vec![value],
+                p_type: PropertyType::Main
+            });
+        }
+
+        self.update(key, &edge)?;
+    Ok(())
+    }
+
+    // Method to get level property value
+    pub fn get_level(&self, key: &str) -> Result<Option<String>, Box<dyn Error>> {
+        // Try to get edge by key, return error if fails
+        if let Some(edge) = self.get_by_key(key)? {
+            // If edge exists, look at its main_properties
+            Ok(edge.main_properties
+                .iter()
+                .find(|p| p.key == "level")  // Find property with key "level"
+                .and_then(|p| p.value.first().cloned())) // Get first value of property if exists
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Method to update level property 
+    pub fn update_level(&self, key: &str, level: String) -> Result<(), Box<dyn Error>> {
+        self.update_single_layer_property(key, "level", level) // Delegate to general update method
+    }
+
+    // Method to get layer property value
+    pub fn get_layer(&self, key: &str) -> Result<Option<String>, Box<dyn Error>> {
+        if let Some(edge) = self.get_by_key(key)? {
+            // Same pattern as get_level
+            Ok(edge.main_properties
+            .iter()
+            .find(|p| p.key == "layer") // Look for "layer" instead 
+            .and_then(|p| p.value.first().cloned()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Method to update layer property
+    pub fn update_layer(&self, key: &str, layer: String) -> Result<(), Box<dyn Error>> {
+        self.update_single_layer_property(key, "layer", layer)
+    }
+
     // Method to Delete a property
     pub fn delete_property(&self, key: &str, property_key: &str) -> Result<(), Box<dyn Error>> {
         if let Some(mut edge) = self.get_by_key(key)? {
@@ -175,6 +247,10 @@ impl SimpleHyperEdgeRepository {
             Err(Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Edge not found")))
         }
     }
+
+  /******************************************* Save and Process matrices************************************************+/
+                        Here we are going to list all methods to save and create a matrix for simple-h-edge 
+****************************************************************************************************************************/
 
     // Save method to explicitly save a SimpleHyperEdge (similar to save_dual)
     pub fn save(&self, edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
