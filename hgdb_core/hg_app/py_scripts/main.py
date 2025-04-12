@@ -3,12 +3,10 @@ from streamlit_option_menu import option_menu
 from hypergraph import create_hypergraph, draw_hypergraph
 from layered_hypergraph import draw_layered_hypergraph
 from dual_hypergraph import create_dual_hypergraph, draw_dual_hypergraph
+from setting import load_db_path, update_build_rs, update_db_path, get_python_version, get_python_library_path, ensure_upload_dir, display_properties, display_table
 import hypernetx as hnx
 import pandas as pd
-import toml
-import subprocess
 import os 
-from pathlib import Path
 
 def main():
 
@@ -27,9 +25,9 @@ def main():
 # ---------------------------------------------- Sidebar Configuration Section ------------------------------------------------------------------
 
     with st.sidebar:
-        choose = option_menu("HG-DB Project", ["Introduction", "Interactive Hypergraph", "Dual Hypergraph", "Files/Analysis"],
-                            icons=['house', 'bar-chart', 'kanban', 'cloud-upload'],
-                            menu_icon="github", default_index=0,
+        choose = option_menu("HG-DB Project", ["Introduction", "Interactive Hypergraph","Dual Hypergraph", "Layered Hypergraph", "Files/Analysis", "Setting"],
+                            icons=['house', 'graph-up', 'kanban', 'graph-down', 'cloud-upload', 'gear'],
+                            menu_icon="bezier", default_index=0,
                             styles={
             "container": {"padding": "5!important"},
             "icon": {"color": "orange", "font-size": "25px"}, 
@@ -42,55 +40,29 @@ def main():
 
     if choose == "Introduction":
         st.title("Introduction")
-        st.write("Welcome to the HG-DB Project!📌  Configure your settings below:")
-                
-        st.header("Configuration")
-
-        # Step 1: DB Path Configuration
-        st.subheader("1. Database Path Configuration ")
-        current_db_path = load_db_path()
-        new_db_path = st.text_input(
-            "Enter new database path:",
-            value=current_db_path,
-            key="db_path_input"
-        )
-        
-        if st.button("Update DB Path 🔧"):
-            if update_db_path(new_db_path):
-                st.success("Database path updated successfully! ✅")
-            else:
-                st.error("Failed to update database path ❌")
-        
-
-        # Python Configuration Section
-        st.subheader("Python Configuration")
-        if st.button("Auto-configure Python Bindings 🔧"):
-            python_lib_path = get_python_library_path()
-            python_version = get_python_version()
-            
-            if python_lib_path and python_version:
-                st.success(f"Detected Python library path: {python_lib_path} ⚙️")
-                st.success(f"Detected Python version: {python_version} ⚙️")
-                
-                if update_build_rs(python_lib_path, python_version):
-                    st.success("""
-                    build.rs updated successfully with correct paths! ✅
-                    - Python library linking
-                    - Library search path
-                    - Rebuild trigger on Python changes
-                    """)
-                else:
-                    st.error("Failed to update build.rs ❌")
-            else:
-                st.error("Could not detect Python configuration properly ❌")
-
+        st.write("Welcome to the HG-DB Project!📌")
+        st.write("This project is designed to provide a comprehensive framework for working with hypergraphs.")
+        st.write("You can visualize, analyze, and manipulate hypergraphs using this application.")
+        st.subheader("Features:")
+        st.write("- **Interactive Hypergraph**: Visualize and analyze hypergraphs interactively.")
+        st.write("- **Dual Hypergraph**: Explore the dual representation of hypergraphs.")
+        st.write("- **Layered Hypergraph**: Visualize hypergraphs in a layered format.")
+        st.write("- **Files/Analysis**: Upload and manage files related to hypergraphs.")
+        st.subheader("Configuration:")
+        st.write("Ensure to configure the database path and Python settings correctly to avoid any issues.")
+        st.subheader("Note:")
+        st.write("This application is designed to work with Python 3.8 or higher.")
+        st.subheader("Contact:")
+        st.write("For any issues or suggestions, please contact the development team.")
 # ---------------------------------------------- Hypergraph Tab ------------------------------------------------------------------
 
     if choose == "Interactive Hypergraph":
         st.title("Interactive Hypergraph")
         tabs = st.tabs([
             "HyperGraph Visualization", 
-            "Layered HyperGraph Visualization",
+            "Graph Properties",
+            "Graph Tables",
+            "Graph Edit"
         ])
         with tabs[0]:
             st.write("### HyperGraph Visualization")
@@ -104,54 +76,18 @@ def main():
                 fig = draw_hypergraph(H, st.session_state.hyperedges, visualize_mode)
                 if fig:
                     st.pyplot(fig)
+        # ---------------------------------------------- Graph Information Tab ------------------------------------------------------------------
         with tabs[1]:
-            st.write("### Layered HyperGraph Visualization")
-            if st.button("Visualize Layered HyperGraph✨"):
-                fig = draw_layered_hypergraph(st.session_state.hyperedges)  # Pass the full hyperedges dictionary
-                if fig:
-                    st.pyplot(fig)
-
-# ---------------------------------------------- Dual Hypergraph Tab ------------------------------------------------------------------
-
-    if choose == "Dual Hypergraph":
-        st.title("Dual HyperGraph")
-        tabs = st.tabs(["Dual Hypergraph Visualization"])
-        with tabs[0]:
-            st.write("### Dual HyperGraph Visualization")
-            H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)
-            if st.button("Visualize Dual HyperGraph✨"):
-                fig = draw_dual_hypergraph(H_dual)
-                if fig:
-                    st.pyplot(fig)
-
-# ---------------------------------------------- Analistics Tab ------------------------------------------------------------------
-
-    if choose == "Files/Analysis":
-        st.title("Files/Analysis")
-        tabs = st.tabs([
-            "Graph Properties",
-            "Graph tables",
-            "Graph Edit",
-            "Upload Files",
-        ])
-
-# ---------------------------------------------- Graph Information Tab ------------------------------------------------------------------
-        with tabs[0]:
             st.write("### Graphs Properties")
             H = hnx.Hypergraph({k: v["nodes"] for k, v in st.session_state.hyperedges.items()})
             display_properties(H, "HyperGraph")
-            H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)
-            display_properties(H_dual, "Dual HyperGraph")
-
-        with tabs[1]:
-            st.write("### Graphs Tables")
-            display_table(st.session_state.hyperedges, "HyperGraph")
-            H_dual, dual_hyperedges = create_dual_hypergraph(st.session_state.hyperedges)
-            display_table(dual_hyperedges, "Dual HyperGraph")
-
-# ---------------------------------------------- Graph Edit Tab ------------------------------------------------------------------
 
         with tabs[2]:
+            st.write("### Graphs Tables")
+            display_table(st.session_state.hyperedges, "HyperGraph")
+# ---------------------------------------------- Graph Edit Tab ------------------------------------------------------------------
+
+        with tabs[3]:
             st.write("### Graph Edit")
             edit_sub_tabs = st.tabs(["Add Hyperedge", "Edit Hyperedge", "Delete Hyperedge"])
 
@@ -218,9 +154,56 @@ def main():
                         del st.session_state.hyperedges[edges_to_delete]
                         st.success(f"Hyperedge '{edges_to_delete}' deleted successfully. ✅")
 
-# ---------------------------------------------- Manage Files Tab ------------------------------------------------------------------
+# ---------------------------------------------- Dual Hypergraph Tab ------------------------------------------------------------------
 
-        with tabs[3]:
+    if choose == "Dual Hypergraph":
+        st.title("Dual HyperGraph")
+        tabs = st.tabs([
+            "Dual Hypergraph visualization",
+            "Dual Hypergraph Properties",
+            "Dual Hypergraph Table"
+        ])
+            
+        with tabs[0]:
+            st.write("### Dual HyperGraph Visualization")
+            H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)
+            if st.button("Visualize Dual HyperGraph✨"):
+                fig = draw_dual_hypergraph(H_dual)
+                if fig:
+                    st.pyplot(fig)
+        
+        with tabs[1]:
+            st.write("### Dual Hypergraph Properties")
+            H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)
+            display_properties(H_dual, "Dual HyperGraph")
+
+
+        with tabs[2]:
+            st.write("### Dual Hypergraph Table")
+            H_dual, dual_hyperedges = create_dual_hypergraph(st.session_state.hyperedges)
+            display_table(dual_hyperedges, "Dual Hypergraph")
+
+# ---------------------------------------------- Layered Hypergraph Tab ------------------------------------------------------------------
+
+    if choose == "Layered Hypergraph":
+        st.title("Layered Hypergraph")
+        tabs = st.tabs(["Layered Hypergraph Visualization"])
+        with tabs[0]:
+            st.write("### Layered HyperGraph Visualization")
+            if st.button("Visualize Layered HyperGraph✨"):
+                fig = draw_layered_hypergraph(st.session_state.hyperedges)  # Pass the full hyperedges dictionary
+                if fig:
+                    st.pyplot(fig)
+
+# ---------------------------------------------- Analistics Tab ------------------------------------------------------------------
+
+    if choose == "Files/Analysis":
+        st.title("Files/Analysis")
+        tabs = st.tabs([
+            "Upload Files",
+        ])
+
+        with tabs[0]:
             st.write("### Upload Files")
             edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
 
@@ -261,6 +244,8 @@ def main():
                                 st.success(f"File deleted from database directory! ✅")
                             except Exception as e:
                                 st.error(f"Deletion failed: {str(e)} ❌")
+                else:
+                    st.write("No files in database directory yet ☁️")
 
             with edit_sub_tabs[2]:
                 st.write("#### Files List")
@@ -281,166 +266,50 @@ def main():
                 else:
                     st.write("No files in database directory yet ☁️")
 
-# ---------------------------------------------- Functions Section ------------------------------------------------------------------
-
-def display_properties(H, graph_type):
-    st.write(f"### {graph_type} Properties")
-    nodes_list = list(H.nodes())
-    edges_list = list(H.edges())
-    st.write(f"Nodes: {nodes_list}")
-    st.write(f"Number of nodes: {len(nodes_list)}")
-    st.write(f"Edges: {edges_list}")
-    st.write(f"Number of edges: {len(edges_list)}")
-
-def display_table(graph, graph_type):
-    st.write(f"### {graph_type} Table")
-    edge_data = []
-    if graph_type == "HyperGraph":
-        edge_data = [
-            {"Edge": edge, "Nodes": ", ".join(sorted(data["nodes"])), 
-            "Traversable": data["traversable"]}
-            for edge, data in graph.items()
-        ]
-    else:  # Dual HyperGraph
-        edge_data = [
-            {"Node (Original Edge)": node, "Hyperedges (Original Nodes)": ", ".join(sorted(edges))}
-            for node, edges in graph.items()
-        ]
-    df = pd.DataFrame(edge_data)
-    st.dataframe(df)
-
-def load_db_path():
-    """Load db_path from Config.toml in hgdb_core directory."""
-    config_file = os.path.join("hgdb_core", "Config.toml")
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, "r") as f:
-                config_data = toml.load(f)
-            return config_data.get("db_path", "/Users/gigin/Documents/mydbs/rocksdb/")
-        except Exception as e:
-            st.error(f"Failed to load '{config_file}': {str(e)}. Using default path.")
-    return ""
 
 
-def get_project_root():
-    """Helper function to get the project root relative to main.py's location"""
-    return Path(__file__).parent.parent.parent # Goes up from py_scripts to hgdb_core
+    if choose == "Setting":
 
-def load_db_path():
-    """Load db_path from Config.toml with correct path"""
-    config_file = get_project_root() / "Config.toml"
-    if config_file.exists():
-        try:
-            with open(config_file, "r") as f:
-                config_data = toml.load(f)
-            return config_data.get("db_path", "/Users/gigin/Documents/mydbs/rocksdb/")
-        except Exception as e:
-            st.error(f"Failed to load '{config_file}': {str(e)}. Using default path.")
-    return ""
+        st.title("Configuration ⚙️")
+        st.write("Apply the configuration to avoid any errors!⚠️")
 
-def update_db_path(new_path):
-    """Update the db_path in Config.toml with correct path"""
-    config_file = get_project_root() / "Config.toml"
-    try:
-        with open(config_file, "r") as f:
-            config_data = toml.load(f)
-        
-        config_data["db_path"] = new_path
-        
-        with open(config_file, "w") as f:
-            toml.dump(config_data, f)
-        return True
-    except Exception as e:
-        st.error(f"Error updating Config.toml: {e}")
-        return False
-
-def get_python_version():
-    """Get Python version (e.g., '3.13') using subprocess"""
-    try:
-        result = subprocess.run(
-            ['python3', '--version'],
-            capture_output=True,
-            text=True,
-            check=True
+        # Step 1: DB Path Configuration
+        st.subheader("1. Database Path Configuration ")
+        current_db_path = load_db_path()
+        new_db_path = st.text_input(
+            "Enter new database path:",
+            value=current_db_path,
+            key="db_path_input"
         )
-        version = result.stdout.strip().split()[1]  # Gets "3.13.0" from "Python 3.13.0"
-        return '.'.join(version.split('.')[:2])  # Returns "3.13"
-    except Exception as e:
-        st.error(f"Error detecting Python version: {e}")
-        return None
-
-
-def get_python_library_path():
-    """Get the correct Python library path without appending the version"""
-    try:
-        # First try to get the lib directory path
-        result = subprocess.run(
-            ['python3', '-c', "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        lib_path = result.stdout.strip()
         
-        # Verify this is the correct path by checking for Python library files
-        if lib_path and os.path.exists(lib_path):
-            # Check for common Python library file patterns
-            lib_files = os.listdir(lib_path)
-            if any(f.startswith('libpython3') for f in lib_files):
-                return lib_path
+        if st.button("Update DB Path 🔧"):
+            if update_db_path(new_db_path):
+                st.success("Database path updated successfully! ✅")
+            else:
+                st.error("Failed to update database path ❌")
         
-        # Fallback to stdlib path if LIBDIR doesn't work
-        result = subprocess.run(
-            ['python3', '-c', "import sysconfig; print(sysconfig.get_path('stdlib'))"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        stdlib_path = result.stdout.strip()
-        if stdlib_path:
-            # Go up one level from site-packages to lib directory
-            return os.path.dirname(stdlib_path)
+
+        # Python Configuration Section
+        st.subheader("2. Python Configuration")
+        if st.button("Auto-configure Python Bindings 🔧"):
+            python_lib_path = get_python_library_path()
+            python_version = get_python_version()
             
-        return None
-    except subprocess.CalledProcessError as e:
-        st.error(f"Error detecting Python library path: {e}")
-        return None
-
-def update_build_rs(python_path, python_version):
-    """Update build.rs with correct paths without appending python version"""
-    build_rs_path = get_project_root() / "hg_app" / "build.rs"
-    
-    try:
-        with open(build_rs_path, "w") as f:
-            f.write(f"""fn main() {{
-    // Link the Python {python_version} library
-    println!("cargo:rustc-link-lib=python{python_version}");
-
-    // Specify the search path for Python libraries (without pythonX.Y suffix)
-    println!("cargo:rustc-link-search=native={python_path}");
-
-    // Ensure Rust rebuilds when Python version changes
-    println!("cargo:rerun-if-env-changed=PYTHON_SYS_EXECUTABLE");
-}}""")
-        return True
-    except Exception as e:
-        st.error(f"Error updating build.rs: {e}")
-        return False
-    
-    
-def get_upload_dir():
-    """Get the upload directory path based on configured db_path"""
-    db_path = load_db_path()
-    if not db_path:
-        return None
-    return os.path.join(db_path, "hg_uploads")
-
-def ensure_upload_dir():
-    """Ensure upload directory exists"""
-    upload_dir = get_upload_dir()
-    if upload_dir and not os.path.exists(upload_dir):
-        os.makedirs(upload_dir, exist_ok=True)
-    return upload_dir
+            if python_lib_path and python_version:
+                st.success(f"Detected Python library path: {python_lib_path} ⚙️")
+                st.success(f"Detected Python version: {python_version} ⚙️")
+                
+                if update_build_rs(python_lib_path, python_version):
+                    st.success("""
+                    build.rs updated successfully with correct paths! ✅
+                    - Python library linking
+                    - Library search path
+                    - Rebuild trigger on Python changes
+                    """)
+                else:
+                    st.error("Failed to update build.rs ❌")
+            else:
+                st.error("Could not detect Python configuration properly ❌")
 
 
 if __name__ == "__main__":
