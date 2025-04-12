@@ -75,14 +75,14 @@ def draw_dual_hypergraph(H_dual):
         points = np.array([pos[node] for node in node_set])
         if len(points) == 1:
             # Single node: Draw a circle
-            circle = Circle(points[0], 0.3, color=hyperedge_colors.get(hyperedge, "gray"), alpha=0.5)
+            circle = Circle(points[0], 0.2, color=hyperedge_colors.get(hyperedge, "gray"), alpha=0.5)
             ax.add_patch(circle)
         else:
             # Multiple nodes: Draw an ellipse encompassing all nodes
             center = np.mean(points, axis=0)
             max_dist = max(np.linalg.norm(p - center) for p in points)
-            width = max_dist * 2.5  # Scale to make the ellipse larger
-            height = width * 0.6  # Adjust height to make it more elliptical
+            width = max_dist * 2.8  # Scale to make the ellipse larger
+            height = width * 0.8  # Adjust height to make it more elliptical
             if len(points) >= 2:
                 p1, p2 = points[0], points[1]  # Use first two points to determine angle
                 angle = np.degrees(np.arctan2(p2[1] - p1[1], p2[0] - p1[0]))
@@ -91,21 +91,39 @@ def draw_dual_hypergraph(H_dual):
             ellipse = Ellipse(center, width, height, angle=angle,
                              facecolor=hyperedge_colors.get(hyperedge, "gray"), alpha=0.5, edgecolor="none")
             ax.add_patch(ellipse)
-        # Label the hyperedge near the centroid
-        centroid_x = np.mean([pos[node][0] for node in node_set])
-        centroid_y = np.mean([pos[node][1] for node in node_set])
-        ax.text(centroid_x, centroid_y - 0.2, f"x{hyperedge}", fontsize=10, color="black", ha="center")
-
     # Draw nodes (original edges)
     for node in nodes:
         x, y = pos[node]
-        ax.scatter(x, y, s=100, color="black")
+        ax.scatter(x, y, s=50, color="black")
         ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
 
     ax.set_title("DualHypergraph Visualization")
     ax.axis("off")
+    
+    # Create legend patches
+    legend_patches = []
+    for hyperedge, color in hyperedge_colors.items():
+        legend_patches.append(plt.Line2D([0], [0], 
+                                      marker='o', 
+                                      color='w', 
+                                      label=f"x{hyperedge}",
+                                      markerfacecolor=color, 
+                                      markersize=10,
+                                      alpha=0.5))
+
+    # Add legend to the plot
+    ax.legend(handles=legend_patches, 
+         title="Dual Hyperedges",
+         loc='upper right',
+         bbox_to_anchor=(1.4, 1),    
+         prop={'size': 15},           
+         title_fontsize='13',         
+         framealpha=0.7,
+         markerscale=1.8)   
+    
     plt.tight_layout()
     return fig
+
 
 # def draw_dual_hypergraph(H_dual):
 #     """Draw the dual hypergraph using HyperNetX and return the figure."""

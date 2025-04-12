@@ -113,21 +113,40 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
                     ellipse = Ellipse(center, width, height, angle=angle,
                                      facecolor=edge_colors.get(edge_name, "gray"), alpha=0.5, edgecolor="none")
                     ax.add_patch(ellipse)
-                # Label the edge near the centroid
-                centroid_x = np.mean([node_pos[n][0] for n in node_list])
-                centroid_y = np.mean([node_pos[n][1] for n in node_list])
-                ax.text(centroid_x, centroid_y - 0.2, edge_name, fontsize=10, color="black", ha="center")
+
+            # Create legend patches
+            legend_patches = []
+            for edge_name, color in edge_colors.items():
+                legend_patches.append(plt.Line2D([0], [0], 
+                                                marker='o', 
+                                                color='w', 
+                                                label=edge_name,
+                                                markerfacecolor=color, 
+                                                markersize=10,
+                                                alpha=0.5))
+
+            # Add legend to the plot
+            ax.legend(handles=legend_patches, 
+                title="Hyperedges",
+                loc='upper right',
+                bbox_to_anchor=(1.35, 1),  
+                prop={'size': 15},          
+                title_fontsize='12',         
+                framealpha=0.7,
+                markerscale=1.5) 
 
     # Draw nodes
     for node, (x, y) in node_pos.items():
         ax.scatter(x, y, s=100, color="black")
-        ax.text(x, y + 0.05, f"x{node}", fontsize=10, ha="center", va="bottom")
+        ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
 
     ax.set_title("Hypergraph")
     ax.axis("off")
+    
+                
+
     plt.tight_layout()
     return fig
-
 # -----------------------------------------------------------------------------------------------------
 # import hypernetx as hnx
 # import matplotlib.pyplot as plt

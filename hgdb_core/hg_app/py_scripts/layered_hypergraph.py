@@ -124,18 +124,10 @@ def draw_layered_hypergraph(hyperedges):
             from mpl_toolkits.mplot3d import art3d
             art3d.pathpatch_2d_to_3d(ellipse, z=z, zdir="z")
 
-        # Edge label with higher zorder and better positioning
-        centroid_x = np.mean([node_positions[(node, layer)][0] for node in node_list])
-        centroid_y = np.mean([node_positions[(node, layer)][1] for node in node_list])
-        ax.text(centroid_x, centroid_y, z + 0.5, edge_name, 
-                fontsize=12, color="black", ha="center", va="bottom",
-                bbox=dict(facecolor='none', alpha=0.7, edgecolor='none', pad=3),
-                zorder=10000)
-
     # Draw nodes and labels with highest zorder
     for (node, layer), (x, y, z) in node_positions.items():
         ax.scatter(x, y, z, color='black', s=60, zorder=1000)
-        ax.text(x, y + 0.1, z + 0.15, f"x{node}", 
+        ax.text(x, y + 0.1, z + 0.15, node, 
                 fontsize=10, ha='center', va='bottom',
                 bbox=dict(facecolor='none', alpha=0.7, edgecolor='none', pad=1),
                 zorder=10001)
@@ -161,7 +153,7 @@ def draw_layered_hypergraph(hyperedges):
             pos1 = node_positions[(node, layer1)]
             pos2 = node_positions[(node, layer2)]
             ax.plot([pos1[0], pos2[0]], [pos1[1], pos2[1]], [pos1[2], pos2[2]], 
-                    linestyle='--', color='black', alpha=0.9, lw=1, zorder=20)
+                    linestyle='--', color='black', alpha=0.9, lw=1, zorder=30)
 
     # Configure axes
     ax.set_xlabel("X-axis")
@@ -171,6 +163,28 @@ def draw_layered_hypergraph(hyperedges):
     ax.set_ylim(-3, 3)
     ax.set_zlim(-0.5, 5)
     ax.view_init(elev=20, azim=60)
-    plt.tight_layout()
+    
+    # Create legend patches (for layers)
+    layer_names = ['Top Layer', 'Middle Layer', 'Lower Layer']
+    legend_patches = []
+    for layer, color in enumerate(layer_colors):
+        legend_patches.append(plt.Line2D([0], [0], 
+                                       marker='o', 
+                                       color='w', 
+                                       label=layer_names[layer],
+                                       markerfacecolor=color, 
+                                       markersize=10))
 
+
+    # Add legend to the plot
+    ax.legend(handles=legend_patches, 
+            title="Layers",
+            loc='upper right',
+            bbox_to_anchor=(1.15, 1),   
+            prop={'size': 15},           
+            title_fontsize='14',         
+            framealpha=0.7,
+            markerscale=2.0)            
+    
+    plt.tight_layout()
     return fig
