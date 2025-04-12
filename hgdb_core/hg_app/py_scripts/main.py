@@ -199,72 +199,66 @@ def main():
 
     if choose == "Files/Analysis":
         st.title("Files/Analysis")
-        tabs = st.tabs([
-            "Upload Files",
-        ])
+        edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
 
-        with tabs[0]:
-            st.write("### Upload Files")
-            edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
+        # Ensure upload directory exists
+        upload_dir = ensure_upload_dir()
+        if not upload_dir:
+            st.error("Database path not configured! Please set DB path in Introduction tab.")
+            st.stop()
 
-            # Ensure upload directory exists
-            upload_dir = ensure_upload_dir()
-            if not upload_dir:
-                st.error("Database path not configured! Please set DB path in Introduction tab.")
-                st.stop()
+        with edit_sub_tabs[0]:
+            st.write("#### Add File")
+            uploaded_file = st.file_uploader("Choose a file to upload", type=None, key="file_uploader")
+            if st.button("Upload File"):
+                if uploaded_file:
+                    file_path = os.path.join(upload_dir, uploaded_file.name)
+                    try:
+                        with open(file_path, "wb") as f:
+                            f.write(uploaded_file.getbuffer())
+                        st.session_state.file_db[uploaded_file.name] = file_path
+                        st.success(f"File '{uploaded_file.name}' uploaded to database directory! ✅")
+                    except Exception as e:
+                        st.error(f"Upload failed: {str(e)} ❌")
 
-            with edit_sub_tabs[0]:
-                st.write("#### Add File")
-                uploaded_file = st.file_uploader("Choose a file to upload", type=None, key="file_uploader")
-                if st.button("Upload File"):
-                    if uploaded_file:
-                        file_path = os.path.join(upload_dir, uploaded_file.name)
+        with edit_sub_tabs[1]:
+            st.write("#### Delete File")
+            if st.session_state.file_db:
+                file_to_delete = st.selectbox(
+                    "Select a file to delete:",
+                    options=list(st.session_state.file_db.keys()),
+                    key="delete_file"
+                )
+                if st.button("Delete File"):
+                    if file_to_delete in st.session_state.file_db:
+                        file_path = st.session_state.file_db[file_to_delete]
                         try:
-                            with open(file_path, "wb") as f:
-                                f.write(uploaded_file.getbuffer())
-                            st.session_state.file_db[uploaded_file.name] = file_path
-                            st.success(f"File '{uploaded_file.name}' uploaded to database directory! ✅")
+                            os.remove(file_path)
+                            del st.session_state.file_db[file_to_delete]
+                            st.success(f"File deleted from database directory! ✅")
                         except Exception as e:
-                            st.error(f"Upload failed: {str(e)} ❌")
+                            st.error(f"Deletion failed: {str(e)} ❌")
+            else:
+                st.write("No files in database directory yet ☁️")
 
-            with edit_sub_tabs[1]:
-                st.write("#### Delete File")
-                if st.session_state.file_db:
-                    file_to_delete = st.selectbox(
-                        "Select a file to delete:",
-                        options=list(st.session_state.file_db.keys()),
-                        key="delete_file"
-                    )
-                    if st.button("Delete File"):
-                        if file_to_delete in st.session_state.file_db:
-                            file_path = st.session_state.file_db[file_to_delete]
-                            try:
-                                os.remove(file_path)
-                                del st.session_state.file_db[file_to_delete]
-                                st.success(f"File deleted from database directory! ✅")
-                            except Exception as e:
-                                st.error(f"Deletion failed: {str(e)} ❌")
-                else:
-                    st.write("No files in database directory yet ☁️")
-
-            with edit_sub_tabs[2]:
-                st.write("#### Files List")
-                if st.session_state.file_db:
-                    file_data = []
-                    for name, path in st.session_state.file_db.items():
-                        try:
-                            size = os.path.getsize(path)
-                            file_data.append({
-                                "File Name": name,
-                                "Path": path,
-                                "Size (bytes)": size
-                            })
-                        except:
-                            continue
-                    df = pd.DataFrame(file_data)
-                    st.dataframe(df)
-                else:
-                    st.write("No files in database directory yet ☁️")
+        with edit_sub_tabs[2]:
+            st.write("#### Files List")
+            if st.session_state.file_db:
+                file_data = []
+                for name, path in st.session_state.file_db.items():
+                    try:
+                        size = os.path.getsize(path)
+                        file_data.append({
+                            "File Name": name,
+                            "Path": path,
+                            "Size (bytes)": size
+                        })
+                    except:
+                        continue
+                df = pd.DataFrame(file_data)
+                st.dataframe(df)
+            else:
+                st.write("No files in database directory yet ☁️")
 
 
 
@@ -301,10 +295,7 @@ def main():
                 
                 if update_build_rs(python_lib_path, python_version):
                     st.success("""
-                    build.rs updated successfully with correct paths! ✅
-                    - Python library linking
-                    - Library search path
-                    - Rebuild trigger on Python changes
+                    `build.rs` updated successfully with correct paths! ✅
                     """)
                 else:
                     st.error("Failed to update build.rs ❌")
