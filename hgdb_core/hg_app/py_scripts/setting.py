@@ -13,11 +13,12 @@ def get_project_root():
 def load_db_path():
     """Load db_path from Config.toml with correct path"""
     config_file = get_project_root() / "Config.toml"
+    default_path = get_project_root() / "mydbs" / "rocksdb"
     if config_file.exists():
         try:
             with open(config_file, "r") as f:
                 config_data = toml.load(f)
-            return config_data.get("db_path", "/Users/gigin/Documents/mydbs/rocksdb/")
+            return config_data.get("db_path", default_path)
         except Exception as e:
             st.error(f"Failed to load '{config_file}': {str(e)}. Using default path.")
     return ""

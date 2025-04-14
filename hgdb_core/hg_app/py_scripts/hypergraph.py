@@ -1,13 +1,17 @@
 import hypernetx as hnx
+from pathlib import Path
 import matplotlib
 import matplotlib.pyplot as plt
 import json
 import numpy as np
 import networkx as nx
-from matplotlib.patches import PathPatch, Path, Ellipse, Circle
-from matplotlib.path import Path
+from matplotlib.patches import Ellipse, Circle
 
-JSON_FILE_PATH = "/Users/gigin/Documents/GitHub/HG-db/hgdb_core/hg_app/py_scripts/json-data/test_edge.json"
+def data_root():
+    """Helper Function to get the project root relative to main.py's location"""
+    return Path(__file__).parent
+
+JSON_FILE_PATH = data_root() / "json-data" / "test_edge.json"
 
 def load_hyperedges_from_json(json_file_path):
     with open(json_file_path, 'r') as file:
