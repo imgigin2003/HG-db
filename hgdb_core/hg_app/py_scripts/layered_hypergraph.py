@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
@@ -11,19 +12,36 @@ def draw_layered_hypergraph(hyperedges):
     fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
 
-    # Group hyperedges by layer
-    layer_groups = {0: [], 1: [], 2: []}  # Top, Middle, Lower
+    # Dynamically determine all layers present in the data
+    all_layers = set()
+    for edge_data in hyperedges.values():
+        all_layers.add(edge_data.get("layer", 0)) # Default layer set to 0 (lowest)
+
+    if not all_layers: # if no layers specified at all
+        all_layers = {0}
+
+    num_layers = len(all_layers)
+    sorted_layers = sorted(all_layers)
+
+    # Create layer groups
+    layer_groups = {layer: [] for layer in sorted_layers}
     for edge_name, edge_data in hyperedges.items():
-        layer = edge_data.get("layer", 2)  # Default to lower layer if not specified
+        layer = edge_data.get("layer", sorted_layers[-1]) # Default to last layer if not specified
+
         if layer in layer_groups:
             layer_groups[layer].append(edge_name)
 
     # Node positions: (node, layer) -> (x, y, z)
     node_positions = {}
-    layer_nodes = {0: set(), 1: set(), 2: set()}  # Nodes in each layer
+    layer_nodes = {layer: set() for layer in sorted_layers}
 
-    # Use custom colors for layers (matching the target image)
-    layer_colors = ['#90EE90', '#DDA0DD', '#ADD8E6']  # Green (top), Purple (middle), Blue (lower)
+    # Generate colors using a cyclic colormap that can handle any number of layers
+    custom_colors = ['#c49ffc', '#f294d9', '#6fc5ed', '#a5f0a8', '#fcc09f']
+    layer_colors = [custom_colors[i % len(custom_colors)] for i in range(num_layers)]
+
+    # Create layer mapping for z-position calculation
+    layer_z_mapping = {layer: (len(sorted_layers) - 1 - idx) * 2.0 
+                      for idx, layer in enumerate(sorted_layers)}
 
     # Position nodes in each layer
     for layer, edges in layer_groups.items():
@@ -73,26 +91,26 @@ def draw_layered_hypergraph(hyperedges):
                 edge_positions[edge] = edge_pos
 
         # Map 2D positions to 3D by adding the z-coordinate for the layer (reversed)
-        z = (2 - layer) * 2.0  # Layer 0 at z=4, layer 2 at z=0
+        z = layer_z_mapping[layer]
         for node in nodes_in_layer:
             x, y = pos_2d[node]
             node_positions[(node, layer)] = (x, y, z)
 
     # Draw layer planes
     for layer in range(3):
-        z = (2 - layer) * 2.0
+        z = layer_z_mapping[layer]
         vertices = [
             (-3, -3, z),
             (3, -3, z),
             (3, 3, z),
             (-3, 3, z)
         ]
-        ax.add_collection3d(Poly3DCollection([vertices], alpha=0.3, color=layer_colors[layer]))
+        ax.add_collection3d(Poly3DCollection([vertices], alpha=0.4, color=layer_colors[layer]))
 
     # Draw hyperedges as ellipses within each layer
     for edge_name, edge_data in hyperedges.items():
         layer = edge_data.get("layer", 2)
-        z = (2 - layer) * 2.0
+        z = layer_z_mapping[layer]
         node_list = list(edge_data["nodes"])
         points = np.array([node_positions[(node, layer)][:2] for node in node_list])  # 2D points (x, y)
         
@@ -106,7 +124,7 @@ def draw_layered_hypergraph(hyperedges):
             # Single node: Draw a circle with a minimum size
             width = max(base_size * size_multiplier, min_size)
             height = width
-            circle = Ellipse(points[0], width, height, zorder=z, color=layer_colors[layer], alpha=0.6)
+            circle = Ellipse(points[0], width, height, zorder=25, color=layer_colors[layer], alpha=0.7)
             ax.add_patch(circle)
             from mpl_toolkits.mplot3d import art3d
             art3d.pathpatch_2d_to_3d(circle, z=z, zdir="z")
@@ -119,14 +137,14 @@ def draw_layered_hypergraph(hyperedges):
             width = max(max_dist * 2.9 * size_multiplier, min_size)
             height = max(width * 1.5, min_size)
             angle = np.degrees(np.arctan2(points[1][1] - points[0][1], points[1][0] - points[0][0])) if len(points) >= 2 else 0
-            ellipse = Ellipse(center, width, height, angle=angle, zorder=z, color=layer_colors[layer], alpha=0.7)
+            ellipse = Ellipse(center, width, height, angle=angle, zorder=25, color=layer_colors[layer], alpha=0.7)
             ax.add_patch(ellipse)
             from mpl_toolkits.mplot3d import art3d
             art3d.pathpatch_2d_to_3d(ellipse, z=z, zdir="z")
 
     # Draw nodes and labels with highest zorder
     for (node, layer), (x, y, z) in node_positions.items():
-        ax.scatter(x, y, z, color='black', s=60, zorder=1000)
+        ax.scatter(x, y, z, color='black', s=60, zorder=10001)
         ax.text(x, y + 0.1, z + 0.15, node, 
                 fontsize=10, ha='center', va='bottom',
                 bbox=dict(facecolor='none', alpha=0.7, edgecolor='none', pad=1),
