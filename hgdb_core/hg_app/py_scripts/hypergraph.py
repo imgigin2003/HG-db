@@ -78,11 +78,13 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
     # Use NetworkX spring_layout with adjusted parameters to spread nodes
     pos = nx.spring_layout(G, scale=2.0, k=0.5, iterations=50, seed=42)  # Added seed for consistent layout
     node_pos = {node: coord for node, coord in pos.items() if node in H.nodes}
-    
-    # Generate colors dynamically using a continuous colormap
-    num_edges = len(hyperedges)
-    colormap = matplotlib.colormaps.get_cmap('rainbow')  # Use 'rainbow' for a continuous range of colors
-    edge_colors = {edge_name: colormap(i / num_edges) for i, edge_name in enumerate(hyperedges.keys())}
+
+    # Generate colors using a cyclic colormap that can handle any number of layers
+    custom_colors = ['#c49ffc', '#f294d9', '#6fc5ed', '#a5f0a8', '#fcc09f']
+    edge_colors = {
+        edge_name: custom_colors[i % len(custom_colors)]
+        for i, edge_name in enumerate(hyperedges.keys())
+    }
 
     # Draw hyperedges as colored regions (always ellipses or circles)
     for edge_name, edge_data in hyperedges.items():
@@ -99,7 +101,7 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
                 points = np.array([node_pos[n] for n in node_list])
                 if len(points) == 1:
                     # Single node: Draw a circle
-                    circle = Circle(points[0], 0.3, color=edge_colors.get(edge_name, "gray"), alpha=0.5)
+                    circle = Circle(points[0], 0.3, color=edge_colors.get(edge_name, "gray"), alpha=0.6)
                     ax.add_patch(circle)
                 else:
                     # Multiple nodes: Draw an ellipse encompassing all nodes
@@ -115,7 +117,7 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
                     else:
                         angle = 0
                     ellipse = Ellipse(center, width, height, angle=angle,
-                                     facecolor=edge_colors.get(edge_name, "gray"), alpha=0.5, edgecolor="none")
+                                     facecolor=edge_colors.get(edge_name, "gray"), alpha=0.6, edgecolor="none")
                     ax.add_patch(ellipse)
 
             # Create legend patches

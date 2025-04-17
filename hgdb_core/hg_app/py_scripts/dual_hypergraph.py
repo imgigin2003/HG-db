@@ -58,11 +58,13 @@ def draw_dual_hypergraph(H_dual):
     # Use NetworkX spring_layout with parameters matching the Hypergraph
     pos = nx.spring_layout(G, scale=2.0, k=0.5, iterations=50, seed=42)
 
-    # Generate colors dynamically using a continuous colormap (matching Hypergraph)
-    num_hyperedges = len(hyperedges)
-    import matplotlib
-    colormap = matplotlib.colormaps.get_cmap('rainbow')  # Use 'rainbow' for a continuous range of colors
-    hyperedge_colors = {hyperedge: colormap(i / num_hyperedges) for i, hyperedge in enumerate(hyperedges.keys())}
+    # Use your custom pastel colors
+    custom_colors = ['#c49ffc', '#f294d9', '#6fc5ed', '#a5f0a8', '#fcc09f']
+    # Assign colors to dual hyperedges (original nodes)
+    hyperedge_colors = {
+        hyperedge: custom_colors[i % len(custom_colors)]
+        for i, hyperedge in enumerate(H_dual.edges)
+    }
 
     # Draw hyperedges as colored ellipses (representing original nodes)
     from matplotlib.patches import Circle, Ellipse
@@ -75,7 +77,7 @@ def draw_dual_hypergraph(H_dual):
         points = np.array([pos[node] for node in node_set])
         if len(points) == 1:
             # Single node: Draw a circle
-            circle = Circle(points[0], 0.2, color=hyperedge_colors.get(hyperedge, "gray"), alpha=0.5)
+            circle = Circle(points[0], 0.2, color=hyperedge_colors.get(hyperedge, "gray"), alpha=0.7)
             ax.add_patch(circle)
         else:
             # Multiple nodes: Draw an ellipse encompassing all nodes
@@ -89,7 +91,7 @@ def draw_dual_hypergraph(H_dual):
             else:
                 angle = 0
             ellipse = Ellipse(center, width, height, angle=angle,
-                             facecolor=hyperedge_colors.get(hyperedge, "gray"), alpha=0.5, edgecolor="none")
+                             facecolor=hyperedge_colors.get(hyperedge, "gray"), alpha=0.6, edgecolor="none")
             ax.add_patch(ellipse)
     # Draw nodes (original edges)
     for node in nodes:
