@@ -4,7 +4,8 @@ import subprocess
 import streamlit as st
 from pathlib import Path
 import pandas as pd
-
+import json
+from collections import Counter
 
 def get_project_root():
     """Helper function to get the project root relative to main.py's location"""
@@ -152,3 +153,145 @@ def display_table(graph, graph_type):
         ]
     df = pd.DataFrame(edge_data)
     st.dataframe(df)
+
+def load_atoms_data():
+    FILE_PATH = get_project_root() / "resources" / "Atoms.json"
+    try:
+        with open(FILE_PATH, "r") as f:
+            atoms_data = json.load(f)
+        
+        hyperedges = {}
+        for atom in atoms_data:
+            symbol = atom['properties'][0]['symbol']
+            hyperedges[symbol] = {  # Using symbol as both key and node
+                "nodes": {symbol},
+                "layer": int(atom['properties'][0].get('layer', 0)),
+                "traversable": False,  # Atoms are non-traversable
+                "directed": False,
+                "head": {symbol},
+                "tail": set(),
+                "type": "atom"
+            }
+        return hyperedges
+    except Exception as e:
+        st.error(f"Error loading Atoms data: {e}")
+        return None
+    
+def parse_formula(formula):
+    # Parse molecular formula (e.g., 'C6H12O6' -> {'C': 6, 'H': 12, 'O': 6})
+    elements = {}
+    current_element = ''
+    current_count = ''
+    for char in formula:
+        if char.isupper():
+            if current_element:
+                count = int(current_count) if current_count else 1
+                elements[current_element] = elements.get(current_element, 0) + count
+            current_element = char
+            current_count = ''
+        elif char.islower():
+            current_element += char
+        elif char.isdigit():
+            current_count += char
+    if current_element:
+        count = int(current_count) if current_count else 1
+        elements[current_element] = elements.get(current_element, 0) + count
+    return elements
+
+def load_mols_data():
+    FILE_PATH = get_project_root() / "resources" / "Mols.json"
+    try:
+        with open(FILE_PATH, "r") as f:
+            molecules = json.load(f)
+        
+        hyperedges = {}
+        for mol in molecules:
+            formula = mol['properties'][0]['molecular_formula']
+            atoms = parse_formula(formula)
+            nodes = set(atoms.keys())  # Use individual elements as nodes
+            # Assign layer based on roles
+            # In load_mols_data
+            layer = int(mol['properties'][0].get('layer', 0))  # Use layer from JSON, default to 0
+            hyperedges[mol['id']] = {
+                "nodes": nodes,
+                "layer": layer,
+                "traversable": mol['traversable'].lower() == "true",
+                "directed": mol['directed'].lower() == "true",
+                "head": nodes,  # All atoms as head nodes
+                "tail": set(),
+                "type": "molecule"
+            }
+        return hyperedges
+    except Exception as e:
+        st.error(f"Error loading Molecules data: {e}")
+        return None
+
+def display_atom_properties():
+    try:
+        FILE_PATH = get_project_root() / "resources" / "Atoms.json"
+        with open(FILE_PATH, "r") as f:
+            atoms = json.load(f)
+        
+        properties = []
+        for atom in atoms:
+            props = atom['properties'][0]
+            properties.append({
+                'Name': atom['name'],
+                'Symbol': props['symbol'],
+                'Atomic Number': props['atomic_number'],
+                'Weight': props['atomic_weight'],
+                'Electron Config': props['electron_configuration'],
+                'Layer': props.get('layer', 0)
+            })
+        
+        df = pd.DataFrame(properties)
+        st.dataframe(df)
+        
+        # Additional metrics display
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Atoms", len(df))
+        with col2:
+            st.metric("Average Weight", f"{df['Weight'].mean():.2f}")
+        with col3:
+            st.metric("Unique Layers", df['Layer'].nunique())
+            
+    except Exception as e:
+        st.error(f"Error loading atom properties: {str(e)}")
+
+def display_molecule_properties():
+    """Display molecule properties from JSON file"""
+    FILE_PATH = get_project_root() / "resources" / "Mols.json"
+    try:
+        with open(FILE_PATH, "r") as f:
+            molecules_data = json.load(f)
+        
+        # Prepare properties data
+        properties = []
+        for mol in molecules_data:
+            props = mol['properties'][0]
+            properties.append({
+                'Name': mol['name'],
+                'Formula': props['molecular_formula'],
+                'Weight': props['molecular_weight'],
+                'IUPAC Name': props['iupac_name'],
+                'Roles': ', '.join(props['roles']),
+                'Layer': props.get('layer', 0)
+            })
+        
+        # Display dataframe
+        df = pd.DataFrame(properties)
+        st.dataframe(df)
+
+        # Display metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Molecules", len(properties))
+        with col2:
+            avg_weight = sum(float(mol['properties'][0]['molecular_weight']) for mol in molecules_data)/len(molecules_data)
+            st.metric("Avg Weight", f"{avg_weight:.2f}")
+        with col3:
+            st.metric("Layers Used", len({mol['properties'][0].get('layer', 0) for mol in molecules_data}))
+        
+    except Exception as e:
+        st.error(f"Error loading molecule properties: {str(e)}")
