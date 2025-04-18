@@ -75,12 +75,12 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
         for node in hyperedges[edge_name]["nodes"]:
             G.add_edge(node, edge_name)
     
-    # Use NetworkX spring_layout with adjusted parameters to spread nodes
-    pos = nx.spring_layout(G, scale=2.0, k=0.5, iterations=50, seed=42)  # Added seed for consistent layout
+    # Use NetworkX kamada_kawai_layout with adjusted parameters to spread nodes
+    pos = nx.kamada_kawai_layout(G, scale=2.0) 
     node_pos = {node: coord for node, coord in pos.items() if node in H.nodes}
 
     # Generate colors using a cyclic colormap that can handle any number of layers
-    custom_colors = ['#c49ffc', '#f294d9', '#6fc5ed', '#a5f0a8', '#fcc09f']
+    custom_colors = ['#a5f0a8','#c49ffc', '#f294d9', '#fcc09f', '#6fc5ed']
     edge_colors = {
         edge_name: custom_colors[i % len(custom_colors)]
         for i, edge_name in enumerate(hyperedges.keys())
@@ -99,6 +99,7 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
             if node_list and all(n in node_pos for n in node_list):
                 # Calculate points for the blob
                 points = np.array([node_pos[n] for n in node_list])
+                print(f"Drawing {edge_name} with nodes {node_list} at points {points}")
                 if len(points) == 1:
                     # Single node: Draw a circle
                     circle = Circle(points[0], 0.3, color=edge_colors.get(edge_name, "gray"), alpha=0.6)
@@ -106,6 +107,8 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges"):
                 else:
                     # Multiple nodes: Draw an ellipse encompassing all nodes
                     center = np.mean(points, axis=0)
+                    if edge_name == 'C27H46O':
+                        center = center + np.array([0.1, 0.1])  # Small offset
                     # Calculate the width and height of the ellipse
                     max_dist = max(np.linalg.norm(p - center) for p in points)
                     width = max_dist * 2.5  # Scale to make the ellipse larger

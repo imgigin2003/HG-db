@@ -56,7 +56,7 @@ def draw_dual_hypergraph(H_dual):
                 G.add_edge(node_list[i], node_list[j])
 
     # Use NetworkX spring_layout with parameters matching the Hypergraph
-    pos = nx.spring_layout(G, scale=2.0, k=0.5, iterations=50, seed=42)
+    pos = nx.kamada_kawai_layout(G, scale=2.0)
 
     # Use your custom pastel colors
     custom_colors = ['#c49ffc', '#f294d9', '#6fc5ed', '#a5f0a8', '#fcc09f']
@@ -108,7 +108,7 @@ def draw_dual_hypergraph(H_dual):
         legend_patches.append(plt.Line2D([0], [0], 
                                       marker='o', 
                                       color='w', 
-                                      label=f"x{hyperedge}",
+                                      label=hyperedge,
                                       markerfacecolor=color, 
                                       markersize=10,
                                       alpha=0.5))
