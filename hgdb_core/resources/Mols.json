@@ -1,0 +1,80 @@
+[
+  {
+    "id": "C6H12O6",
+    "name": "Glucose",
+    "properties": [
+      {
+        "type": "molecule",
+        "level": "1",
+        "layer": "2",
+        "aspect": "",
+        "molecular_formula": "C6H12O6",
+        "molecular_weight": 180.16,
+        "iupac_name": "D-Glucose",
+        "roles": ["Energy source", "Metabolic intermediate"]
+      }
+    ],
+    "head_hyper_nodes": ["H"],
+    "tail_hyper_nodes": ["C1"],
+    "traversable": "True",
+    "directed": "True",
+    "Relationship": {
+      "name": "CovalentBond",
+      "properties": [],
+      "rel_type": [],
+      "n_net": "null"
+    }
+  },
+  {
+    "id": "C10H16N5O13P3",
+    "name": "Adenosine Triphosphate (ATP)",
+    "properties": [
+      {
+        "type": "molecule",
+        "level": "1",
+        "layer": "0",
+        "aspect": "",
+        "molecular_formula": "C10H16N5O13P3",
+        "molecular_weight": 507.18,
+        "iupac_name": "Adenosine 5'-triphosphate",
+        "roles": ["Energy transfer", "Cellular metabolism"]
+      }
+    ],
+    "head_hyper_nodes": ["H"],
+    "tail_hyper_nodes": ["C1"],
+    "traversable": "True",
+    "directed": "False",
+    "Relationship": {
+      "name": "CovalentBond",
+      "properties": [],
+      "rel_type": [],
+      "n_net": "null"
+    }
+  },
+  {
+    "id": "C27H46O",
+    "name": "Cholesterol",
+    "properties": [
+      {
+        "type": "molecule",
+        "level": "1",
+        "layer": "1",
+        "aspect": "",
+        "molecular_formula": "C27H46O",
+        "molecular_weight": 386.65,
+        "iupac_name": "(3β)-cholest-5-en-3-ol",
+        "roles": ["Membrane structure", "Precursor to hormones"]
+      }
+    ],
+    "head_hyper_nodes": ["H"],
+    "tail_hyper_nodes": ["C1"],
+    "traversable": "True",
+    "directed": "False",
+    "Relationship": {
+      "name": "CovalentBond",
+      "properties": [],
+      "rel_type": [],
+      "n_net": "null"
+    }
+  }
+]

@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Hydrogen",
+    "properties": [
+      {
+        "type": "atom",
+        "level": "0",
+        "layer": "2",
+        "aspect": "",
+        "atomic_number": 1,
+        "symbol": "H",
+        "atomic_weight": 1.008,
+        "electron_configuration": "1s1"
+      }
+    ],
+    "traversable": "False",
+    "directed": "False"
+  },
+  {
+    "name": "Helium",
+    "properties": [
+      {
+        "type": "atom",
+        "level": "0",
+        "layer": "1",
+        "aspect": "",
+        "atomic_number": 2,
+        "symbol": "He",
+        "atomic_weight": 4.0026,
+        "electron_configuration": "1s2"
+      }
+    ],
+    "traversable": "False",
+    "directed": "False"
+  },
+  {
+    "name": "Lithium",
+    "properties": [
+      {
+        "type": "atom",
+        "level": "0",
+        "layer": "0",
+        "aspect": "",
+        "atomic_number": 3,
+        "symbol": "Li",
+        "atomic_weight": 6.94,
+        "electron_configuration": "[He] 2s1"
+      }
+    ],
+    "traversable": "False",
+    "directed": "False"
+  }
+]
