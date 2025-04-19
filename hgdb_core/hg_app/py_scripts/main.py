@@ -40,9 +40,9 @@ def main():
         if st.session_state.active_menu == "main":
             selected = option_menu("HG-DB Project", 
                                 ["Introduction", "Interactive Hypergraph", "Dual Hypergraph", 
-                                "Layered Hypergraph", "Files/Analysis", "Setting", "DB-Config"],
+                                "Layered Hypergraph", "Files/Analysis", "Setting"],
                                 icons=['house', 'graph-up', 'kanban', 'graph-down', 
-                                    'cloud-upload', 'gear', 'database-check'],
+                                    'cloud-upload', 'gear'],
                                 menu_icon="bezier",
                                 default_index=0,
                                 styles={
@@ -293,50 +293,51 @@ def main():
 
         if selected == "Setting":
 
-            st.title("Configuration ⚙️")
-            st.write("Apply the configuration to avoid any errors!⚠️")
+            tabs = st.tabs(["Setting", "DB-Config Properties"])
 
-            # Step 1: DB Path Configuration
-            st.subheader("1. Database Path Configuration ")
-            current_db_path = load_db_path()
-            new_db_path = st.text_input(
-                "Enter new database path:",
-                value=current_db_path,
-                key="db_path_input"
-            )
-            
-            if st.button("Update DB Path 🔧"):
-                if update_db_path(new_db_path):
-                    st.success("Database path updated successfully! ✅")
-                else:
-                    st.error("Failed to update database path ❌")
-            
+            with tabs[0]: 
+                st.title("Configuration")
+                st.write("Apply the configuration to avoid any errors!⚠️")
 
-            # Python Configuration Section
-            st.subheader("2. Python Configuration")
-            if st.button("Auto-configure Python Bindings 🔧"):
-                python_lib_path = get_python_library_path()
-                python_version = get_python_version()
+                # Step 1: DB Path Configuration
+                st.subheader("1. Database Path Configuration ")
+                current_db_path = load_db_path()
+                new_db_path = st.text_input(
+                    "Enter new database path:",
+                    value=current_db_path,
+                    key="db_path_input"
+                )
                 
-                if python_lib_path and python_version:
-                    st.success(f"Detected Python library path: {python_lib_path} ⚙️")
-                    st.success(f"Detected Python version: {python_version} ⚙️")
-                    
-                    if update_build_rs(python_lib_path, python_version):
-                        st.success("""
-                        `build.rs` updated successfully with correct paths! ✅
-                        """)
+                if st.button("Update DB Path 🔧"):
+                    if update_db_path(new_db_path):
+                        st.success("Database path updated successfully! ✅")
                     else:
-                        st.error("Failed to update build.rs ❌")
-                else:
-                    st.error("Could not detect Python configuration properly ❌")
+                        st.error("Failed to update database path ❌")
+                
 
-# ---------------------------------------------- DB-Config Tab ------------------------------------------------------------------
+                # Python Configuration Section
+                st.subheader("2. Python Configuration")
+                if st.button("Auto-configure Python Bindings 🔧"):
+                    python_lib_path = get_python_library_path()
+                    python_version = get_python_version()
+                    
+                    if python_lib_path and python_version:
+                        st.success(f"Detected Python library path: {python_lib_path} ⚙️")
+                        st.success(f"Detected Python version: {python_version} ⚙️")
+                        
+                        if update_build_rs(python_lib_path, python_version):
+                            st.success("""
+                            `build.rs` updated successfully with correct paths! ✅
+                            """)
+                        else:
+                            st.error("Failed to update build.rs ❌")
+                    else:
+                        st.error("Could not detect Python configuration properly ❌")
 
-        if selected == "DB-Config":
-            st.title("DB-Config")
-            st.write("### Database Properties")
-            display_db_config_propeties()
+            with tabs[1]:
+                st.title("DB-Config")
+                st.write("### Database Properties")
+                display_db_config_propeties()
 
 # ----------------------------------------------  Bio menu ------------------------------------------------------------------
 
