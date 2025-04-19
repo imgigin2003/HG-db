@@ -8,7 +8,7 @@ def draw_layered_hypergraph(hyperedges):
     if not hyperedges:
         return None
 
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(16, 12))
     ax = fig.add_subplot(111, projection='3d')
 
     # Dynamically determine all layers present in the data
@@ -186,16 +186,18 @@ def draw_layered_hypergraph(hyperedges):
     ax.set_zlim(-0.5, 5)
     ax.view_init(elev=20, azim=60)
     
-    # Create legend patches (for layers)
-    layer_names = ['Top Layer', 'Middle Layer', 'Lower Layer']
+    # Create legend patches - works for any number of layers
+    layer_names = [f'Layer {i+1}' for i in range(num_layers)]
     legend_patches = []
-    for layer, color in enumerate(layer_colors):
-        legend_patches.append(plt.Line2D([0], [0], 
-                                       marker='o', 
-                                       color='w', 
-                                       label=layer_names[layer],
-                                       markerfacecolor=color, 
-                                       markersize=10))
+    for layer_idx in range(num_layers):
+        legend_patches.append(plt.Line2D(
+            [0], [0],
+            marker='o',
+            color='w',
+            label=layer_names[layer_idx],
+            markerfacecolor=layer_colors[layer_idx % len(layer_colors)],  # Cycle through colors
+            markersize=10
+        ))
 
 
     # Add legend to the plot
