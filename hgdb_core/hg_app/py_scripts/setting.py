@@ -295,3 +295,27 @@ def display_molecule_properties():
         
     except Exception as e:
         st.error(f"Error loading molecule properties: {str(e)}")
+
+def display_db_config_propeties():
+    """Display DB-Config Properties from JSON file"""
+    FILE_PATH = get_project_root() / "resources" / "db-config.json"
+    
+    try:
+        with open(FILE_PATH, "r") as f:
+            db_data = json.load(f)
+
+        # Column Families table
+        properties = []
+        for data in db_data["ColumnFamilies"]:
+            properties.append({
+                "Name": data["name"],
+                "Type": data["properties"]["type"],
+                "Rows": data["properties"]["numer_of_rows"],
+                "Config": data["properties"]["config"] if data["properties"]["config"] != "None" else "Default"
+            })
+        # Display dataframe
+        df = pd.DataFrame(properties)
+        st.dataframe(df)
+
+    except Exception as e:
+        st.error(f"Error loading DB-Config properties: {str(e)}")

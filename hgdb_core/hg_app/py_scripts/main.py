@@ -3,7 +3,7 @@ from streamlit_option_menu import option_menu
 from hypergraph import create_hypergraph, draw_hypergraph
 from layered_hypergraph import draw_layered_hypergraph
 from dual_hypergraph import create_dual_hypergraph, draw_dual_hypergraph
-from setting import load_db_path, update_build_rs, update_db_path, get_python_version, get_python_library_path, ensure_upload_dir, display_properties, display_table, load_atoms_data, display_atom_properties, load_mols_data, display_molecule_properties
+from setting import load_db_path, update_build_rs, update_db_path, get_python_version, get_python_library_path, ensure_upload_dir, display_properties, display_table, load_atoms_data, display_atom_properties, load_mols_data, display_molecule_properties, display_db_config_propeties
 import hypernetx as hnx
 import pandas as pd
 import os 
@@ -40,9 +40,9 @@ def main():
         if st.session_state.active_menu == "main":
             selected = option_menu("HG-DB Project", 
                                 ["Introduction", "Interactive Hypergraph", "Dual Hypergraph", 
-                                "Layered Hypergraph", "Files/Analysis", "Setting"],
+                                "Layered Hypergraph", "Files/Analysis", "Setting", "DB-Config"],
                                 icons=['house', 'graph-up', 'kanban', 'graph-down', 
-                                    'cloud-upload', 'gear'],
+                                    'cloud-upload', 'gear', 'database-check'],
                                 menu_icon="bezier",
                                 default_index=0,
                                 styles={
@@ -331,11 +331,23 @@ def main():
                 else:
                     st.error("Could not detect Python configuration properly ❌")
 
+# ---------------------------------------------- DB-Config Tab ------------------------------------------------------------------
+
+        if selected == "DB-Config":
+            st.title("DB-Config")
+            st.write("### Database Properties")
+            display_db_config_propeties()
+
+# ----------------------------------------------  Bio menu ------------------------------------------------------------------
+
+
     if st.session_state.active_menu == "bio":
         if selected == "Atoms":
             st.title("Atoms")
             tabs = st.tabs(["Atoms Visualization", "Atoms Layered Visualization", "Atoms Properties", "Atoms Edit"])
             
+# ---------------------------------------------- Atom tab ------------------------------------------------------------------
+
             with tabs[0]:
                 st.write("### Atoms Visualization")
                 if st.button("Visualize Atoms ✨"):
@@ -364,7 +376,9 @@ def main():
             st.title("Molecules")
             tabs = st.tabs(["Molecules Visualization", "Molecules Layered Visualization", "Molecules Properties", "Molecules Edit"])
 
-            # In your molecules visualization tab:
+# ---------------------------------------------- Molecules Tab ------------------------------------------------------------------
+
+
             with tabs[0]:  # Basic Visualization
                 st.write("### Molecules Visualization")
                 if st.button("Visualize Molecules ✨"):
