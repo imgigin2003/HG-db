@@ -49,5 +49,39 @@
     ],
     "traversable": "False",
     "directed": "False"
+  },
+  {
+    "name": "Beryllium",
+    "properties": [
+      {
+        "type": "atom",
+        "level": "0",
+        "layer": "0",
+        "aspect": "",
+        "atomic_number": 4,
+        "symbol": "Be",
+        "atomic_weight": 9.0122,
+        "electron_configuration": "[He] 2s2"
+      }
+    ],
+    "traversable": "False",
+    "directed": "False"
+  },
+  {
+    "name": "Boron",
+    "properties": [
+      {
+        "type": "atom",
+        "level": "0",
+        "layer": "0",
+        "aspect": "",
+        "atomic_number": 5,
+        "symbol": "B",
+        "atomic_weight": 10.81,
+        "electron_configuration": "[He] 2s2 2p1"
+      }
+    ],
+    "traversable": "False",
+    "directed": "False"
   }
 ]

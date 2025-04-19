@@ -76,5 +76,31 @@
       "rel_type": [],
       "n_net": "null"
     }
+  },
+  {
+    "id": "C5H5N5O",
+    "name": "Caffeine",
+    "properties": [
+      {
+        "type": "molecule",
+        "level": "1",
+        "layer": "3",
+        "aspect": "",
+        "molecular_formula": "C8H10N4O2",
+        "molecular_weight": 194.19,
+        "iupac_name": "1,3,7-trimethylxanthine",
+        "roles": ["Stimulant", "Cognitive enhancer"]
+      }
+    ],
+    "head_hyper_nodes": ["H"],
+    "tail_hyper_nodes": ["C1"],
+    "traversable": "True",
+    "directed": "False",
+    "Relationship": {
+      "name": "CovalentBond",
+      "properties": [],
+      "rel_type": [],
+      "n_net": "null"
+    }
   }
 ]

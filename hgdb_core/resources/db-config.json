@@ -1,0 +1,30 @@
+{
+    "Number od Column Families": "3",
+    "names": ["default", "atom", "mol"],
+    "ColumnFamilies":[
+        {
+            "name": "default",
+            "properties": {
+                "type": "Simple Column Family",
+                "numer_of_rows": "3",
+                "config": "None"
+            }
+        },
+        {
+            "name": "atom",
+            "properties": {
+                "type": "Simple Column Family",
+                "numer_of_rows": "6",
+                "config": "None"
+            }
+        },
+        {
+            "name": "mol",
+            "properties": {
+                "type": "Simple Column Family",
+                "numer_of_rows": "3",
+                "config": "None"
+            }
+        }
+    ]
+}
