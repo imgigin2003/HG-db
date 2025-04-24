@@ -229,29 +229,36 @@ def main():
             st.title("Files/Analysis")
             edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
 
-            # Ensure upload directory exists
-            upload_dir = ensure_upload_dir()
-            if not upload_dir:
-                st.error("Database path not configured! Please set DB path in Introduction tab.")
+            # Get upload directory from session state
+            upload_dir = st.session_state.get('upload_dir', 'uploads')
+            
+            # Ensure directory exists
+            try:
+                os.makedirs(upload_dir, exist_ok=True)
+            except Exception as e:
+                st.error(f"Cannot access upload directory: {str(e)}")
                 st.stop()
 
             with edit_sub_tabs[0]:
                 st.write("#### Add File")
-                uploaded_file = st.file_uploader("main_selected a file to upload", type=None, key="file_uploader")
+                uploaded_file = st.file_uploader("Select a file to upload", type=None, key="file_uploader")
                 if st.button("Upload File"):
                     if uploaded_file:
                         file_path = os.path.join(upload_dir, uploaded_file.name)
                         try:
                             with open(file_path, "wb") as f:
                                 f.write(uploaded_file.getbuffer())
+                            # Update file_db in session state
+                            if 'file_db' not in st.session_state:
+                                st.session_state.file_db = {}
                             st.session_state.file_db[uploaded_file.name] = file_path
-                            st.success(f"File '{uploaded_file.name}' uploaded to database directory! ✅")
+                            st.success(f"File '{uploaded_file.name}' uploaded to {upload_dir} directory! ✅")
                         except Exception as e:
                             st.error(f"Upload failed: {str(e)} ❌")
 
             with edit_sub_tabs[1]:
                 st.write("#### Delete File")
-                if st.session_state.file_db:
+                if 'file_db' in st.session_state and st.session_state.file_db:
                     file_to_delete = st.selectbox(
                         "Select a file to delete:",
                         options=list(st.session_state.file_db.keys()),
@@ -263,15 +270,15 @@ def main():
                             try:
                                 os.remove(file_path)
                                 del st.session_state.file_db[file_to_delete]
-                                st.success(f"File deleted from database directory! ✅")
+                                st.success(f"File deleted from {upload_dir} directory! ✅")
                             except Exception as e:
                                 st.error(f"Deletion failed: {str(e)} ❌")
                 else:
-                    st.write("No files in database directory yet ☁️")
+                    st.write("No files in upload directory yet ☁️")
 
             with edit_sub_tabs[2]:
                 st.write("#### Files List")
-                if st.session_state.file_db:
+                if 'file_db' in st.session_state and st.session_state.file_db:
                     file_data = []
                     for name, path in st.session_state.file_db.items():
                         try:
@@ -279,28 +286,32 @@ def main():
                             file_data.append({
                                 "File Name": name,
                                 "Path": path,
-                                "Size (bytes)": size
+                                "Size (bytes)": size,
+                                "Upload Directory": upload_dir
                             })
                         except:
                             continue
                     df = pd.DataFrame(file_data)
                     st.dataframe(df)
                 else:
-                    st.write("No files in database directory yet ☁️")
+                    st.write("No files in upload directory yet ☁️")
 
     # ---------------------------------------------- Settings Tab ------------------------------------------------------------------
 
 
         if selected == "Setting":
-
-            tabs = st.tabs(["Setting", "DB-Config Properties"])
+            tabs = st.tabs(["Configuration", "DB-Config Properties", "Upload Settings"])
 
             with tabs[0]: 
                 st.title("Configuration")
                 st.write("Apply the configuration to avoid any errors!⚠️")
 
-                # Step 1: DB Path Configuration
-                st.subheader("1. Database Path Configuration ")
+                # Initialize session state variables if they don't exist
+                if 'upload_dir' not in st.session_state:
+                    st.session_state.upload_dir = "uploads"  # Default upload directory
+
+                # DB Path Configuration
+                st.subheader("1. Database Path Configuration")
                 current_db_path = load_db_path()
                 new_db_path = st.text_input(
                     "Enter new database path:",
@@ -313,9 +324,8 @@ def main():
                         st.success("Database path updated successfully! ✅")
                     else:
                         st.error("Failed to update database path ❌")
-                
 
-                # Python Configuration Section
+                # Python Configuration
                 st.subheader("2. Python Configuration")
                 if st.button("Auto-configure Python Bindings 🔧"):
                     python_lib_path = get_python_library_path()
@@ -326,17 +336,31 @@ def main():
                         st.success(f"Detected Python version: {python_version} ⚙️")
                         
                         if update_build_rs(python_lib_path, python_version):
-                            st.success("""
-                            `build.rs` updated successfully with correct paths! ✅
-                            """)
+                            st.success("`build.rs` updated successfully with correct paths! ✅")
                         else:
                             st.error("Failed to update build.rs ❌")
                     else:
                         st.error("Could not detect Python configuration properly ❌")
 
+                # Upload Directory Configuration
+                st.subheader("3. Upload Directory Configuration")
+                new_upload_dir = st.text_input(
+                    "Enter new upload directory path:",
+                    value=st.session_state.upload_dir,
+                    key="upload_dir_input"
+                )
+                
+                if st.button("Update Upload Directory 🔧"):
+                    try:
+                        os.makedirs(new_upload_dir, exist_ok=True)
+                        st.session_state.upload_dir = new_upload_dir
+                        st.session_state.file_db = {}  # Clear file cache
+                        st.success("Upload directory updated successfully! ✅")
+                    except Exception as e:
+                        st.error(f"Failed to update upload directory: {str(e)} ❌")
+
             with tabs[1]:
                 st.title("DB-Config")
-                st.write("### Database Properties")
                 display_db_config_propeties()
 
 # ----------------------------------------------  Bio menu ------------------------------------------------------------------
