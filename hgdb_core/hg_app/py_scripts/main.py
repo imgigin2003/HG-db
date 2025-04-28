@@ -3,7 +3,7 @@ from streamlit_option_menu import option_menu
 from hypergraph import create_hypergraph, draw_hypergraph
 from layered_hypergraph import draw_layered_hypergraph
 from dual_hypergraph import create_dual_hypergraph, draw_dual_hypergraph
-from setting import load_db_path, update_build_rs, update_db_path, get_python_version, get_python_library_path, ensure_upload_dir, display_properties, display_table, load_atoms_data, display_atom_properties, load_mols_data, display_molecule_properties, display_db_config_propeties
+from setting import load_db_path, update_build_rs, update_db_path, get_python_version, get_python_library_path, ensure_upload_dir, display_properties, display_table, load_atoms_data, display_atom_properties, load_mols_data, display_molecule_properties, display_db_config_propeties, load_genes_data, display_genes_properties
 import hypernetx as hnx
 import pandas as pd
 import os 
@@ -53,8 +53,8 @@ def main():
                                 })
         else:
             selected = option_menu("Bio", 
-                                ["Atoms", "Molecules"],
-                                icons=['capsule', 'virus'],
+                                ["Atoms", "Molecules", "Genes"],
+                                icons=['capsule', 'virus', 'gender-ambiguous'],
                                 menu_icon="file-medical",
                                 default_index=0,
                                 styles={
@@ -437,6 +437,44 @@ def main():
             with tabs[2]:
                 st.write("### Molecule Properties")
                 display_molecule_properties()
+
+        
+        if selected == "Genes":
+            st.title("Genes")
+            tabs = st.tabs(["Genes Visualization", "Genes Layered Visualization", "Genes Properties", "Genes Edit"])
+
+            with tabs[0]:
+                st.write("### Genes Visualization")
+                if st.button("Visualize Genes ✨"):
+                    data = load_genes_data()
+                    if data:
+                        H = hnx.Hypergraph({k: v["nodes"] for k, v in data.items()})
+                        fig = draw_hypergraph(H, data, "edges")
+                        st.pyplot(fig)
+            
+            with tabs[1]:
+                st.write("### Genes Layered Visualization")
+                
+                if st.button("Visualize Layered Genes ✨"):
+                    data = load_genes_data()
+                    if data:
+                        # Assign layers based on chromosome location
+                        for gene_name, gene_data in data.items():
+                            # Extract chromosome number (first part before 'q' or 'p')
+                            chrom = gene_data["properties"]["chromosome_location"]
+                            chrom_num = ''.join(filter(str.isdigit, chrom.split('q')[0].split('p')[0]))
+                            layer = int(chrom_num) % 3 if chrom_num else 0
+                            gene_data["layer"] = layer
+                        
+                        fig = draw_layered_hypergraph(data)
+                        if fig:
+                            st.pyplot(fig)
+                st.write("###### Genes are grouped by chromosome number")
+
+            with tabs[2]:
+                st.write("### Genes Properties")
+                display_genes_properties()
+
 
 if __name__ == "__main__":
     main()

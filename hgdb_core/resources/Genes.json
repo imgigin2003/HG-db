@@ -1,0 +1,136 @@
+{
+  "type_name": "Gene",
+  "cf_name": "Gene",
+  "Genes":[
+    {
+      "name": "TP53",
+      "properties": {
+        "chromosome_location": "17p13.1",
+        "encoded_protein": "p53",
+        "function": "Tumor suppression",
+        "biological_processes": [
+          "Cell cycle regulation",
+          "DNA repair",
+          "Apoptosis"
+        ]
+      }
+    },
+    {
+      "name": "BRCA1",
+      "properties": {
+        "chromosome_location": "17q21.31",
+        "encoded_protein": "Breast cancer type 1 susceptibility protein",
+        "function": "DNA repair",
+        "biological_processes": [
+          "Homologous recombination",
+          "Genomic stability",
+          "Tumor suppression"
+        ]
+      }
+    },
+    {
+      "name": "CFTR",
+      "properties": {
+        "chromosome_location": "7q31.2",
+        "encoded_protein": "Cystic fibrosis transmembrane conductance regulator",
+        "function": "Chloride ion transport",
+        "biological_processes": [
+          "Ion transport",
+          "Fluid regulation",
+          "Mucus production"
+        ]
+      }
+    },
+    {
+      "name": "APOE",
+      "properties": {
+        "chromosome_location": "19q13.32",
+        "encoded_protein": "Apolipoprotein E",
+        "function": "Lipid metabolism",
+        "biological_processes": [
+          "Cholesterol transport",
+          "Lipid binding",
+          "Alzheimer’s disease risk"
+        ]
+      }
+    },
+    {
+      "name": "HTT",
+      "properties": {
+        "chromosome_location": "4p16.3",
+        "encoded_protein": "Huntingtin",
+        "function": "Neuronal function",
+        "biological_processes": [
+          "Brain development",
+          "Axonal transport",
+          "Huntington’s disease"
+        ]
+      }
+    },
+    {
+      "name": "HBB",
+      "properties": {
+        "chromosome_location": "11p15.4",
+        "encoded_protein": "Hemoglobin subunit beta",
+        "function": "Oxygen transport",
+        "biological_processes": [
+          "Oxygen binding",
+          "Carbon dioxide transport",
+          "Sickle cell disease"
+        ]
+      }
+    },
+    {
+      "name": "INS",
+      "properties": {
+        "chromosome_location": "11p15.5",
+        "encoded_protein": "Insulin",
+        "function": "Glucose metabolism",
+        "biological_processes": [
+          "Blood glucose regulation",
+          "Metabolic control",
+          "Diabetes"
+        ]
+      }
+    },
+    {
+      "name": "EGFR",
+      "properties": {
+        "chromosome_location": "7p11.2",
+        "encoded_protein": "Epidermal growth factor receptor",
+        "function": "Cell growth and differentiation",
+        "biological_processes": [
+          "Signal transduction",
+          "Cell proliferation",
+          "Cancer development"
+        ]
+      }
+    },
+    {
+      "name": "MYH7",
+      "properties": {
+        "chromosome_location": "14q12",
+        "encoded_protein": "Myosin-7",
+        "function": "Muscle contraction",
+        "biological_processes": [
+          "Cardiac muscle contraction",
+          "Skeletal muscle contraction",
+          "Cardiomyopathy"
+        ]
+      }
+    },
+    {
+      "name": "F5",
+      "properties": {
+        "chromosome_location": "1q24.2",
+        "encoded_protein": "Coagulation factor V",
+        "function": "Blood coagulation",
+        "biological_processes": [
+          "Hemostasis",
+          "Blood clotting",
+          "Thrombophilia"
+        ]
+      }
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import subprocess
 import streamlit as st
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import json
 from collections import Counter
 
@@ -319,3 +320,68 @@ def display_db_config_propeties():
 
     except Exception as e:
         st.error(f"Error loading DB-Config properties: {str(e)}")
+
+def load_genes_data():
+    """Load genes data from JSON file and format for hypergraph visualization"""
+    FILE_PATH = get_project_root() / "resources" / "Genes.json"
+    try:
+        with open(FILE_PATH, "r") as f:
+            genes_data = json.load(f)
+        
+        hyperedges = {}
+        for gene in genes_data["Genes"]:
+            gene_name = gene["name"]
+            hyperedges[gene_name] = {
+                "nodes": {gene_name},
+                "layer": 0,  # Default layer
+                "traversable": True,
+                "directed": False,
+                "head": {gene_name},
+                "tail": set(),
+                "type": "gene",
+                "properties": gene["properties"]  # Store all properties
+            }
+        return hyperedges
+    except Exception as e:
+        st.error(f"Error loading Genes data: {e}")
+        return None
+    
+def display_genes_properties():
+    """Display gene properties from JSON file"""
+    FILE_PATH = get_project_root() / "resources" / "Genes.json"
+    try:
+        with open(FILE_PATH, "r") as f:
+            genes_data = json.load(f)
+        
+        # Prepare properties data
+        properties = []
+        for gene in genes_data["Genes"]:
+            props = gene["properties"]
+            properties.append({
+                'Gene Name': gene["name"],
+                'Chromosome': props["chromosome_location"],
+                'Protein': props["encoded_protein"],
+                'Function': props["function"],
+                'Biological Processes': ', '.join(props["biological_processes"])
+            })
+        
+        # Display dataframe 
+        df = pd.DataFrame(properties)
+        st.dataframe(df)  
+        
+        # Display metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Genes", len(genes_data["Genes"]))
+        with col2:
+            unique_chromosomes = len(set(g["properties"]["chromosome_location"] for g in genes_data["Genes"]))
+            st.metric("Unique Chromosomes", unique_chromosomes)
+        with col3:
+            # Fixed the average calculation
+            process_counts = [len(g["properties"]["biological_processes"]) for g in genes_data["Genes"]]
+            avg_processes = sum(process_counts) / len(process_counts) if process_counts else 0
+            st.metric("Avg Processes", f"{avg_processes:.1f}")
+            
+    except Exception as e:
+        st.error(f"Error loading gene properties: {str(e)}")
+        
