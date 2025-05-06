@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import json
 from collections import Counter
+import hypernetx as hnx
 
 def get_project_root():
     """Helper function to get the project root relative to main.py's location"""
@@ -55,7 +56,6 @@ def get_python_version():
     except Exception as e:
         st.error(f"Error detecting Python version: {e}")
         return None
-
 
 def get_python_library_path():
     """Get the correct Python library path without appending the version"""
@@ -114,13 +114,12 @@ def update_build_rs(python_path, python_version):
         st.error(f"Error updating build.rs: {e}")
         return False
     
-    
 def get_upload_dir():
     """Get the upload directory path based on configured db_path"""
     db_path = load_db_path()
     if not db_path:
         return None
-    return os.path.join(db_path, "hg_uploads")
+    return os.path.join(db_path, "hg_Uploads")
 
 def ensure_upload_dir():
     """Ensure upload directory exists"""
@@ -141,10 +140,10 @@ def display_properties(H, graph_type):
 def display_table(graph, graph_type):
     st.write(f"### {graph_type} Table")
     edge_data = []
-    if graph_type == "HyperGraph":
+    if graph_type == "Hypergraph":
         edge_data = [
             {"Edge": edge, "Nodes": ", ".join(sorted(data["nodes"])), 
-            "Traversable": data["traversable"]}
+             "Traversable": data["traversable"]}
             for edge, data in graph.items()
         ]
     else:  # Dual HyperGraph
@@ -199,6 +198,20 @@ def parse_formula(formula):
         elements[current_element] = elements.get(current_element, 0) + count
     return elements
 
+@st.cache_data
+def load_paths_data():
+    FILE_PATH = get_project_root() / "resources" / "paths.json"
+    try:
+        with open(FILE_PATH, "r") as f:
+            paths_data = json.load(f)
+        return paths_data.get("Hyperpaths", [])
+    except FileNotFoundError:
+        st.error(f"paths.json not found at {FILE_PATH}")
+        return []
+    except Exception as e:
+        st.error(f"Error loading paths data: {str(e)}")
+        return []
+
 def load_mols_data():
     FILE_PATH = get_project_root() / "resources" / "Mols.json"
     try:
@@ -210,8 +223,6 @@ def load_mols_data():
             formula = mol['properties'][0]['molecular_formula']
             atoms = parse_formula(formula)
             nodes = set(atoms.keys())  # Use individual elements as nodes
-            # Assign layer based on roles
-            # In load_mols_data
             layer = int(mol['properties'][0].get('layer', 0))  # Use layer from JSON, default to 0
             hyperedges[mol['id']] = {
                 "nodes": nodes,
@@ -226,100 +237,6 @@ def load_mols_data():
     except Exception as e:
         st.error(f"Error loading Molecules data: {e}")
         return None
-
-def display_atom_properties():
-    try:
-        FILE_PATH = get_project_root() / "resources" / "Atoms.json"
-        with open(FILE_PATH, "r") as f:
-            atoms = json.load(f)
-        
-        properties = []
-        for atom in atoms:
-            props = atom['properties'][0]
-            properties.append({
-                'Name': atom['name'],
-                'Symbol': props['symbol'],
-                'Atomic Number': props['atomic_number'],
-                'Weight': props['atomic_weight'],
-                'Electron Config': props['electron_configuration'],
-                'Layer': props.get('layer', 0)
-            })
-        
-        df = pd.DataFrame(properties)
-        st.dataframe(df)
-        
-        # Additional metrics display
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Atoms", len(df))
-        with col2:
-            st.metric("Average Weight", f"{df['Weight'].mean():.2f}")
-        with col3:
-            st.metric("Unique Layers", df['Layer'].nunique())
-            
-    except Exception as e:
-        st.error(f"Error loading atom properties: {str(e)}")
-
-def display_molecule_properties():
-    """Display molecule properties from JSON file"""
-    FILE_PATH = get_project_root() / "resources" / "Mols.json"
-    try:
-        with open(FILE_PATH, "r") as f:
-            molecules_data = json.load(f)
-        
-        # Prepare properties data
-        properties = []
-        for mol in molecules_data:
-            props = mol['properties'][0]
-            properties.append({
-                'Name': mol['name'],
-                'Formula': props['molecular_formula'],
-                'Weight': props['molecular_weight'],
-                'IUPAC Name': props['iupac_name'],
-                'Roles': ', '.join(props['roles']),
-                'Layer': props.get('layer', 0)
-            })
-        
-        # Display dataframe
-        df = pd.DataFrame(properties)
-        st.dataframe(df)
-
-        # Display metrics
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Molecules", len(properties))
-        with col2:
-            avg_weight = sum(float(mol['properties'][0]['molecular_weight']) for mol in molecules_data)/len(molecules_data)
-            st.metric("Avg Weight", f"{avg_weight:.2f}")
-        with col3:
-            st.metric("Layers Used", len({mol['properties'][0].get('layer', 0) for mol in molecules_data}))
-        
-    except Exception as e:
-        st.error(f"Error loading molecule properties: {str(e)}")
-
-def display_db_config_propeties():
-    """Display DB-Config Properties from JSON file"""
-    FILE_PATH = get_project_root() / "resources" / "db-config.json"
-    
-    try:
-        with open(FILE_PATH, "r") as f:
-            db_data = json.load(f)
-
-        # Column Families table
-        properties = []
-        for data in db_data["ColumnFamilies"]:
-            properties.append({
-                "Name": data["name"],
-                "Type": data["properties"]["type"],
-                "Rows": data["properties"]["numer_of_rows"],
-                "Config": data["properties"]["config"] if data["properties"]["config"] != "None" else "Default"
-            })
-        # Display dataframe
-        df = pd.DataFrame(properties)
-        st.dataframe(df)
-
-    except Exception as e:
-        st.error(f"Error loading DB-Config properties: {str(e)}")
 
 def load_genes_data():
     """Load genes data from JSON file and format for hypergraph visualization"""
@@ -345,43 +262,135 @@ def load_genes_data():
     except Exception as e:
         st.error(f"Error loading Genes data: {e}")
         return None
+
+def display_data_properties(data, data_type):
+    """Display properties for atoms, molecules, genes, hypergraphs, or dual hypergraphs"""
+    st.write(f"### {data_type} Properties")
     
-def display_genes_properties():
-    """Display gene properties from JSON file"""
-    FILE_PATH = get_project_root() / "resources" / "Genes.json"
+    try:
+        if data_type in ["Hypergraph", "Dual Hypergraph"]:
+            # Handle hypergraph and dual hypergraph (expects hypernetx.Hypergraph object)
+            if isinstance(data, hnx.Hypergraph):
+                nodes_list = list(data.nodes())
+                edges_list = list(data.edges())
+                st.write(f"Nodes: {nodes_list}")
+                st.write(f"Number of nodes: {len(nodes_list)}")
+                st.write(f"Edges: {edges_list}")
+                st.write(f"Number of edges: {len(edges_list)}")
+            else:
+                st.error(f"Invalid {data_type} data: Expected hypernetx.Hypergraph object")
+                return
+
+        else:
+            # Handle atoms, molecules, genes
+            FILE_PATHS = {
+                "Atoms": get_project_root() / "resources" / "Atoms.json",
+                "Molecules": get_project_root() / "resources" / "Mols.json",
+                "Genes": get_project_root() / "resources" / "Genes.json"
+            }
+            
+            if data_type not in FILE_PATHS:
+                st.error(f"Unsupported data type: {data_type}")
+                return
+
+            with open(FILE_PATHS[data_type], "r") as f:
+                json_data = json.load(f)
+                if data_type == "Genes":
+                    json_data = json_data["Genes"]  # Genes data is nested under "Genes" key
+
+            properties = []
+            if data_type == "Atoms":
+                for atom in json_data:
+                    props = atom['properties'][0]
+                    properties.append({
+                        'Name': atom['name'],
+                        'Symbol': props['symbol'],
+                        'Atomic Number': props['atomic_number'],
+                        'Weight': props['atomic_weight'],
+                        'Electron Config': props['electron_configuration'],
+                        'Layer': props.get('layer', 0)
+                    })
+                df = pd.DataFrame(properties)
+                st.dataframe(df)
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Atoms", len(df))
+                with col2:
+                    st.metric("Average Weight", f"{df['Weight'].mean():.2f}")
+                with col3:
+                    st.metric("Unique Layers", df['Layer'].nunique())
+
+            elif data_type == "Molecules":
+                for mol in json_data:
+                    props = mol['properties'][0]
+                    properties.append({
+                        'Name': mol['name'],
+                        'Formula': props['molecular_formula'],
+                        'Weight': props['molecular_weight'],
+                        'IUPAC Name': props['iupac_name'],
+                        'Roles': ', '.join(props['roles']),
+                        'Layer': props.get('layer', 0)
+                    })
+                df = pd.DataFrame(properties)
+                st.dataframe(df)
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Molecules", len(properties))
+                with col2:
+                    avg_weight = sum(float(mol['properties'][0]['molecular_weight']) for mol in json_data) / len(json_data)
+                    st.metric("Avg Weight", f"{avg_weight:.2f}")
+                with col3:
+                    st.metric("Layers Used", len({mol['properties'][0].get('layer', 0) for mol in json_data}))
+
+            elif data_type == "Genes":
+                for gene in json_data:
+                    props = gene["properties"]
+                    properties.append({
+                        'Gene Name': gene["name"],
+                        'Chromosome': props["chromosome_location"],
+                        'Protein': props["encoded_protein"],
+                        'Function': props["function"],
+                        'Biological Processes': ', '.join(props["biological_processes"])
+                    })
+                df = pd.DataFrame(properties)
+                st.dataframe(df)
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Genes", len(json_data))
+                with col2:
+                    unique_chromosomes = len(set(g["properties"]["chromosome_location"] for g in json_data))
+                    st.metric("Unique Chromosomes", unique_chromosomes)
+                with col3:
+                    process_counts = [len(g["properties"]["biological_processes"]) for g in json_data]
+                    avg_processes = sum(process_counts) / len(process_counts) if process_counts else 0
+                    st.metric("Avg Processes", f"{avg_processes:.1f}")
+
+    except Exception as e:
+        st.error(f"Error loading {data_type.lower()} properties: {str(e)}")
+
+def display_db_config_properties():
+    """Display DB-Config Properties from JSON file"""
+    FILE_PATH = get_project_root() / "resources" / "db-config.json"
+    
     try:
         with open(FILE_PATH, "r") as f:
-            genes_data = json.load(f)
-        
-        # Prepare properties data
+            db_data = json.load(f)
+
+        # Column Families table
         properties = []
-        for gene in genes_data["Genes"]:
-            props = gene["properties"]
+        for data in db_data["ColumnFamilies"]:
             properties.append({
-                'Gene Name': gene["name"],
-                'Chromosome': props["chromosome_location"],
-                'Protein': props["encoded_protein"],
-                'Function': props["function"],
-                'Biological Processes': ', '.join(props["biological_processes"])
+                "Name": data["name"],
+                "Type": data["properties"]["type"],
+                "Rows": data["properties"]["numer_of_rows"],
+                "Config": data["properties"]["config"] if data["properties"]["config"] != "None" else "Default"
             })
-        
-        # Display dataframe 
+        # Display dataframe
         df = pd.DataFrame(properties)
-        st.dataframe(df)  
-        
-        # Display metrics
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Genes", len(genes_data["Genes"]))
-        with col2:
-            unique_chromosomes = len(set(g["properties"]["chromosome_location"] for g in genes_data["Genes"]))
-            st.metric("Unique Chromosomes", unique_chromosomes)
-        with col3:
-            # Fixed the average calculation
-            process_counts = [len(g["properties"]["biological_processes"]) for g in genes_data["Genes"]]
-            avg_processes = sum(process_counts) / len(process_counts) if process_counts else 0
-            st.metric("Avg Processes", f"{avg_processes:.1f}")
-            
+        st.dataframe(df)
+
     except Exception as e:
-        st.error(f"Error loading gene properties: {str(e)}")
-        
+        st.error(f"Error loading DB-Config properties: {str(e)}")

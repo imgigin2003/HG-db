@@ -3,31 +3,54 @@ from streamlit_option_menu import option_menu
 from hypergraph import create_hypergraph, draw_hypergraph
 from layered_hypergraph import draw_layered_hypergraph
 from dual_hypergraph import create_dual_hypergraph, draw_dual_hypergraph
-from setting import load_db_path, update_build_rs, update_db_path, get_python_version, get_python_library_path, ensure_upload_dir, display_properties, display_table, load_atoms_data, display_atom_properties, load_mols_data, display_molecule_properties, display_db_config_propeties, load_genes_data, display_genes_properties
+from setting import (
+    load_db_path, update_db_path, get_python_version, get_python_library_path,
+    update_build_rs, load_atoms_data, load_mols_data, load_genes_data, load_paths_data,
+    display_data_properties, display_table, ensure_upload_dir, display_db_config_properties
+)
 import hypernetx as hnx
 import pandas as pd
-import os 
-import json
+import os
+
+def display_hypergraph_visualization(hyperedges, graph_type, visualize_mode=None, is_layered=False, is_dual=False, tab_key="", highlighted_path=None):
+    try:
+        if is_dual:
+            H, _ = create_dual_hypergraph(hyperedges)
+        else:
+            H = hnx.Hypergraph({k: v["nodes"] for k, v in hyperedges.items()})
+        
+        if st.button(f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"):
+            if is_layered:
+                fig = draw_layered_hypergraph(hyperedges)
+            elif is_dual:
+                fig = draw_dual_hypergraph(H)
+            else:
+                fig = draw_hypergraph(H, hyperedges, visualize_mode, highlighted_path=highlighted_path)
+            if fig:
+                st.pyplot(fig)
+            else:
+                st.error(f"Failed to visualize {graph_type}")
+    except Exception as e:
+        st.error(f"Visualization error: {str(e)}")
 
 def main():
-
-    # ---------------------------------------------- Basic Configuration Section ------------------------------------------------------------------
+    # Initialize session state
     if "hyperedges" not in st.session_state:
-        H, hyperedges = create_hypergraph()
-        st.session_state.hyperedges = hyperedges if hyperedges else {}
-
-    if 'active_menu' not in st.session_state:
-        st.session_state.active_menu = "main"  
-
-    # Initialize a file database in session state
+        try:
+            H, hyperedges = create_hypergraph()
+            st.session_state.hyperedges = hyperedges if hyperedges else {}
+        except Exception as e:
+            st.error(f"Error initializing hypergraph: {str(e)}")
+            st.session_state.hyperedges = {}
+    
+    if "active_menu" not in st.session_state:
+        st.session_state.active_menu = "main"
+    
     if "file_db" not in st.session_state:
-        st.session_state.file_db = {}  # Key: filename, Value: file_path
+        st.session_state.file_db = {}
 
-# ---------------------------------------------- Sidebar Configuration Section ------------------------------------------------------------------
-        
-    # Main sidebar - shows only one menu at a time
+    # Sidebar configuration
     with st.sidebar:
-        # Menu toggle buttons
         col1, col2 = st.columns(2)
         with col1:
             if st.button("HG-DB Menu", key="main_menu_btn"):
@@ -35,117 +58,94 @@ def main():
         with col2:
             if st.button("Bio Menu", key="bio_menu_btn"):
                 st.session_state.active_menu = "bio"
+        
+        menu_options = (
+            ["Introduction", "Interactive Hypergraph", "Hyperpath", "Dual Hypergraph", "Layered Hypergraph", "Files/Analysis", "Setting"]
+            if st.session_state.active_menu == "main"
+            else ["Atoms", "Molecules", "Genes"]
+        )
+        menu_icons = (
+            ['house', 'graph-up','sign-turn-slight-right', 'kanban', 'graph-down', 'cloud-upload', 'gear']
+            if st.session_state.active_menu == "main"
+            else ['capsule', 'virus', 'gender-ambiguous']
+        )
+        selected = option_menu(
+            "HG-DB Project" if st.session_state.active_menu == "main" else "Bio",
+            menu_options,
+            icons=menu_icons,
+            menu_icon="bezier" if st.session_state.active_menu == "main" else "file-medical",
+            default_index=0,
+            styles={
+                "container": {"padding": "5!important"},
+                "icon": {"color": "orange", "font-size": "25px"},
+                "nav-link": {"font-size": "16px", "text-align": "left", "margin": "0px", "--hover-color": "#A594F9"},
+                "nav-link-selected": {"background-color": "#7E60BF"},
+            },
+            key="main_menu" if st.session_state.active_menu == "main" else "bio_menu"
+        )
 
-        # Show the appropriate menu
-        if st.session_state.active_menu == "main":
-            selected = option_menu("HG-DB Project", 
-                                ["Introduction", "Interactive Hypergraph", "Dual Hypergraph", 
-                                "Layered Hypergraph", "Files/Analysis", "Setting"],
-                                icons=['house', 'graph-up', 'kanban', 'graph-down', 
-                                    'cloud-upload', 'gear'],
-                                menu_icon="bezier",
-                                default_index=0,
-                                styles={
-                                    "container": {"padding": "5!important"},
-                                    "icon": {"color": "orange", "font-size": "25px"}, 
-                                    "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#A594F9"},
-                                    "nav-link-selected": {"background-color": "#7E60BF"},
-                                })
-        else:
-            selected = option_menu("Bio", 
-                                ["Atoms", "Molecules", "Genes"],
-                                icons=['capsule', 'virus', 'gender-ambiguous'],
-                                menu_icon="file-medical",
-                                default_index=0,
-                                styles={
-                                    "container": {"padding": "5!important"},
-                                    "icon": {"color": "orange", "font-size": "25px"}, 
-                                    "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#A594F9"},
-                                    "nav-link-selected": {"background-color": "#7E60BF"},
-                                })
-# ---------------------------------------------- Introduction Tab ------------------------------------------------------------------
-
+    # Main content
     if st.session_state.active_menu == "main":
         if selected == "Introduction":
             st.title("Introduction")
-            st.write("Welcome to the HG-DB Project!📌")
-            st.write("This project is designed to provide a comprehensive framework for working with hypergraphs.")
-            st.write("You can visualize, analyze, and manipulate hypergraphs using this application.")
-            st.subheader("Features:")
-            st.write("- **Interactive Hypergraph**: Visualize and analyze hypergraphs interactively.")
-            st.write("- **Dual Hypergraph**: Explore the dual representation of hypergraphs.")
-            st.write("- **Layered Hypergraph**: Visualize hypergraphs in a layered format.")
-            st.write("- **Files/Analysis**: Upload and manage files related to hypergraphs.")
-            st.subheader("Configuration:")
-            st.write("Ensure to configure the database path and Python settings correctly to avoid any issues.")
-            st.subheader("Note:")
-            st.write("This application is designed to work with Python 3.8 or higher.")
-            st.subheader("Contact:")
-            st.write("For any issues or suggestions, please contact the development team.")
-# ---------------------------------------------- Hypergraph Tab ------------------------------------------------------------------
+            st.write("Welcome to the HG-DB Project! 📌")
+            st.write("This project provides a comprehensive framework for working with hypergraphs.")
+            st.write("Features: Interactive Hypergraph, Dual Hypergraph, Layered Hypergraph, File Management")
+            st.write("Ensure correct database and Python configuration to avoid issues.")
+            st.write("Requires Python 3.8 or higher. Contact the development team for issues.")
 
-        if selected == "Interactive Hypergraph":
+        elif selected == "Interactive Hypergraph":
             st.title("Interactive Hypergraph")
-            tabs = st.tabs([
-                "HyperGraph Visualization", 
-                "Graph Properties",
-                "Graph Tables",
-                "Graph Edit"
-            ])
+            tabs = st.tabs(["Visualization", "Properties", "Tables", "Edit"])
+            
             with tabs[0]:
-                st.write("### HyperGraph Visualization")
-                H = hnx.Hypergraph({k: v["nodes"] for k, v in st.session_state.hyperedges.items()})
+                st.write("### Hypergraph Visualization")
                 visualize_mode = st.radio(
                     "Visualize based on traversable:",
                     options=["edges", "nodes"],
-                    format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})"
+                    format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
+                    key="hypergraph_viz_mode"
                 )
-                if st.button("Visualize HyperGraph✨"):
-                    fig = draw_hypergraph(H, st.session_state.hyperedges, visualize_mode)
-                    if fig:
-                        st.pyplot(fig)
-        # ---------------------------------------------- Graph Information Tab ------------------------------------------------------------------
+                display_hypergraph_visualization(st.session_state.hyperedges, "Hypergraph", visualize_mode, tab_key="hypergraph")
+            
             with tabs[1]:
-                st.write("### Graphs Properties")
+                st.write("### Properties")
                 H = hnx.Hypergraph({k: v["nodes"] for k, v in st.session_state.hyperedges.items()})
-                display_properties(H, "HyperGraph")
-
+                display_data_properties(H, "Hypergraph")
+            
             with tabs[2]:
-                st.write("### Graphs Tables")
-                display_table(st.session_state.hyperedges, "HyperGraph")
-    # ---------------------------------------------- Graph Edit Tab ------------------------------------------------------------------
-
+                st.write("### Tables")
+                display_table(st.session_state.hyperedges, "Hypergraph")
+            
             with tabs[3]:
-                st.write("### Graph Edit")
-                edit_sub_tabs = st.tabs(["Add Hyperedge", "Edit Hyperedge", "Delete Hyperedge"])
-
+                st.write("### Edit Hypergraph")
+                edit_sub_tabs = st.tabs(["Add", "Edit", "Delete"])
+                
                 with edit_sub_tabs[0]:
                     st.write("#### Add Hyperedge")
-                    new_edge_id = st.text_input("Enter new edge ID (e.g., e8):", key="new_edge_id")
-                    new_nodes = st.text_input("Enter nodes for the new edge (comma-separated):", key="new_nodes")
-                    new_layer = st.selectbox("Select layer for the new edge:", options=["Top", "Middle", "Lower"], key="new_layer")
-                    is_traverse = st.checkbox("Traversable", value=False, key="traverse")
-                    is_directed = st.checkbox("Directed", value=False, key="directed")  # New Directed checkbox
-
-                    # Collect all nodes in the hypergraph for the dropdown
-                    all_nodes = set()
-                    for edge_data in st.session_state.hyperedges.values():
-                        all_nodes.update(edge_data["nodes"])
+                    new_edge_id = st.text_input("Edge ID:", key="add_edge_id")
+                    new_nodes = st.text_input("Nodes (comma-separated):", key="add_nodes")
+                    new_layer = st.selectbox(
+                        "Layer:", ["Top", "Middle", "Lower"],
+                        key="add_layer_select"
+                    )
+                    is_traverse = st.checkbox("Traversable", key="add_traverse")
+                    is_directed = st.checkbox("Directed", key="add_directed")
+                    
+                    all_nodes = set().union(*[data["nodes"] for data in st.session_state.hyperedges.values()])
                     target_node = None
                     if is_directed:
-                        st.write("Select a target node for the directed edge:")
                         target_node = st.selectbox(
-                            "Target Node:",
-                            options=list(all_nodes),
-                            key="target_node"
+                            "Target Node:", list(all_nodes),
+                            key="add_target_node_select"
                         )
-
-                    if st.button("Add Hyperedge"):
+                    
+                    if st.button("Add Hyperedge", key="add_hyperedge_btn"):
                         if new_edge_id and new_nodes:
-                            nodes_set = set(new_nodes.split(","))
                             if new_edge_id in st.session_state.hyperedges:
                                 st.warning("Edge ID already exists!")
                             else:
+                                nodes_set = set(new_nodes.split(","))
                                 layer_map = {"Top": 0, "Middle": 1, "Lower": 2}
                                 st.session_state.hyperedges[new_edge_id] = {
                                     "nodes": nodes_set,
@@ -154,327 +154,217 @@ def main():
                                     "traversable": is_traverse,
                                     "type": "linked",
                                     "layer": layer_map[new_layer],
-                                    "directed": is_directed,  # Store the directed field
-                                    "target_node": target_node if is_directed else None  # Store the target node if directed
+                                    "directed": is_directed,
+                                    "target_node": target_node
                                 }
-                                st.success(f"Hyperedge '{new_edge_id}' added with nodes {nodes_set} in {new_layer} layer! Directed: {is_directed}, Target Node: {target_node if is_directed else 'None'}")
+                                st.success(f"Added hyperedge '{new_edge_id}' in {new_layer} layer!")
 
                 with edit_sub_tabs[1]:
-                    st.write("### Edit Hyperedge")
-                    edge_to_edit = st.selectbox("Select an edge to edit:", options=list(st.session_state.hyperedges.keys()))
-                    edited_nodes = st.text_input("Enter new nodes for the selected edge (comma-separated):", key="edit_nodes")
-                    edited_layer = st.selectbox("Select new layer for the selected edge:", options=["Top", "Middle", "Lower"], key="edit_layer")
-                    if st.button("Edit Hyperedge"):
+                    st.write("#### Edit Hyperedge")
+                    edge_to_edit = st.selectbox(
+                        "Edge:", list(st.session_state.hyperedges.keys()),
+                        key="edit_edge_select"
+                    )
+                    edited_nodes = st.text_input("New nodes (comma-separated):", key="edit_nodes_input")
+                    edited_layer = st.selectbox(
+                        "New layer:", ["Top", "Middle", "Lower"],
+                        key="edit_layer_select"
+                    )
+                    if st.button("Edit Hyperedge", key="edit_hyperedge_btn"):
                         if edge_to_edit and edited_nodes:
                             new_nodes_set = set(edited_nodes.split(","))
                             layer_map = {"Top": 0, "Middle": 1, "Lower": 2}
-                            st.session_state.hyperedges[edge_to_edit]["nodes"] = new_nodes_set
-                            st.session_state.hyperedges[edge_to_edit]["head"] = new_nodes_set
-                            st.session_state.hyperedges[edge_to_edit]["tail"] = set()
-                            st.session_state.hyperedges[edge_to_edit]["layer"] = layer_map[edited_layer]  # Update layer
-                            st.success(f"Hyperedge '{edge_to_edit}' updated with nodes '{new_nodes_set}' in {edited_layer} layer! ✅")
+                            st.session_state.hyperedges[edge_to_edit].update({
+                                "nodes": new_nodes_set,
+                                "head": new_nodes_set,
+                                "tail": set(),
+                                "layer": layer_map[edited_layer]
+                            })
+                            st.success(f"Updated hyperedge '{edge_to_edit}'!")
 
                 with edit_sub_tabs[2]:
-                    st.write("### Delete Hyperedge")
-                    edges_to_delete = st.selectbox("Select an edge to delete:", options=list(st.session_state.hyperedges.keys()))
-                    if st.button("Delete Hyperedge"):
-                        if edges_to_delete:
-                            del st.session_state.hyperedges[edges_to_delete]
-                            st.success(f"Hyperedge '{edges_to_delete}' deleted successfully. ✅")
+                    st.write("#### Delete Hyperedge")
+                    edge_to_delete = st.selectbox(
+                        "Edge:", list(st.session_state.hyperedges.keys()),
+                        key="delete_edge_select"
+                    )
+                    if st.button("Delete Hyperedge", key="delete_hyperedge_btn"):
+                        del st.session_state.hyperedges[edge_to_delete]
+                        st.success(f"Deleted hyperedge '{edge_to_delete}'!")
 
-# ---------------------------------------------- Dual Hypergraph Tab ------------------------------------------------------------------
+        elif selected == "Hyperpath":
+            st.write("### Hyperpath")
+            paths = load_paths_data()
+            if paths:
+                path_ids = [path["id"] for path in paths]
+                selected_path_id = st.selectbox(
+                    "Select a Hyperpath: ", path_ids,
+                    key="hyperpath_select"
+                )
+                if selected_path_id:
+                    selected_path = next(path for path in paths if path ["id"] == selected_path_id)
+                    display_hypergraph_visualization(
+                        st.session_state.hyperedges, "Hyperpath", visualize_mode="edges",
+                        tab_key="hyperpath", highlighted_path=selected_path
+                    )
+                else:
+                    st.warning("No Hyperpath found in paths.json")
 
-        if selected == "Dual Hypergraph":
-            st.title("Dual HyperGraph")
-            tabs = st.tabs([
-                "Dual Hypergraph visualization",
-                "Dual Hypergraph Properties",
-                "Dual Hypergraph Table"
-            ])
-                
+
+        elif selected == "Dual Hypergraph":
+            st.title("Dual Hypergraph")
+            tabs = st.tabs(["Visualization", "Properties", "Tables"])
+            
             with tabs[0]:
-                st.write("### Dual HyperGraph Visualization")
-                H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)
-                if st.button("Visualize Dual HyperGraph✨"):
-                    fig = draw_dual_hypergraph(H_dual)
-                    if fig:
-                        st.pyplot(fig)
+                display_hypergraph_visualization(st.session_state.hyperedges, "Dual Hypergraph", is_dual=True, tab_key="dual")
             
             with tabs[1]:
-                st.write("### Dual Hypergraph Properties")
                 H_dual, _ = create_dual_hypergraph(st.session_state.hyperedges)
-                display_properties(H_dual, "Dual HyperGraph")
-
-
+                display_data_properties(H_dual, "Dual Hypergraph")
+            
             with tabs[2]:
-                st.write("### Dual Hypergraph Table")
-                H_dual, dual_hyperedges = create_dual_hypergraph(st.session_state.hyperedges)
+                _, dual_hyperedges = create_dual_hypergraph(st.session_state.hyperedges)
                 display_table(dual_hyperedges, "Dual Hypergraph")
 
-# ---------------------------------------------- Layered Hypergraph Tab ------------------------------------------------------------------
-
-        if selected == "Layered Hypergraph":
+        elif selected == "Layered Hypergraph":
             st.title("Layered Hypergraph")
-            tabs = st.tabs(["Layered Hypergraph Visualization"])
-            with tabs[0]:
-                st.write("### Layered HyperGraph Visualization")
-                if st.button("Visualize Layered HyperGraph✨"):
-                    fig = draw_layered_hypergraph(st.session_state.hyperedges)  # Pass the full hyperedges dictionary
-                    if fig:
-                        st.pyplot(fig)
+            display_hypergraph_visualization(st.session_state.hyperedges, "Layered Hypergraph", is_layered=True, tab_key="layered")
 
-# ---------------------------------------------- Analistics Tab ------------------------------------------------------------------
-
-        if selected == "Files/Analysis":
+        elif selected == "Files/Analysis":
             st.title("Files/Analysis")
             edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
-
-            # Get upload directory from session state
-            upload_dir = st.session_state.get('upload_dir', 'uploads')
+            upload_dir = ensure_upload_dir()
             
-            # Ensure directory exists
-            try:
-                os.makedirs(upload_dir, exist_ok=True)
-            except Exception as e:
-                st.error(f"Cannot access upload directory: {str(e)}")
-                st.stop()
-
             with edit_sub_tabs[0]:
                 st.write("#### Add File")
-                uploaded_file = st.file_uploader("Select a file to upload", type=None, key="file_uploader")
-                if st.button("Upload File"):
-                    if uploaded_file:
+                uploaded_file = st.file_uploader("Upload file:", key="file_uploader")
+                if st.button("Upload File", key="upload_file_btn"):
+                    if uploaded_file and upload_dir:
                         file_path = os.path.join(upload_dir, uploaded_file.name)
                         try:
                             with open(file_path, "wb") as f:
                                 f.write(uploaded_file.getbuffer())
-                            # Update file_db in session state
-                            if 'file_db' not in st.session_state:
-                                st.session_state.file_db = {}
                             st.session_state.file_db[uploaded_file.name] = file_path
-                            st.success(f"File '{uploaded_file.name}' uploaded to {upload_dir} directory! ✅")
+                            st.success(f"Uploaded '{uploaded_file.name}' to {upload_dir}!")
                         except Exception as e:
-                            st.error(f"Upload failed: {str(e)} ❌")
+                            st.error(f"Upload failed: {str(e)}")
 
             with edit_sub_tabs[1]:
                 st.write("#### Delete File")
-                if 'file_db' in st.session_state and st.session_state.file_db:
+                if st.session_state.file_db:
                     file_to_delete = st.selectbox(
-                        "Select a file to delete:",
-                        options=list(st.session_state.file_db.keys()),
-                        key="delete_file"
+                        "File:", list(st.session_state.file_db.keys()),
+                        key="delete_file_select"
                     )
-                    if st.button("Delete File"):
-                        if file_to_delete in st.session_state.file_db:
-                            file_path = st.session_state.file_db[file_to_delete]
-                            try:
-                                os.remove(file_path)
-                                del st.session_state.file_db[file_to_delete]
-                                st.success(f"File deleted from {upload_dir} directory! ✅")
-                            except Exception as e:
-                                st.error(f"Deletion failed: {str(e)} ❌")
+                    if st.button("Delete File", key="delete_file_btn"):
+                        file_path = st.session_state.file_db[file_to_delete]
+                        try:
+                            os.remove(file_path)
+                            del st.session_state.file_db[file_to_delete]
+                            st.success(f"Deleted '{file_to_delete}'!")
+                        except Exception as e:
+                            st.error(f"Deletion failed: {str(e)}")
                 else:
-                    st.write("No files in upload directory yet ☁️")
+                    st.write("No files uploaded yet.")
 
             with edit_sub_tabs[2]:
                 st.write("#### Files List")
-                if 'file_db' in st.session_state and st.session_state.file_db:
-                    file_data = []
-                    for name, path in st.session_state.file_db.items():
-                        try:
-                            size = os.path.getsize(path)
-                            file_data.append({
-                                "File Name": name,
-                                "Path": path,
-                                "Size (bytes)": size,
-                                "Upload Directory": upload_dir
-                            })
-                        except:
-                            continue
-                    df = pd.DataFrame(file_data)
-                    st.dataframe(df)
+                if st.session_state.file_db:
+                    file_data = [
+                        {"File Name": name, "Path": path, "Size (bytes)": os.path.getsize(path), "Upload Directory": upload_dir}
+                        for name, path in st.session_state.file_db.items() if os.path.exists(path)
+                    ]
+                    st.dataframe(pd.DataFrame(file_data))
                 else:
-                    st.write("No files in upload directory yet ☁️")
+                    st.write("No files uploaded yet.")
 
-    # ---------------------------------------------- Settings Tab ------------------------------------------------------------------
-
-
-        if selected == "Setting":
-            tabs = st.tabs(["Configuration", "DB-Config Properties", "Upload Settings"])
-
-            with tabs[0]: 
-                st.title("Configuration")
-                st.write("Apply the configuration to avoid any errors!⚠️")
-
-                # Initialize session state variables if they don't exist
-                if 'upload_dir' not in st.session_state:
-                    st.session_state.upload_dir = "uploads"  # Default upload directory
-
-                # DB Path Configuration
-                st.subheader("1. Database Path Configuration")
-                current_db_path = load_db_path()
-                new_db_path = st.text_input(
-                    "Enter new database path:",
-                    value=current_db_path,
-                    key="db_path_input"
-                )
+        elif selected == "Setting":
+            st.title("Configuration")
+            tabs = st.tabs(["Configuration", "DB-Config Properties"])
+            
+            with tabs[0]:
+                st.write("Apply configurations to avoid errors! ⚠️")
                 
-                if st.button("Update DB Path 🔧"):
+                st.subheader("Database Path")
+                current_db_path = load_db_path()
+                new_db_path = st.text_input("New database path:", value=current_db_path, key="db_path_input")
+                if st.button("Update DB Path", key="update_db_path_btn"):
                     if update_db_path(new_db_path):
-                        st.success("Database path updated successfully! ✅")
+                        st.success("Database path updated!")
                     else:
-                        st.error("Failed to update database path ❌")
-
-                # Python Configuration
-                st.subheader("2. Python Configuration")
-                if st.button("Auto-configure Python Bindings 🔧"):
+                        st.error("Failed to update database path.")
+                
+                st.subheader("Python Configuration")
+                if st.button("Auto-configure Python", key="auto_config_python_btn"):
                     python_lib_path = get_python_library_path()
                     python_version = get_python_version()
-                    
                     if python_lib_path and python_version:
-                        st.success(f"Detected Python library path: {python_lib_path} ⚙️")
-                        st.success(f"Detected Python version: {python_version} ⚙️")
-                        
                         if update_build_rs(python_lib_path, python_version):
-                            st.success("`build.rs` updated successfully with correct paths! ✅")
+                            st.success(f"Python {python_version} configured at {python_lib_path}!")
                         else:
-                            st.error("Failed to update build.rs ❌")
+                            st.error("Failed to update build.rs.")
                     else:
-                        st.error("Could not detect Python configuration properly ❌")
-
-                # Upload Directory Configuration
-                st.subheader("3. Upload Directory Configuration")
-                new_upload_dir = st.text_input(
-                    "Enter new upload directory path:",
-                    value=st.session_state.upload_dir,
-                    key="upload_dir_input"
-                )
+                        st.error("Could not detect Python configuration.")
                 
-                if st.button("Update Upload Directory 🔧"):
+                st.subheader("Upload Directory")
+                new_upload_dir = st.text_input("New upload directory:", value=ensure_upload_dir(), key="upload_dir_input")
+                if st.button("Update Upload Directory", key="update_upload_dir_btn"):
                     try:
                         os.makedirs(new_upload_dir, exist_ok=True)
                         st.session_state.upload_dir = new_upload_dir
-                        st.session_state.file_db = {}  # Clear file cache
-                        st.success("Upload directory updated successfully! ✅")
+                        st.session_state.file_db = {}
+                        st.success("Upload directory updated!")
                     except Exception as e:
-                        st.error(f"Failed to update upload directory: {str(e)} ❌")
+                        st.error(f"Failed to update upload directory: {str(e)}")
 
             with tabs[1]:
-                st.title("DB-Config")
-                display_db_config_propeties()
+                st.write("### DB-Config Properties")
+                display_db_config_properties()
 
-# ----------------------------------------------  Bio menu ------------------------------------------------------------------
-
-
-    if st.session_state.active_menu == "bio":
+    elif st.session_state.active_menu == "bio":
         if selected == "Atoms":
             st.title("Atoms")
-            tabs = st.tabs(["Atoms Visualization", "Atoms Layered Visualization", "Atoms Properties", "Atoms Edit"])
+            tabs = st.tabs(["Visualization", "Layered Visualization", "Properties"])
             
-# ---------------------------------------------- Atom tab ------------------------------------------------------------------
-
             with tabs[0]:
-                st.write("### Atoms Visualization")
-                if st.button("Visualize Atoms ✨"):
-                    data = load_atoms_data()
-                    if data:
-                        H = hnx.Hypergraph({k: v["nodes"] for k, v in data.items()})
-                        fig = draw_hypergraph(H, data, "nodes")
-                        st.pyplot(fig)
-
+                display_hypergraph_visualization(load_atoms_data(), "Atoms", visualize_mode="nodes", tab_key="atoms")
+            
             with tabs[1]:
-                st.write("### Atoms Layered Visualization")
-                if st.button("Visualize Layered Atoms ✨"):
-                    data = load_atoms_data()
-                    if data:
-                        try:
-                            fig = draw_layered_hypergraph(data)
-                            st.pyplot(fig)
-                        except Exception as e:
-                             st.error(f"Visualization error: {str(e)}")
+                display_hypergraph_visualization(load_atoms_data(), "Layered Atoms", is_layered=True, tab_key="layered_atoms")
             
             with tabs[2]:
-                st.write("### Atoms Properties")
-                display_atom_properties()
+                display_data_properties(load_atoms_data(), "Atoms")
 
-        if selected == "Molecules":
+        elif selected == "Molecules":
             st.title("Molecules")
-            tabs = st.tabs(["Molecules Visualization", "Molecules Layered Visualization", "Molecules Properties", "Molecules Edit"])
-
-# ---------------------------------------------- Molecules Tab ------------------------------------------------------------------
-
-
-            with tabs[0]:  # Basic Visualization
-                st.write("### Molecules Visualization")
-                if st.button("Visualize Molecules ✨"):
-                    data = load_mols_data()
-                    if data:
-                        # Create proper node mapping (include all atomic components)
-                        all_nodes = set()
-                        for edge in data.values():
-                            all_nodes.update(edge["nodes"])
-                        
-                        # Create hypergraph with all nodes
-                        H = hnx.Hypergraph({k: v["nodes"] for k, v in data.items()})
-                        fig = draw_hypergraph(H, data, "edges")
-                        st.pyplot(fig)
-
-            with tabs[1]:  # Layered Visualization
-                st.write("### Layered Molecules Visualization")
-                if st.button("Visualize Layered Molecules ✨"):
-                    data = load_mols_data()
-                    if data:
-                        # Ensure proper layering
-                        for edge in data.values():
-                            if 'layer' not in edge:
-                                edge['layer'] = 0  # Default layer
-                            edge['layer'] = int(edge['layer'])
-                        
-                        fig = draw_layered_hypergraph(data)
-                        if fig:
-                            st.pyplot(fig)
+            tabs = st.tabs(["Visualization", "Layered Visualization", "Properties"])
             
-            with tabs[2]:
-                st.write("### Molecule Properties")
-                display_molecule_properties()
-
-        
-        if selected == "Genes":
-            st.title("Genes")
-            tabs = st.tabs(["Genes Visualization", "Genes Layered Visualization", "Genes Properties", "Genes Edit"])
-
             with tabs[0]:
-                st.write("### Genes Visualization")
-                if st.button("Visualize Genes ✨"):
-                    data = load_genes_data()
-                    if data:
-                        H = hnx.Hypergraph({k: v["nodes"] for k, v in data.items()})
-                        fig = draw_hypergraph(H, data, "edges")
-                        st.pyplot(fig)
+                display_hypergraph_visualization(load_mols_data(), "Molecules", visualize_mode="edges", tab_key="molecules")
             
             with tabs[1]:
-                st.write("### Genes Layered Visualization")
-                
-                if st.button("Visualize Layered Genes ✨"):
-                    data = load_genes_data()
-                    if data:
-                        # Assign layers based on chromosome location
-                        for gene_name, gene_data in data.items():
-                            # Extract chromosome number (first part before 'q' or 'p')
-                            chrom = gene_data["properties"]["chromosome_location"]
-                            chrom_num = ''.join(filter(str.isdigit, chrom.split('q')[0].split('p')[0]))
-                            layer = int(chrom_num) % 3 if chrom_num else 0
-                            gene_data["layer"] = layer
-                        
-                        fig = draw_layered_hypergraph(data)
-                        if fig:
-                            st.pyplot(fig)
-                st.write("###### Genes are grouped by chromosome number")
-
+                display_hypergraph_visualization(load_mols_data(), "Layered Molecules", is_layered=True, tab_key="layered_molecules")
+            
             with tabs[2]:
-                st.write("### Genes Properties")
-                display_genes_properties()
+                display_data_properties(load_mols_data(), "Molecules")
 
+        elif selected == "Genes":
+            st.title("Genes")
+            tabs = st.tabs(["Visualization", "Layered Visualization", "Properties"])
+            
+            with tabs[0]:
+                display_hypergraph_visualization(load_genes_data(), "Genes", visualize_mode="edges", tab_key="genes")
+            
+            with tabs[1]:
+                data = load_genes_data()
+                for gene_name, gene_data in data.items():
+                    chrom = gene_data["properties"]["chromosome_location"]
+                    chrom_num = ''.join(filter(str.isdigit, chrom.split('q')[0].split('p')[0]))
+                    gene_data["layer"] = int(chrom_num) % 3 if chrom_num else 0
+                display_hypergraph_visualization(data, "Layered Genes", is_layered=True, tab_key="layered_genes")
+            
+            with tabs[2]:
+                display_data_properties(load_genes_data(), "Genes")
 
 if __name__ == "__main__":
     main()
