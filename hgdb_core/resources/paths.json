@@ -1,0 +1,19 @@
+{
+  "Hyperpaths": [
+    {
+      "id": "path 1",
+      "hyperedges": ["e1", "e2", "e3"],
+      "color": "red"
+    },
+    {
+      "id": "path 2",
+      "hyperedges": ["e4", "e5"],
+      "color": "red"
+    },
+    {
+      "id": "path 3",
+      "hyperedges": ["e6"],
+      "color": "red"
+    }
+  ]
+}
