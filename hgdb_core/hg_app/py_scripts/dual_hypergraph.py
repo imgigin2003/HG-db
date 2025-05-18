@@ -56,7 +56,7 @@ def draw_dual_hypergraph(H_dual):
                 G.add_edge(node_list[i], node_list[j])
 
     # Use NetworkX spring_layout with parameters matching the Hypergraph
-    pos = nx.kamada_kawai_layout(G, scale=2.0)
+    pos = nx.spring_layout(G, k=0.3, iterations=50, scale=2.0)
 
     # Use your custom pastel colors
     custom_colors = ['#c49ffc', '#f294d9', '#6fc5ed', '#a5f0a8', '#fcc09f']
@@ -96,7 +96,7 @@ def draw_dual_hypergraph(H_dual):
     # Draw nodes (original edges)
     for node in nodes:
         x, y = pos[node]
-        ax.scatter(x, y, s=50, color="black")
+        ax.scatter(x, y, s=100, color="black")
         ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
 
     ax.set_title("DualHypergraph Visualization")
@@ -125,14 +125,3 @@ def draw_dual_hypergraph(H_dual):
     
     plt.tight_layout()
     return fig
-
-
-# def draw_dual_hypergraph(H_dual):
-#     """Draw the dual hypergraph using HyperNetX and return the figure."""
-#     if H_dual is None:
-#         return None
-    
-#     fig, ax = plt.subplots(figsize=(12, 10))
-#     hnx.draw(H_dual, with_node_labels=True, with_edge_labels=True, ax=ax)
-#     plt.title("DualHypergraph Visualization")
-#     return fig
