@@ -12,7 +12,7 @@ import hypernetx as hnx
 import pandas as pd
 import os
 
-def display_hypergraph_visualization(hyperedges, graph_type, visualize_mode=None, is_layered=False, is_dual=False, tab_key="", highlighted_path=None):
+def display_hypergraph_visualization(hyperedges, graph_type, visualize_mode=None, is_layered=False, is_dual=False, tab_key="", highlighted_path=None, display_mode="default"):
     try:
         if is_dual:
             H, _ = create_dual_hypergraph(hyperedges)
@@ -20,12 +20,13 @@ def display_hypergraph_visualization(hyperedges, graph_type, visualize_mode=None
             H = hnx.Hypergraph({k: v["nodes"] for k, v in hyperedges.items()})
         
         if st.button(f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"):
+            # Debug: Print the display_mode before visualization
             if is_layered:
                 fig = draw_layered_hypergraph(hyperedges)
             elif is_dual:
                 fig = draw_dual_hypergraph(H)
             else:
-                fig = draw_hypergraph(H, hyperedges, visualize_mode, highlighted_path=highlighted_path)
+                fig = draw_hypergraph(H, hyperedges, visualize_mode, highlighted_path=highlighted_path, display_mode=display_mode)
             if fig:
                 st.pyplot(fig)
             else:
@@ -100,13 +101,30 @@ def main():
             
             with tabs[0]:
                 st.write("### Hypergraph Visualization")
-                visualize_mode = st.radio(
-                    "Visualize based on traversable:",
-                    options=["edges", "nodes"],
-                    format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
-                    key="hypergraph_viz_mode"
+                col1, col2 = st.columns(2)
+                with col1:
+                    visualize_mode = st.radio(
+                        "Visualize based on traversable:",
+                        options=["edges", "nodes"],
+                        format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
+                        key="hypergraph_viz_mode"
+                    )
+                with col2:
+                    display_mode = st.radio(
+                        "Display mode:",
+                        options=["default", "simple"],
+                        format_func=lambda x: f"{'Default (with ellipses)' if x == 'default' else 'Simple (no ellipses)'}",
+                        key="hypergraph_display_mode"
+                    )
+                
+                display_hypergraph_visualization(
+                    st.session_state.hyperedges, 
+                    "Hypergraph", 
+                    visualize_mode, 
+                    tab_key="hypergraph",
+                    highlighted_path=None,
+                    display_mode=display_mode
                 )
-                display_hypergraph_visualization(st.session_state.hyperedges, "Hypergraph", visualize_mode, tab_key="hypergraph")
             
             with tabs[1]:
                 st.write("### Properties")
@@ -209,7 +227,6 @@ def main():
                     )
                 else:
                     st.warning("No Hyperpath found in paths.json")
-
 
         elif selected == "Dual Hypergraph":
             st.title("Dual Hypergraph")
