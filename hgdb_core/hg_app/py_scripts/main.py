@@ -112,8 +112,12 @@ def main():
                 with col2:
                     display_mode = st.radio(
                         "Display mode:",
-                        options=["default", "simple"],
-                        format_func=lambda x: f"{'Default (with ellipses)' if x == 'default' else 'Simple (no ellipses)'}",
+                        options=["default", "simple", "minimal"],
+                        format_func=lambda x: {
+                            "default": "Default (filled ellipses)",
+                            "simple": "Simple (outline ellipses)",
+                            "minimal": "Minimal (lines only)"
+                        }[x],
                         key="hypergraph_display_mode"
                     )
                 

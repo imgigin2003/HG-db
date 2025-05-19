@@ -63,9 +63,6 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges", highlighted_path=None
     if H is None or not hyperedges:
         return None
 
-    # Debug: Print the display_mode to confirm its value
-    print(f"draw_hypergraph: display_mode = {display_mode}")
-
     fig, ax = plt.subplots(figsize=(10, 8))
     
     # Convert Hypergraph to bipartite NetworkX graph for layout
@@ -123,6 +120,33 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges", highlighted_path=None
                         ellipse = Ellipse(center, width, height, angle=angle,
                                          facecolor=edge_colors.get(edge_name, "gray"), alpha=0.6, edgecolor="none")
                         ax.add_patch(ellipse)
+
+        # Draw nodes (always)
+        for node, (x, y) in node_pos.items():
+            ax.scatter(x, y, s=100, color="black")
+            ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
+
+        # Adding legend patch top right corner for default mode
+        legend_patches = []
+        for edge_name, color in edge_colors.items():
+            legend_patches.append(plt.Line2D([0], [0], 
+                                            marker='o', 
+                                            color='w', 
+                                            label=edge_name,
+                                            markerfacecolor=color, 
+                                            markersize=10,
+                                            alpha=0.5))
+
+        ax.legend(handles=legend_patches, 
+            title="Hyperedges",
+            loc='upper right',
+            bbox_to_anchor=(1.35, 1),  
+            prop={'size': 15},          
+            title_fontsize='12',         
+            framealpha=0.7,
+            markerscale=1.5)
+        
+    
     elif display_mode == "simple":
         # Simple mode: Draw an ellipse outline (no fill) around nodes of each hyperedge
         for edge_name, edge_data in hyperedges.items():
@@ -163,65 +187,27 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges", highlighted_path=None
                         # Label at the center
                         ax.text(points[0][0], points[0][1], edge_name, fontsize=10, color=edge_colors.get(edge_name, "gray"),
                                 ha="center", va="center", bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"))
-    else:
-        # Fallback for unexpected display_mode values
-        print(f"Unexpected display_mode value: {display_mode}. Falling back to simple mode.")
+                        
+        # Draw nodes (always)
+        for node, (x, y) in node_pos.items():
+            ax.scatter(x, y, s=100, color="black")
+            ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
+
+
+    elif display_mode == "minimal":
+        # Minimal mode: Use hypernetx default drawing with node and edge labels, reading from JSON
+        hnx.draw(H, ax=ax, with_node_labels=True, with_edge_labels=True)
+        # Apply custom colors to edges if possible (limited by hypernetx)
         for edge_name, edge_data in hyperedges.items():
             traversable = edge_data["traversable"]
             all_nodes = edge_data["nodes"]
-
             should_draw = (visualize_mode == "edges" and traversable) or (visualize_mode == "nodes" and not traversable)
-
             if should_draw:
                 node_list = list(all_nodes)
                 if node_list and all(n in node_pos for n in node_list):
                     points = np.array([node_pos[n] for n in node_list])
-                    if len(points) >= 2:
-                        center = np.mean(points, axis=0)
-                        max_dist = max(np.linalg.norm(p - center) for p in points)
-                        width = max_dist * 2.5
-                        height = width * 0.6
-                        if len(points) >= 2:
-                            p1, p2 = points[0], points[1]
-                            angle = np.degrees(np.arctan2(p2[1] - p1[1], p2[0] - p1[0]))
-                        else:
-                            angle = 0
-                        ellipse = Ellipse(center, width, height, angle=angle,
-                                         fill=False, edgecolor=edge_colors.get(edge_name, "gray"), linewidth=2)
-                        ax.add_patch(ellipse)
-                        ax.text(center[0], center[1], edge_name, fontsize=10, color=edge_colors.get(edge_name, "gray"),
-                                ha="center", va="center", bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"))
-                    elif len(points) == 1:
-                        circle = Circle(points[0], 0.3, fill=False, color=edge_colors.get(edge_name, "gray"), linewidth=2)
-                        ax.add_patch(circle)
-                        ax.text(points[0][0], points[0][1], edge_name, fontsize=10, color=edge_colors.get(edge_name, "gray"),
-                                ha="center", va="center", bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"))
-
-    # Draw nodes (always)
-    for node, (x, y) in node_pos.items():
-        ax.scatter(x, y, s=100, color="black")
-        ax.text(x, y + 0.05, node, fontsize=10, ha="center", va="bottom")
-
-    # Add legend only in default mode
-    if display_mode == "default":
-        legend_patches = []
-        for edge_name, color in edge_colors.items():
-            legend_patches.append(plt.Line2D([0], [0], 
-                                            marker='o', 
-                                            color='w', 
-                                            label=edge_name,
-                                            markerfacecolor=color, 
-                                            markersize=10,
-                                            alpha=0.5))
-
-        ax.legend(handles=legend_patches, 
-            title="Hyperedges",
-            loc='upper right',
-            bbox_to_anchor=(1.35, 1),  
-            prop={'size': 15},          
-            title_fontsize='12',         
-            framealpha=0.7,
-            markerscale=1.5) 
+                    center = np.mean(points, axis=0)
+ 
 
     ax.set_title("Hypergraph")
     ax.axis("off")
