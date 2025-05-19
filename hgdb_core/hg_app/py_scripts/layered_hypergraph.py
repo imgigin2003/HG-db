@@ -69,7 +69,7 @@ def draw_layered_hypergraph(hyperedges):
                     G.add_edge(nodes[i], nodes[j])
 
         # Compute 2D positions using spring layout with adjusted parameters
-        pos_2d = nx.kamada_kawai_layout(G, scale=1.5)
+        pos_2d = nx.spring_layout(G, k=0.3, scale=2.0)
 
         # Manually adjust positions for single-node hyperedges to avoid overlap
         edge_positions = {}  # Track the center position of each hyperedge
@@ -148,7 +148,7 @@ def draw_layered_hypergraph(hyperedges):
 
     # Draw nodes and labels with highest zorder
     for (node, layer), (x, y, z) in node_positions.items():
-        ax.scatter(x, y, z, color='black', s=60, zorder=10002)
+        ax.scatter(x, y, z, color='black', s=100, zorder=10002)
         ax.text(x, y + 0.1, z + 0.15, node, 
                 fontsize=10, ha='center', va='bottom',
                 bbox=dict(facecolor='none', alpha=0.7, edgecolor='none', pad=1),
