@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
+import streamlit.components.v1 as components
 from hypergraph import create_hypergraph, draw_hypergraph
 from layered_hypergraph import draw_layered_hypergraph
 from dual_hypergraph import create_dual_hypergraph, draw_dual_hypergraph
@@ -11,6 +12,8 @@ from setting import (
 import hypernetx as hnx
 import pandas as pd
 import os
+import json
+from pathlib import Path
 
 def display_hypergraph_visualization(hyperedges, graph_type, visualize_mode=None, is_layered=False, is_dual=False, tab_key="", highlighted_path=None, display_mode="default"):
     try:
@@ -49,6 +52,9 @@ def main():
     
     if "file_db" not in st.session_state:
         st.session_state.file_db = {}
+
+        if "selected_node" not in st.session_state:
+            st.session_state.selected_node = None
 
     # Sidebar configuration
     with st.sidebar:
@@ -101,35 +107,69 @@ def main():
             
             with tabs[0]:
                 st.write("### Hypergraph Visualization")
-                col1, col2 = st.columns(2)
-                with col1:
-                    visualize_mode = st.radio(
-                        "Visualize based on traversable:",
-                        options=["edges", "nodes"],
-                        format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
-                        key="hypergraph_viz_mode"
+                sub_tabs = st.tabs(["Static Visualize", "Dynamic Visualize"])
+                with sub_tabs[0]:
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        visualize_mode = st.radio(
+                            "Visualize based on traversable:",
+                            options=["edges", "nodes"],
+                            format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
+                            key="hypergraph_viz_mode"
+                        )
+                    with col2:
+                        display_mode = st.radio(
+                            "Display mode:",
+                            options=["default", "simple", "minimal"],
+                            format_func=lambda x: {
+                                "default": "Default (filled ellipses)",
+                                "simple": "Simple (outline ellipses)",
+                                "minimal": "Minimal (lines only)"
+                            }[x],
+                            key="hypergraph_display_mode"
+                        )
+                    
+                    display_hypergraph_visualization(
+                        st.session_state.hyperedges, 
+                        "Hypergraph", 
+                        visualize_mode, 
+                        tab_key="hypergraph",
+                        highlighted_path=None,
+                        display_mode=display_mode
                     )
-                with col2:
-                    display_mode = st.radio(
-                        "Display mode:",
-                        options=["default", "simple", "minimal"],
-                        format_func=lambda x: {
-                            "default": "Default (filled ellipses)",
-                            "simple": "Simple (outline ellipses)",
-                            "minimal": "Minimal (lines only)"
-                        }[x],
-                        key="hypergraph_display_mode"
-                    )
-                
-                display_hypergraph_visualization(
-                    st.session_state.hyperedges, 
-                    "Hypergraph", 
-                    visualize_mode, 
-                    tab_key="hypergraph",
-                    highlighted_path=None,
-                    display_mode=display_mode
-                )
-            
+                with sub_tabs[1]:
+                    st.write("### Interactive Hypergraph Visualization")
+
+                    html_path = Path(__file__).parent.parent / "statics" / "interactive.html"
+                    json_path = Path(__file__).parent.parent / "statics" / "test_edge.json"
+                    
+                    try:
+                        # Load HTML template
+                        with open(html_path, "r", encoding="utf-8") as f:
+                            html_content = f.read()
+
+                        # Load JSON data
+                        with open(json_path, "r", encoding="utf-8") as f:
+                            json_data = json.load(f)
+
+                        # Inject JSON directly into the HTML as a JS variable
+                        injected_script = f"<script>const injectedData = {json.dumps(json_data)};</script>"
+                        
+                        # Replace the fetch line in HTML with use of the JS variable
+                        html_content = html_content.replace(
+                        'fetch("test_edge.json")',
+                        'Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(injectedData) })'
+)
+                        
+                        # Insert the injected script before </head> or </body>
+                        html_content = html_content.replace("</head>", f"{injected_script}\n</head>")
+
+                        # Show in Streamlit
+                        components.html(html_content, height=700, scrolling=True)
+                        
+                    except Exception as e:
+                        st.error(f"Error loading interactive visualization: {str(e)}")
+
             with tabs[1]:
                 st.write("### Properties")
                 H = hnx.Hypergraph({k: v["nodes"] for k, v in st.session_state.hyperedges.items()})

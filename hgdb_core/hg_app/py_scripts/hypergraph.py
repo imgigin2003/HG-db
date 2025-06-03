@@ -8,9 +8,9 @@ from matplotlib.patches import Ellipse, Circle
 
 def data_root():
     """Helper Function to get the project root relative to main.py's location"""
-    return Path(__file__).parent
+    return Path(__file__).parent.parent
 
-JSON_FILE_PATH = data_root() / "json-data" / "test_edge.json"
+JSON_FILE_PATH = data_root() / "statics" / "test_edge.json"
 
 def load_hyperedges_from_json(json_file_path):
     with open(json_file_path, 'r') as file:
