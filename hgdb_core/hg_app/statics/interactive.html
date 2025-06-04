@@ -125,6 +125,7 @@
       let nodes = [];
       let hyperedges = [];
       let simulation;
+      let initialPositions = {};
 
       const svg = d3.select("#hypergraph");
       const width = +svg.attr("width");
@@ -140,6 +141,21 @@
         });
 
       svg.call(zoom);
+
+      // Function to calculate circular positions
+      function calculateCircularPositions(nodeCount, centerX, centerY, radius) {
+        const positions = {};
+        const angleStep = (2 * Math.PI) / nodeCount;
+
+        for (let i = 0; i < nodeCount; i++) {
+          const angle = i * angleStep;
+          positions[`v${i + 1}`] = {
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle),
+          };
+        }
+        return positions;
+      }
 
       // Main data loading function
       async function loadData() {
@@ -174,11 +190,36 @@
             })
             .filter((edge) => edge !== null);
 
-          nodes = Array.from(nodeSet).map((nodeId) => ({
-            id: nodeId,
-            x: width / 2 + (Math.random() - 0.5) * 200,
-            y: height / 2 + (Math.random() - 0.5) * 200,
-          }));
+          // Calculate default positions in a circle
+          const nodeIds = Array.from(nodeSet);
+          const defaultPositions = calculateCircularPositions(
+            nodeIds.length,
+            width / 2.5,
+            height / 2.5,
+            Math.min(width, height) * 0.3
+          );
+
+          // Create nodes with initial positions
+          nodes = nodeIds.map((nodeId) => {
+            // Use saved position if available, otherwise use default circular position
+            const pos = initialPositions[nodeId] ||
+              defaultPositions[nodeId] || {
+                x: width / 2 + (Math.random() - 0.5) * 200,
+                y: height / 2 + (Math.random() - 0.5) * 200,
+              };
+
+            if (!initialPositions[nodeId]) {
+              initialPositions[nodeId] = { x: pos.x, y: pos.y };
+            }
+
+            return {
+              id: nodeId,
+              x: pos.x,
+              y: pos.y,
+              fx: pos.x,
+              fy: pos.y,
+            };
+          });
 
           // Initialize or restart simulation
           if (simulation) {
@@ -188,7 +229,7 @@
             simulation = d3
               .forceSimulation(nodes)
               .force("charge", d3.forceManyBody().strength(-80))
-              .force("center", d3.forceCenter(width / 2.5, height / 3))
+              .force("center", d3.forceCenter(width / 2.5, height / 2.5))
               .force("collision", d3.forceCollide(30))
               .on("tick", () => {
                 drawHypergraph();
@@ -373,6 +414,7 @@
             };
           });
       }
+
       // Drag functions
       function dragstarted(event, d) {
         d3.select(this).raise().attr("stroke", "red");
@@ -396,13 +438,17 @@
 
       function dragended(event, d) {
         d3.select(this).attr("stroke", "white");
+        // Update initial position when node is moved
+        initialPositions[d.id] = { x: d.x, y: d.y };
       }
 
       function resetView() {
-        // Reset node positions with better distribution
+        // Reset node positions to initial positions
         nodes.forEach((node) => {
-          node.x = width / 2 + (Math.random() - 0.5) * 200;
-          node.y = height / 2 + (Math.random() - 0.5) * 200;
+          if (initialPositions[node.id]) {
+            node.x = initialPositions[node.id].x;
+            node.y = initialPositions[node.id].y;
+          }
           node.fx = null;
           node.fy = null;
         });

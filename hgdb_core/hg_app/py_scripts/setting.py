@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
-from collections import Counter
 import hypernetx as hnx
 
 def get_project_root():

@@ -75,7 +75,7 @@ def draw_hypergraph(H, hyperedges, visualize_mode="edges", highlighted_path=None
             G.add_edge(node, edge_name)
     
     # Use NetworkX spring_layout with adjusted parameters to spread nodes
-    pos = nx.spring_layout(G, k=0.3, iterations=50, scale=2.0)
+    pos = nx.spring_layout(G, k=0.4, iterations=50, scale=1.0)
     node_pos = {node: coord for node, coord in pos.items() if node in H.nodes}
 
     # Generate colors using a cyclic colormap for edges
