@@ -7,3 +7,4 @@ hgdb_core/hg_app/py_scripts/__pycache__
 .DS_Store
 hgdb_core/hg_app/build.rs
 hgdb_core/Config.toml
+.vscode/
