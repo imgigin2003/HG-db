@@ -14,6 +14,10 @@ from hypergraph import HypergraphManager
 from dual_hypergraph import DualHypergraphManager
 from layered_hypergraph import LayeredHypergraphManager
 
+USE_EXTERNAL_LAYERED_SERVICE = True
+LAYERED_SERVICE_URL = "http://127.0.0.1:5000"
+
+
 class VisualizationManager:
     def __init__(self):
         self.project_root = DataLoader()
@@ -33,7 +37,20 @@ class VisualizationManager:
             
             if st.button(f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"):
                     if is_layered:
-                        fig = self.layered_hypergraph.draw_layered_hypergraph(hyperedges)
+                        status = st.status("🔗 Loading 3D Layered Hypergraph Service...", expanded=True)
+
+                        if USE_EXTERNAL_LAYERED_SERVICE:
+                            components.iframe(
+                                src=LAYERED_SERVICE_URL,
+                                height=750,
+                                scrolling=True
+                            )
+                            status.update(
+                                label="✅ 3D Layered Hypergraph loaded successfully!",
+                                state="complete",
+                                expanded=False
+                            )
+                            return
                     elif is_dual:
                         fig = self.dual_hypergraph.draw_dual_hypergraph(H)
                     else:

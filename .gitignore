@@ -1,10 +1,15 @@
-hgdb_core/target/
+# ===== Rust =====
+**/target/
 
-hgdb_core/hg_app/target/
-hgdb_core/hg_app/venv/
-hgdb_core/hg_app/py_scripts/__pycache__
+# ===== Python =====
+**/venv/
+**/.venv/
+**/__pycache__/
+*.pyc
 
+# ===== OS / IDE =====
 .DS_Store
-hgdb_core/hg_app/build.rs
-hgdb_core/Config.toml
 .vscode/
+
+# ===== Services =====
+Layered-Hypergraph-Service/venv/
