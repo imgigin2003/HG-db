@@ -11,5 +11,4 @@
 .DS_Store
 .vscode/
 
-# ===== Services =====
-Layered-Hypergraph-Service/venv/
+
