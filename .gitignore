@@ -6,6 +6,8 @@
 **/.venv/
 **/__pycache__/
 *.pyc
+__pycache__/
+
 
 # ===== OS / IDE =====
 .DS_Store
