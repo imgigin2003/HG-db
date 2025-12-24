@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+
+{% block head %} 
+<title>hypergraph viewer</title>
+
+ <script type="importmap">
+    {
+      "imports": {
+        "three": "{{ url_for('static', filename='vendor/three/build/three.module.js') }}",
+        "three/addons/": "{{ url_for('static', filename='vendor/three/examples/jsm/') }}"
+      }
+    }
+</script>
+{% endblock %}
+
+
+{% block body %} 
+
+<div id="palette" class="palette-sidebar"></div>
+
+
+ <button id="create-hyperedge-btn" style="
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:10;
+  padding:6px 10px;
+  background:#7c3aed;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+">+ Hyperedge</button>
+
+
+ <canvas id="threejs"></canvas>
+ <div id="layers"></div>
+ <div id="layer-controls" style="
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255,255,255,0.9);
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  font-family: sans-serif;
+  font-size: 13px;
+  max-height: 90vh;
+  overflow-y: auto;
+">
+  <h3 style="margin-top:0;font-size:14px;">Layers</h3>
+  <div id="layer-list"></div>
+</div>
+
+<div id="info-box"
+     style="position:absolute; top:20px; right:20px; padding:10px;
+            background:rgba(0,0,0,0.8); color:white; border-radius:6px;
+            display:none; max-width:200px;">
+</div>
+
+
+    <!-- Your app code as an ES module -->
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+ 
+{% endblock %}

@@ -1,0 +1,70 @@
+body {
+    margin : 0; 
+    font-family: sans-serif;
+    overflow : hidden;
+}
+
+#palette {
+  position: fixed;
+  top: 60%;
+  left: 10px;
+  width: 120px;
+  background: rgba(30,30,30,0.9);
+  border-radius: 8px;
+  padding: 10px;
+  color: white;
+  z-index: 100;
+}
+
+.palette-item {
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 6px;
+  background: #444;
+  cursor: grab;
+  text-align: center;
+  transition: 0.2s;
+}
+
+.palette-item:hover {
+  background: #666;
+}
+.palette-sidebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 100vh;
+  background: rgba(20, 20, 20, 0.9);
+  color: white;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.palette-header {
+  width: 100%;
+  background: none;
+  border: none;
+  color: white;
+  padding: 10px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.palette-content {
+  padding: 6px 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.palette-content.collapsed {
+  display: none;
+}
+
+.palette-icon {
+  width: 32px;
+  height: 32px;
+  cursor: grab;
+}
