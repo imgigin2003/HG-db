@@ -1,13 +1,17 @@
 # ===== Rust =====
 **/target/
-**/Cargo.lock
+
 
 # ===== Python =====
 **/venv/
 **/.venv/
 **/__pycache__/
 *.pyc
+__pycache__/
+
 
 # ===== OS / IDE =====
 .DS_Store
 .vscode/
+
+
