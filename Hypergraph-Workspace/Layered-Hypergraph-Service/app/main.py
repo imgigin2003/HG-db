@@ -1,9 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
 from app.api.layered import router as layered_router
 
-app = FastAPI(title="Layered Hypergraph Service")
+app = FastAPI()
 
-app.include_router(layered_router, prefix="/api")
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+app.include_router(layered_router)
+
+@app.get("/viewer")
+def viewer(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request
+        }
+    )

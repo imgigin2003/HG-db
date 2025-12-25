@@ -1,5 +1,6 @@
 import streamlit as st
 import hypernetx as hnx
+import requests
 import matplotlib as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
@@ -23,6 +24,37 @@ class VisualizationManager:
         self.dual_hypergraph = DualHypergraphManager()
         self.layered_hypergraph = LayeredHypergraphManager()
 
+    def serialize_hyperedges(self, hyperedges):
+        clean = {}
+
+        for edge_name, data in hyperedges.items():
+            clean[edge_name] = {
+                "nodes": list(data["nodes"]),
+                "layer": data.get("layer", 0),
+            }
+
+        return clean
+
+    def send_to_layered_service(self, layers):
+        url = "http://127.0.0.1:5000/render-layered"
+
+        payload = {"layers": layers}
+
+        response = requests.post(url, json=payload)
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Layered service failed [{response.status_code}]: {response.text}"
+            )
+
+        return {
+            "method": "POST",
+            "endpoint": "/render-layered",
+            "status": response.status_code,
+            "request": payload,
+            "body": response.json(),
+        }
+
     def display_hypergraph_visualization(
         self,
         hyperedges,
@@ -38,19 +70,77 @@ class VisualizationManager:
             if is_dual:
                 H, _ = self.dual_hypergraph.create_dual_hypergraph(hyperedges)
             else:
-                H = hnx.Hypergraph(
-                    {k: v["nodes"] for k, v in hyperedges.items()}
-                )
+                H = hnx.Hypergraph({k: v["nodes"] for k, v in hyperedges.items()})
 
             if st.button(
                 f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"
             ):
                 if is_layered:
-                    fig = self.layered_hypergraph.draw_layered_hypergraph(
-                        hyperedges
-                    )
+                    st.info("Sending Layered Hypergraph to 3D Service...")
+
+                    # --------- Build request payload (Layered format) ----------
+                    serialized = {}
+
+                    for edge_id, data in hyperedges.items():
+                        layer = str(data.get("layer", 0))
+                        serialized.setdefault(layer, {})
+                        serialized[layer][edge_id] = list(data["nodes"])
+
+                    request_payload = {"layers": serialized}
+
+                    # --------- Send to microservice ----------
+                    result = self.send_to_layered_service(serialized)
+
+                    # --------- Layout: 2 columns ----------
+                    viewer_url = "http://127.0.0.1:5000/viewer"
+
+                    colA, colB, colC = st.columns([1, 2, 1])
+                    with colB:
+                        st.markdown(
+                            f"""
+                                <div style="text-align:center; margin-bottom:15px;">
+                                    <a href="{viewer_url}" target="_blank">
+                                        <button style="
+                                            background:#6a00ff;
+                                            color:white;
+                                            border:none;
+                                            padding:12px 20px;
+                                            font-size:18px;
+                                            border-radius:10px;
+                                            cursor:pointer;
+                                        ">
+                                            🔮 Open 3D Viewer
+                                        </button>
+                                    </a>
+                                </div>
+                                """,
+                            unsafe_allow_html=True,
+                        )
+
+                    # -------- Request / Response --------
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        with st.expander("📤 Request → FastAPI", expanded=False):
+                            st.code(
+                                json.dumps(request_payload, indent=2), language="json"
+                            )
+
+                    with col2:
+                        with st.expander("📥 Response ← Microservice", expanded=False):
+                            st.json(result)
+
+                    # -------- Status --------
+                    if result["status"] == 200:
+                        st.success("3D Scene Generated Successfully 🚀")
+                    else:
+                        st.error("Layered service failed")
+
+                    return
+
                 elif is_dual:
                     fig = self.dual_hypergraph.draw_dual_hypergraph(H)
+
                 else:
                     fig = self.hypergraph.draw_hypergraph(
                         H,
@@ -68,14 +158,8 @@ class VisualizationManager:
             st.error(f"Visualization error: {str(e)}")
 
     def render_interactive_visualization(self):
-        html_path = (
-            self.data_loader.get_statics_root()
-            / "statics"
-            / "interactive.html"
-        )
-        json_path = (
-            self.data_loader.get_statics_root() / "statics" / "test_edge.json"
-        )
+        html_path = self.data_loader.get_statics_root() / "statics" / "interactive.html"
+        json_path = self.data_loader.get_statics_root() / "statics" / "test_edge.json"
 
         try:
             # Load HTML template
@@ -87,7 +171,9 @@ class VisualizationManager:
                 json_data = json.load(f)
 
             # Inject JSON directly into the HTML as a JS variable
-            injected_script = f"<script>const injectedData = {json.dumps(json_data)};</script>"
+            injected_script = (
+                f"<script>const injectedData = {json.dumps(json_data)};</script>"
+            )
 
             # Replace the fetch line in HTML with use of the JS variable
             html_content = html_content.replace(
@@ -161,9 +247,7 @@ class VisualizationManager:
                                 "Symbol": props["symbol"],
                                 "Atomic Number": props["atomic_number"],
                                 "Weight": props["atomic_weight"],
-                                "Electron Config": props[
-                                    "electron_configuration"
-                                ],
+                                "Electron Config": props["electron_configuration"],
                                 "Layer": props.get("layer", 0),
                             }
                         )
@@ -174,9 +258,7 @@ class VisualizationManager:
                     with col1:
                         st.metric("Total Atoms", len(df))
                     with col2:
-                        st.metric(
-                            "Average Weight", f"{df['Weight'].mean():.2f}"
-                        )
+                        st.metric("Average Weight", f"{df['Weight'].mean():.2f}")
                     with col3:
                         st.metric("Unique Layers", df["Layer"].nunique())
 
