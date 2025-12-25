@@ -6,4 +6,4 @@ class Hyperedge(BaseModel):
     layer: Optional[int] = 0
 
 class LayeredHypergraphRequest(BaseModel):
-    hyperedges: Dict[str, Hyperedge]
+    layers: Dict[int, Dict[str, List[str]]]

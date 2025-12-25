@@ -1,5 +1,6 @@
 import streamlit as st
 import hypernetx as hnx
+import requests
 import matplotlib as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
@@ -23,6 +24,41 @@ class VisualizationManager:
         self.dual_hypergraph = DualHypergraphManager()
         self.layered_hypergraph = LayeredHypergraphManager()
 
+    def serialize_hyperedges(self, hyperedges):
+        clean = {}
+
+        for edge_name, data in hyperedges.items():
+            clean[edge_name] = {
+                "nodes": list(data["nodes"]),  
+                "layer": data.get("layer", 0)
+            }
+
+        return clean
+
+
+    def send_to_layered_service(self, layers):
+        url = "http://127.0.0.1:5000/render-layered"
+
+        payload = {
+            "layers": layers
+        }
+
+        response = requests.post(url, json=payload)
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Layered service failed [{response.status_code}]: {response.text}"
+            )
+
+        return {
+            "method": "POST",
+            "endpoint": "/render-layered",
+            "status": response.status_code,
+            "request": payload,
+            "body": response.json()
+        }
+
+
     def display_hypergraph_visualization(self, hyperedges, graph_type, visualize_mode=None, 
                                         is_layered=False, is_dual=False, tab_key="", 
                                         highlighted_path=None, display_mode="default"):
@@ -34,9 +70,73 @@ class VisualizationManager:
             
             if st.button(f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"):
                     if is_layered:
-                        fig = self.layered_hypergraph.draw_layered_hypergraph(hyperedges)
+                        st.info("Sending Layered Hypergraph to 3D Service...")
+
+
+                        # --------- Build request payload (Layered format) ----------
+                        serialized = {}
+
+                        for edge_id, data in hyperedges.items():
+                            layer = str(data.get("layer", 0))
+                            serialized.setdefault(layer, {})
+                            serialized[layer][edge_id] = list(data["nodes"])
+                        
+                        request_payload = {
+                            "layers": serialized
+                        }
+
+                        # --------- Send to microservice ----------
+                        result = self.send_to_layered_service(serialized)
+
+
+                        # --------- Layout: 2 columns ----------
+                        viewer_url = "http://127.0.0.1:5000/viewer"
+
+                        colA, colB, colC = st.columns([1,2,1])
+                        with colB:
+                            st.markdown(
+                                f"""
+                                <div style="text-align:center; margin-bottom:15px;">
+                                    <a href="{viewer_url}" target="_blank">
+                                        <button style="
+                                            background:#6a00ff;
+                                            color:white;
+                                            border:none;
+                                            padding:12px 20px;
+                                            font-size:18px;
+                                            border-radius:10px;
+                                            cursor:pointer;
+                                        ">
+                                            🔮 Open 3D Viewer
+                                        </button>
+                                    </a>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+                        # -------- Request / Response --------
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            with st.expander("📤 Request → FastAPI", expanded=False):
+                                st.code(json.dumps(request_payload, indent=2), language="json")
+
+                        with col2:
+                            with st.expander("📥 Response ← Microservice", expanded=False):
+                                st.json(result)
+
+                        # -------- Status --------
+                        if result["status"] == 200:
+                            st.success("3D Scene Generated Successfully 🚀")
+                        else:
+                            st.error("Layered service failed")
+
+                        return
+                    
                     elif is_dual:
                         fig = self.dual_hypergraph.draw_dual_hypergraph(H)
+                    
                     else:
                         fig = self.hypergraph.draw_hypergraph(H, hyperedges, visualize_mode, 
                                                 highlighted_path=highlighted_path, 
