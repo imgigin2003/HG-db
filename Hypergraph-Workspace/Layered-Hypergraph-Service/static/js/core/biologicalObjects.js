@@ -5,11 +5,12 @@ export let selectableObjects = [];
 
 
 
-export function getBioIconSprite(url, size = 0.12) {
+
+export function getBioIconSprite({ type, src }, size = 0.12) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = url;
+    img.src = src;
 
     img.onload = () => {
       const SCALE = 4; // 👈 increase for sharper icons (3–6 is sweet spot)
@@ -37,8 +38,14 @@ export function getBioIconSprite(url, size = 0.12) {
       const aspect = canvas.width / canvas.height;
       sprite.scale.set(size * aspect, size, 1);
 
-      sprite.userData = { type: "bio-icon", selected: false };
+      sprite.userData = {
+      type,
+      src,
+      selected: false
+    };
+
       selectableObjects.push(sprite);
+      
 
       resolve(sprite);
     };

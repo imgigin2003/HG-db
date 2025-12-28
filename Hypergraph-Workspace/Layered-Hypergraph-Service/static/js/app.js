@@ -8,6 +8,9 @@ import { showEdgeInfo } from './hypergraph/info.js';
 import {setupDragAndDrop} from './core/events.js'
 import {connectRepeatedNodes} from './hypergraph/connectors.js'
 import {createEdgeClickHandler } from './hypergraph/edgeClick.js'
+import { createTopBar } from "./ui/topBar.js";
+import { exportScene, importScene } from "./io/hypergraphIO.js";
+import { getBioIconSprite } from "./core/biologicalObjects.js";
 
 
 
@@ -266,5 +269,42 @@ function animate() {
 }
 
 setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects);
+
+
+
+createTopBar({
+  onExport: () => {
+    exportScene({  sceneNodes });
+  },
+
+  onImport: () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
+    input.onchange = () => {
+      const file = input.files[0];
+      if (!file) return;
+
+      importScene({
+        file,
+        addNode: async ({ type, position }) => {
+          const sprite = await getBioIconSprite({
+          type,
+          src: `/static/palette-data/icons/genetics/${type}.svg`
+        });
+
+          sprite.position.set(position.x, position.y, position.z);
+          scene.add(sprite);
+          sceneNodes.push(sprite);
+        }
+      });
+    };
+
+    input.click();
+  }
+});
+
+
 
 animate();
