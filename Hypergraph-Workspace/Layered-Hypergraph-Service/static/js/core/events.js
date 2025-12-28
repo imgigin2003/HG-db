@@ -2,6 +2,8 @@ import * as THREE from "three";
 import "../palette.js";
 import { selectableObjects, getBioIconSprite } from "./biologicalObjects.js";
 
+export let sceneNodes = [];
+
 export function setupDragAndDrop(camera, scene, canvas, selectedObjects) {
   let draggedItem = null;
   const raycaster = new THREE.Raycaster();
@@ -44,7 +46,11 @@ export function setupDragAndDrop(camera, scene, canvas, selectedObjects) {
 
     if (draggedItem.src) {
       try {
-        const sprite = await getBioIconSprite(draggedItem.src);
+        const sprite = await getBioIconSprite({
+  type: draggedItem.type,
+  src: draggedItem.src
+})
+
 
         const square = createSelectionSquare(sprite);
 
@@ -54,6 +60,8 @@ export function setupDragAndDrop(camera, scene, canvas, selectedObjects) {
         sprite.position.copy(pos);
         scene.add(sprite);
         selectableObjects.push(sprite);
+        sceneNodes.push(sprite);
+
 
         console.log("Sprite icon added at", pos);
       } catch (err) {
