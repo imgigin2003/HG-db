@@ -5,5 +5,7 @@ edition = "2021"
 
 [dependencies]
 libc = "0.2.178"
-pyo3 = { version = "0.27.2", features = ["extension-module"] }
 
+
+[package.metadata.pyo3]
+python = "C:\\Users\\Hp\\AppData\\Local\\Programs\\Python\\Python311\\python.exe"

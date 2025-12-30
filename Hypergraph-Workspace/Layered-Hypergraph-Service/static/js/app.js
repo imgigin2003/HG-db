@@ -5,7 +5,7 @@ import { createLabelRenderer, createLabel , relaxLabels } from './hypergraph/lab
 import {  relaxLayerToVenn } from './hypergraph/layout.js';
 import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './hypergraph/edges.js'
 import { showEdgeInfo } from './hypergraph/info.js';
-import {setupDragAndDrop} from './core/events.js'
+import {setupDragAndDrop , sceneNodes} from './core/events.js'
 import {connectRepeatedNodes} from './hypergraph/connectors.js'
 import {createEdgeClickHandler } from './hypergraph/edgeClick.js'
 import { createTopBar } from "./ui/topBar.js";
