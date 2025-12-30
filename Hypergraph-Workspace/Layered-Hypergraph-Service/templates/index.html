@@ -4,13 +4,18 @@
 {% block head %} 
 <title>hypergraph viewer</title>
 
- <script type="importmap">
-    {
-      "imports": {
-        "three": "{{ url_for('static', filename='vendor/three/build/three.module.js') }}",
-        "three/addons/": "{{ url_for('static', filename='vendor/three/examples/jsm/') }}"
-      }
-    }
+<script type="importmap">
+{
+  "imports": {
+    "three": "{{ request.url_for('static', path='vendor/three/build/three.module.js') }}",
+    "three/addons/": "{{ request.url_for('static', path='vendor/three/examples/jsm/') }}"
+  }
+}
+</script>
+
+
+
+
 </script>
 {% endblock %}
 
@@ -60,7 +65,8 @@
 </div>
 
 
-    <!-- Your app code as an ES module -->
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
- 
+<script type="module" src="{{ request.url_for('static', path='js/app.js') }}"></script>
+
+
+
 {% endblock %}

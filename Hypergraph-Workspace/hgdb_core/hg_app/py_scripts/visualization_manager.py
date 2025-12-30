@@ -36,7 +36,7 @@ class VisualizationManager:
         return clean
 
     def send_to_layered_service(self, layers):
-        url = "http://127.0.0.1:5000/render-layered"
+        url = "http://127.0.0.1:8000/render-layered"
 
         payload = {"layers": layers}
 
@@ -91,8 +91,8 @@ class VisualizationManager:
                     # --------- Send to microservice ----------
                     result = self.send_to_layered_service(serialized)
 
-                    # --------- Layout: 2 columns ----------
-                    viewer_url = "http://127.0.0.1:5000/viewer"
+                        # --------- Layout: 2 columns ----------
+                        viewer_url = "http://127.0.0.1:8000/viewer"
 
                     colA, colB, colC = st.columns([1, 2, 1])
                     with colB:
