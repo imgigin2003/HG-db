@@ -3,7 +3,7 @@ export default {
   label: "📐 UML",
   icons: [
     {
-      type: "layer"
+      type: "plane"
       // no src on purpose
     }
   ]

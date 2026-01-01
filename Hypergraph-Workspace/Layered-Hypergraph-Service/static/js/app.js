@@ -5,12 +5,11 @@ import { createLabelRenderer, createLabel , relaxLabels } from './hypergraph/lab
 import {  relaxLayerToVenn } from './hypergraph/layout.js';
 import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './hypergraph/edges.js'
 import { showEdgeInfo } from './hypergraph/info.js';
-import {setupDragAndDrop , sceneNodes} from './core/events.js'
+import {setupDragAndDrop , sceneNodes , selectableObjects} from './core/events.js'
 import {connectRepeatedNodes} from './hypergraph/connectors.js'
 import {createEdgeClickHandler } from './hypergraph/edgeClick.js'
-import { createTopBar } from "./ui/topBar.js";
 import { exportScene, importScene } from "./io/hypergraphIO.js";
-import { getBioIconSprite } from "./core/biologicalObjects.js";
+import { getBioIconSprite  } from "./core/biologicalObjects.js";
 
 
 
@@ -77,12 +76,21 @@ scene.add(connectorsGroup);
   console.log("✅ Created hyperedge around:", selectedObjects.map(o => o.userData.type));
 
   // optional: clear selection
-  selectedObjects.forEach(o => {
-    o.userData.selected = false;
-    o.material.emissive = new THREE.Color(0x000000);
-    o.material.emissiveIntensity = 0;
+ // === PROPER DESELECTION ===
+  selectedObjects.forEach(obj => {
+    obj.userData.selected = false;
+
+    if (obj.userData.selectionRing) {
+      obj.userData.selectionRing.visible = false;
+    }
+
+    if (obj.userData.originalColor) {
+      obj.material.color.copy(obj.userData.originalColor);
+      delete obj.userData.originalColor;
+    }
   });
-  selectedObjects = [];
+
+  selectedObjects.length = 0; // clear the array
 });
 
 
@@ -322,6 +330,7 @@ document.getElementById("import-btn").addEventListener("click", () => {
         sprite.position.set(position.x, position.y, position.z);
         scene.add(sprite);
         sceneNodes.push(sprite);
+        selectableObjects.push(sprite);
       }
     });
   };
