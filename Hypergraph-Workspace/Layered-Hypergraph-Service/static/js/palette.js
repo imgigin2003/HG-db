@@ -1,8 +1,22 @@
-import { paletteCategories  } from "../palette-data/index.js";
+import { paletteCategories, umlCategories } from "../palette-data/index.js";
 
-const palette = document.getElementById("palette");
+const bioPalette = document.getElementById("palette");
+const umlPalette = document.getElementById("uml-palette");
 
+// Render Bio categories
 paletteCategories.forEach(category => {
+  const wrapper = createCategoryWrapper(category);
+  bioPalette.appendChild(wrapper);
+});
+
+// Render UML categories
+umlCategories.forEach(category => {
+  const wrapper = createCategoryWrapper(category);
+  umlPalette.appendChild(wrapper);
+});
+
+// Utility to create a palette category DOM element
+function createCategoryWrapper(category) {
   const wrapper = document.createElement("div");
   wrapper.className = "palette-category";
 
@@ -13,39 +27,43 @@ paletteCategories.forEach(category => {
   const content = document.createElement("div");
   content.className = "palette-content";
 
-category.icons.forEach(icon => {
-  let el;
+  category.icons.forEach(icon => {
+    let el;
 
-  if (icon.type === "plane") {
-    el = document.createElement("div");
-    el.className = "palette-icon";
-    el.dataset.type = "plane";
-    el.draggable = true;
+    if (icon.type === "plane") {
+      el = document.createElement("div");
+      el.className = "palette-icon";
+      el.draggable = true;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 40;
-    canvas.height = 40;
-    el.appendChild(canvas);
+      el.dataset.type = icon.type;
+      el.dataset.src = "__plane__";
 
-    drawPlaneIcon(canvas);
-  } else {
-    el = document.createElement("img");
-    el.src = icon.src;
-    el.dataset.src = icon.src;
-    el.className = "palette-icon";
-    el.draggable = true;
-    el.dataset.type = icon.type;
-  }
+      const canvas = document.createElement("canvas");
+      canvas.width = 40;
+      canvas.height = 40;
+      canvas.style.display = "block";
 
-  content.appendChild(el);
-});
+      el.appendChild(canvas);
+      drawPlaneIcon(canvas);
+    } else {
+      el = document.createElement("img");
+      el.className = "palette-icon";
+      el.draggable = true;
 
+      el.src = icon.src;
+      el.dataset.src = icon.src;
+      el.dataset.type = icon.type;
+    }
+
+    content.appendChild(el);
+  });
 
   wrapper.appendChild(header);
   wrapper.appendChild(content);
-  palette.appendChild(wrapper);
-});
+  return wrapper;
+}
 
+// Draw plane icon on canvas
 function drawPlaneIcon(canvas) {
   const ctx = canvas.getContext("2d");
 

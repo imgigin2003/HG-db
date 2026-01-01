@@ -1,7 +1,6 @@
 // biologicalObjects.js
 import * as THREE from "three";
 
-export let selectableObjects = [];
 
 
 
@@ -44,7 +43,7 @@ export function getBioIconSprite({ type, src }, size = 0.12) {
       selected: false
     };
 
-      selectableObjects.push(sprite);
+
       
 
       resolve(sprite);
