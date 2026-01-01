@@ -1,10 +1,10 @@
 fn main() {
-    // Link the Python 3.13 library
-    println!("cargo:rustc-link-lib=python3.12");
+    // Link Python library
+    println!("cargo:rustc-link-lib=python311");
 
-    // Specify the search path for Python libraries (without pythonX.Y suffix)
-    println!("cargo:rustc-link-search=native=/usr/local/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib");
+    // Specify search path for Python libraries
+    println!("cargo:rustc-link-search=native=C:\\Users\\Hp\\AppData\\Local\\Programs\\Python\\Python311\\libs");
 
-    // Ensure Rust rebuilds when Python version changes
+    // Ensure rebuild if Python changes
     println!("cargo:rerun-if-env-changed=PYTHON_SYS_EXECUTABLE");
 }
