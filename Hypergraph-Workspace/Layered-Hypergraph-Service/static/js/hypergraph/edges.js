@@ -7,30 +7,44 @@ import { planeSize } from '../core/plane.js';
 
 
 
-  export function createEdgeEllipse(cx, cz, rx, rz, color = 0x7c3aed) {
-    const shape = new THREE.Shape();
-    shape.absellipse(0, 0, rx, rz, 0, Math.PI * 2);
+export function createEdgeEllipse(cx, cz, rx, rz, color = 0x7c3aed) {
+  const shape = new THREE.Shape();
+  shape.absellipse(0, 0, rx, rz, 0, Math.PI * 2);
 
-    const fillGeom = new THREE.ShapeGeometry(shape, 64);
-    const fillMat = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.18,
-      side: THREE.DoubleSide, depthWrite: false
-    });
-    const fillMesh = new THREE.Mesh(fillGeom, fillMat);
+  const fillGeom = new THREE.ShapeGeometry(shape, 64);
+  const fillMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.18,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
 
-    const points = new THREE.EllipseCurve(0, 0, rx, rz, 0, Math.PI * 2).getPoints(64);
-    const outline = new THREE.LineLoop(
-      new THREE.BufferGeometry().setFromPoints(points),
-      new THREE.LineBasicMaterial({ color })
-    );
+  const fillMesh = new THREE.Mesh(fillGeom, fillMat);
 
-    const group = new THREE.Group();
-    group.rotation.x = -Math.PI / 2;
-    group.position.set(cx, 0.01, cz);
-    group.add(fillMesh, outline);
+  const points = new THREE.EllipseCurve(0, 0, rx, rz, 0, Math.PI * 2).getPoints(64);
+  const outline = new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(points),
+    new THREE.LineBasicMaterial({ color })
+  );
 
-    return group;
-  }
+  const ellipseGroup = new THREE.Group();
+  ellipseGroup.rotation.x = -Math.PI / 2;
+  ellipseGroup.add(fillMesh, outline);
+
+  const labelAnchor = new THREE.Object3D();
+  labelAnchor.position.set(0, 0.12, 0);
+
+  const root = new THREE.Group();
+  root.position.set(cx, 0.01, cz);
+  root.add(ellipseGroup);
+  root.add(labelAnchor);
+
+  root.userData.labelAnchor = labelAnchor;
+
+  return root;
+}
+
 
  export function createEdgeLabel(edgeId, edgeInfo, layerId , handleEdgeClick) {
   const div = document.createElement("div");

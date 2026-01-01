@@ -1,7 +1,12 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='css/main.css') }}">
 
 
-{% block head %} 
+
 <title>hypergraph viewer</title>
 
 <script type="importmap">
@@ -12,61 +17,96 @@
   }
 }
 </script>
+</head>
 
+<body>
 
+<div id="app-root">
 
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="menu-left">
+      <span class="app-title">Hypergraph</span>
+      <button class="top-btn">File</button>
+      <button class="top-btn">Edit</button>
+      <button class="top-btn">View</button>
+      <button class="top-btn">Arrange</button>
+      <button class="top-btn">Extras</button>
+      <button class="top-btn">Help</button>
+      <button class="top-btn" id="import-btn">Import</button>
+      <button class="top-btn" id="export-btn">Export</button>
 
-</script>
-{% endblock %}
+      
+      <button id="create-hyperedge-btn" class="top-btn">
+        + Hyperedge
+      </button>
 
+    <div class="menu-right">
+      <span class="status">100%</span>
+    </div>
+  </header>
 
-{% block body %} 
+  <!-- Main Area -->
+  <div class="main-area">
 
-<div id="palette" class="palette-sidebar"></div>
+    <!-- Left Sidebar -->
+    <aside class="left-sidebar">
+      <div class="section">
+        <button class="section-header">Standard</button>
+        <div class="section-body">…</div>
+      </div>
 
+      <div class="section">
+        <button class="section-header">General</button>
+        <div class="section-body">…</div>
+      </div>
 
- <button id="create-hyperedge-btn" style="
-  position:absolute;
-  top:10px;
-  right:10px;
-  z-index:10;
-  padding:6px 10px;
-  background:#7c3aed;
-  color:white;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-">+ Hyperedge</button>
-
-
- <canvas id="threejs"></canvas>
- <div id="layers"></div>
- <div id="layer-controls" style="
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(255,255,255,0.9);
-  padding: 10px 14px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  font-family: sans-serif;
-  font-size: 13px;
-  max-height: 90vh;
-  overflow-y: auto;
-">
-  <h3 style="margin-top:0;font-size:14px;">Layers</h3>
-  <div id="layer-list"></div>
+      <div class="section">
+        <button class="section-header">UML</button>
+        <div class="section-body">
+         <div class="palette-icon" draggable="true" data-type="plane">
+  <canvas width="40" height="40"></canvas>
 </div>
 
-<div id="info-box"
-     style="position:absolute; top:20px; right:20px; padding:10px;
-            background:rgba(0,0,0,0.8); color:white; border-radius:6px;
-            display:none; max-width:200px;">
+</div>
+      </div>
+
+      <div class="section">
+        <button class="section-header">Bio</button>
+        <div class="section-body">
+         <div id="palette" class="palette-sidebar"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Canvas -->
+    <main class="canvas-wrapper">
+      <canvas id="threejs"></canvas>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+      <h3>Diagram</h3>
+      <label><input type="checkbox" checked /> Grid</label>
+      <label><input type="checkbox" checked /> Guides</label>
+
+      <h3>Style</h3>
+      <label><input type="checkbox" /> Shadows</label>
+      <label><input type="checkbox" /> Connection Arrows</label>
+    </aside>
+
+     <div id="layer-controls">
+
+    <div id="layer-list"></div>
+  </div>
+
+  <div id="info-box"></div>
+
+  </div>
 </div>
 
 
 <script type="module" src="{{ request.url_for('static', path='js/app.js') }}"></script>
 
 
-
-{% endblock %}
+</body>

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import "../palette.js";
 import { selectableObjects, getBioIconSprite } from "./biologicalObjects.js";
+import { createPlane } from './plane.js';
 
 export let sceneNodes = [];
 
@@ -26,52 +27,52 @@ export function setupDragAndDrop(camera, scene, canvas, selectedObjects) {
   canvas.addEventListener("dragover", e => e.preventDefault());
 
   // --- DROP ---
-  canvas.addEventListener("drop", async e => {
-    e.preventDefault();
-    if (!draggedItem) return;
+canvas.addEventListener("drop", async e => {
+  e.preventDefault();
+  if (!draggedItem) return;
 
-    // convert mouse coordinates
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  // convert mouse coordinates
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-    // drop on y=0 plane
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    const pos = new THREE.Vector3();
-    raycaster.setFromCamera(mouse, camera);
-    raycaster.ray.intersectPlane(plane, pos);
-    
-    
+  // drop on y=0 plane
+  const planeRay = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const pos = new THREE.Vector3();
+  raycaster.setFromCamera(mouse, camera);
+  raycaster.ray.intersectPlane(planeRay, pos);
 
+  let objectToAdd = null;
 
-    if (draggedItem.src) {
-      try {
-        const sprite = await getBioIconSprite({
-  type: draggedItem.type,
-  src: draggedItem.src
-})
-
-
-        const square = createSelectionSquare(sprite);
-
-        sprite.userData.selectionRing = square; // keep existing name
-        sprite.add(square);
-
-        sprite.position.copy(pos);
-        scene.add(sprite);
-        selectableObjects.push(sprite);
-        sceneNodes.push(sprite);
-
-
-        console.log("Sprite icon added at", pos);
-      } catch (err) {
-        console.error("Icon load failed:", err);
-      }
+  if (draggedItem.type === "plane") {
+    objectToAdd = createPlane();
+    selectableObjects.push(objectToAdd); 
+  } else if (draggedItem.src) {
+    // existing biological icon code
+    try {
+      const sprite = await getBioIconSprite({
+        type: draggedItem.type,
+        src: draggedItem.src
+      });
+      const square = createSelectionSquare(sprite);
+      sprite.userData.selectionRing = square;
+      sprite.add(square);
+      objectToAdd = sprite;
+      selectableObjects.push(sprite);
+    } catch (err) {
+      console.error("Icon load failed:", err);
     }
+  }
 
-    draggedItem = null;
-  });
+  if (objectToAdd) {
+    objectToAdd.position.copy(pos);
+    scene.add(objectToAdd);
+    sceneNodes.push(objectToAdd);
+    console.log(`${draggedItem.type} added at`, pos);
+  }
 
+  draggedItem = null;
+});
   // --- CLICK SELECTION ---
   window.addEventListener("click", event => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;

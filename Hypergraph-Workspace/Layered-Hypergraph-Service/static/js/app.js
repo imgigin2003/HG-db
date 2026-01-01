@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createScene, handleResize } from './core/scene.js';
+import { createScene } from './core/scene.js';
 import { createPlane, planeSize } from './core/plane.js';
 import { createLabelRenderer, createLabel , relaxLabels } from './hypergraph/labels.js';
 import {  relaxLayerToVenn } from './hypergraph/layout.js';
@@ -22,7 +22,24 @@ let selectedObjects = [];
 const canvas = document.getElementById("threejs");
 const { scene, camera, renderer, controls } = createScene(canvas);
 const labelRenderer = createLabelRenderer();
-handleResize(camera, renderer, labelRenderer);
+function resizeToCanvasWrapper() {
+  const wrapper = document.querySelector(".canvas-wrapper");
+  if (!wrapper) return;
+
+  const width = wrapper.clientWidth;
+  const height = wrapper.clientHeight;
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(width, height, false);
+  labelRenderer.setSize(width, height);
+}
+
+window.addEventListener("resize", resizeToCanvasWrapper);
+resizeToCanvasWrapper();
+
+
 
 
 // ------------------- Geometry / Materials -------------------
@@ -260,6 +277,15 @@ if (labelObjs.length) relaxLabels(labelObjs);
   })
   .catch(err => { console.error(err); });
 
+
+document.querySelectorAll(".section-header").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const body = btn.nextElementSibling;
+    body.style.display = body.style.display === "none" ? "block" : "none";
+  });
+});
+
+
 // ------------------- Animation -------------------
 function animate() {
   requestAnimationFrame(animate);
@@ -270,39 +296,37 @@ function animate() {
 
 setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects);
 
+// EXPORT
+document.getElementById("export-btn").addEventListener("click", () => {
+  exportScene({ sceneNodes });
+});
 
+// IMPORT
+document.getElementById("import-btn").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
 
-createTopBar({
-  onExport: () => {
-    exportScene({  sceneNodes });
-  },
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
 
-  onImport: () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-
-    input.onchange = () => {
-      const file = input.files[0];
-      if (!file) return;
-
-      importScene({
-        file,
-        addNode: async ({ type, position }) => {
-          const sprite = await getBioIconSprite({
+    await importScene({
+      file,
+      addNode: async ({ type, position }) => {
+        const sprite = await getBioIconSprite({
           type,
           src: `/static/palette-data/icons/genetics/${type}.svg`
         });
 
-          sprite.position.set(position.x, position.y, position.z);
-          scene.add(sprite);
-          sceneNodes.push(sprite);
-        }
-      });
-    };
+        sprite.position.set(position.x, position.y, position.z);
+        scene.add(sprite);
+        sceneNodes.push(sprite);
+      }
+    });
+  };
 
-    input.click();
-  }
+  input.click();
 });
 
 

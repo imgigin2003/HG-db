@@ -15,4 +15,3 @@ def get_current_hypergraph():
     if scene is None:
         raise HTTPException(404, "No hypergraph loaded")
     return scene
-
