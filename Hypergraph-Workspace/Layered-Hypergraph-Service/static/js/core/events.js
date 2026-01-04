@@ -3,14 +3,24 @@ import "../palette.js";
 import { getBioIconSprite } from "./biologicalObjects.js";
 import { createPlane } from './plane.js';
 
+
 export let sceneNodes = [];
 export let selectableObjects = [];  
+
+
 
 
 export function setupDragAndDrop(camera, scene, canvas, selectedObjects) {
   let draggedItem = null;
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
+  const planeNormal = camera.getWorldDirection(new THREE.Vector3());
+const dropPlane = new THREE.Plane();
+let draggedSceneObject = null;
+let isDraggingSceneObject = false;
+
+
+
   // --- DRAG START ---
   document.addEventListener("dragstart", e => {
     const icon = e.target.closest(".palette-icon");
@@ -32,34 +42,41 @@ canvas.addEventListener("drop", async e => {
   e.preventDefault();
   if (!draggedItem) return;
 
-  // convert mouse coordinates
- const rect = canvas.getBoundingClientRect();
+  // mouse → NDC
+  const rect = canvas.getBoundingClientRect();
   mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-  // drop on y=0 plane
-  const planeRay = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-  const pos = new THREE.Vector3();
   raycaster.setFromCamera(mouse, camera);
-  raycaster.ray.intersectPlane(planeRay, pos);
+
+  dropPlane.setFromNormalAndCoplanarPoint(
+    planeNormal,
+    new THREE.Vector3(0, 0, 0)
+  );
+
+  const pos = new THREE.Vector3();
+  raycaster.ray.intersectPlane(dropPlane, pos);
 
   let objectToAdd = null;
 
   if (draggedItem.type === "plane") {
     objectToAdd = createPlane();
-    selectableObjects.push(objectToAdd); 
+    selectableObjects.push(objectToAdd);
+
   } else if (draggedItem.src) {
-    // existing biological icon code
     try {
       const sprite = await getBioIconSprite({
         type: draggedItem.type,
         src: draggedItem.src
       });
+
       const square = createSelectionSquare(sprite);
       sprite.userData.selectionRing = square;
       sprite.add(square);
+
       objectToAdd = sprite;
       selectableObjects.push(sprite);
+
     } catch (err) {
       console.error("Icon load failed:", err);
     }
@@ -74,8 +91,62 @@ canvas.addEventListener("drop", async e => {
 
   draggedItem = null;
 });
+
+canvas.addEventListener("mousedown", e => {
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(selectableObjects, true);
+
+  if (hits.length > 0) {
+    draggedSceneObject = hits[0].object;
+
+    while (
+      draggedSceneObject.parent &&
+      !selectableObjects.includes(draggedSceneObject)
+    ) {
+      draggedSceneObject = draggedSceneObject.parent;
+    }
+
+    camera.getWorldDirection(planeNormal);
+    dropPlane.setFromNormalAndCoplanarPoint(
+      planeNormal,
+      draggedSceneObject.position
+    );
+
+    isDraggingSceneObject = false; // reset here
+  }
+});
+canvas.addEventListener("mousemove", e => {
+  if (!draggedSceneObject) return;
+
+  isDraggingSceneObject = true; // 👈 mark as drag
+
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const pos = new THREE.Vector3();
+  if (raycaster.ray.intersectPlane(dropPlane, pos)) {
+    draggedSceneObject.position.copy(pos);
+  }
+});
+
+
+window.addEventListener("mouseup", () => {
+  draggedSceneObject = null;
+});
+
   // --- CLICK SELECTION ---
 window.addEventListener("click", event => {
+    if (isDraggingSceneObject) {
+    isDraggingSceneObject = false;
+    return; // 🚫 stop click selection
+  }
   // Optional: only process if clicked on canvas
   if (event.target !== canvas) return;
 

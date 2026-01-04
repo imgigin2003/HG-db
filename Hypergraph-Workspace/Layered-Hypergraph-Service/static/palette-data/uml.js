@@ -4,7 +4,7 @@ export default {
   icons: [
     {
       type: "plane"
-      // no src on purpose
+   
     }
   ]
 };
