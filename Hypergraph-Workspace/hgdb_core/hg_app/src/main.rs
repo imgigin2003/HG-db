@@ -1,20 +1,13 @@
 use std::ffi::CString;
+use pyo3::prelude::*;
+
 use std::fs;
-use std::os::raw::c_char;
 use std::process::Command;
 
-extern "C" {
-    fn Py_Initialize(); // External function to initialize the Python interpreter.
-    fn Py_Finalize(); // External function to finalize (shut down) the Python interpreter.
-    fn PyRun_SimpleString(command: *const c_char) -> i32; // External function to execute a Python code string.
-}
-
 pub fn main() {
-    println!("Streamlit app is running..");
-    unsafe {
-        // Initialize the Python interpreter
-        Py_Initialize();
 
+    println!("Streamlit app is running..");
+    Python::with_gil(|py| {
         // Dynamically get Python executable path and site-packages
         let setup_code = r#"
 import sys
@@ -30,8 +23,9 @@ sys.path.insert(0, py_script_path)
 "#;
 
         // Convert the setup code to a C-style string and execute it
-        let setup_string = CString::new(setup_code).expect("Failed to create CString for setup code.");
-        PyRun_SimpleString(setup_string.as_ptr());
+        let setup_string =
+            CString::new(setup_code).expect("Failed to create CString for setup code.");
+        py.run(setup_string.as_c_str(), None, None).unwrap();
 
         // Path to the external Python file
         let python_file_path = "py_scripts/main.py";
@@ -41,30 +35,25 @@ sys.path.insert(0, py_script_path)
             .expect("Failed to read the Python file. Ensure the file exists and is readable.");
 
         // Convert the Python script into a CString
-        let python_cstring = CString::new(python_code)
-            .expect("Failed to create CString for Python code.");
+        let python_cstring =
+            CString::new(python_code).expect("Failed to create CString for Python code.");
 
         // Launch Streamlit using the system's Python environment
         let streamlit_command = Command::new("streamlit")
-        .arg("run")
-        .arg(python_file_path)
-        .status()
-        .expect("Failed to start Streamlit server");
+            .arg("run")
+            .arg(python_file_path)
+            .status()
+            .expect("Failed to start Streamlit server");
 
         if streamlit_command.success() {
             ()
         } else {
             eprintln!("Failed to run the Streamlit app. Check if Streamlit is installed and the path is correct.");
         }
-        
-        // Execute the Python script
-        if PyRun_SimpleString(python_cstring.as_ptr()) != 0 {
-            eprintln!("Error occurred while executing the Python script.");
-        }
 
-        // Finalize the Python interpreter
-        Py_Finalize();
-    }
+        // Execute the Python script
+        py.run(python_cstring.as_c_str(), None, None).unwrap();
+    });
 
     println!("Finished executing the Python code from Rust.");
 }
