@@ -2,8 +2,8 @@
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import * as THREE from 'three';
 import { clamp, lerp } from '../utils/helper.js';
-import { planeSize } from '../core/plane.js';
-import { showNodeInfo } from './info.js';
+import { planeSize } from '../scene/plane.js';
+import { showNodeInfo } from '../interaction/info.js';
 
 const LABEL_MIN_DIST = 0.14;     
 const LABEL_RELAX_ITERS = 18;    

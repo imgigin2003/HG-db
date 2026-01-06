@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { clamp, lerp } from '../utils/helper.js';
-import { planeSize } from '../core/plane.js';
+import { planeSize } from '../scene/plane.js';
 
 
 

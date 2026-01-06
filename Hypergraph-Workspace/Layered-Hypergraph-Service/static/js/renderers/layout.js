@@ -1,5 +1,5 @@
 import { clamp , lerp } from '../utils/helper.js';
-import { planeSize } from '../core/plane.js';
+import { planeSize } from '../scene/plane.js';
 import {ensureContains} from '../utils/LayoutUtils.js'
 
 //world variables

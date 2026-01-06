@@ -1,15 +1,15 @@
 import * as THREE from 'three';
-import { createScene } from './core/scene.js';
-import { createPlane, planeSize } from './core/plane.js';
-import { createLabelRenderer, createLabel , relaxLabels } from './hypergraph/labels.js';
-import {  relaxLayerToVenn } from './hypergraph/layout.js';
-import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './hypergraph/edges.js'
-import { showEdgeInfo } from './hypergraph/info.js';
-import {setupDragAndDrop , sceneNodes , selectableObjects} from './core/events.js'
-import {connectRepeatedNodes} from './hypergraph/connectors.js'
-import {createEdgeClickHandler } from './hypergraph/edgeClick.js'
-import { exportScene, importScene } from "./io/hypergraphIO.js";
-import { getBioIconSprite  } from "./core/biologicalObjects.js";
+import { createScene } from './scene/scene.js';
+import { createPlane, planeSize } from './scene/plane.js';
+import { createLabelRenderer, createLabel , relaxLabels } from './renderers/labels.js';
+import {  relaxLayerToVenn } from './renderers/layout.js';
+import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './renderers/edges.js'
+import { showEdgeInfo } from './interaction/info.js';
+import {setupDragAndDrop , sceneNodes , selectableObjects} from './interaction/events.js'
+import {connectRepeatedNodes} from './renderers/connectors.js'
+import {createEdgeClickHandler } from './interaction/edgeClick.js'
+import { exportScene, importScene } from "./data/hypergraphIO.js";
+import { getBioIconSprite  } from "./scene/biologicalObjects.js";
 
 
 
