@@ -13,6 +13,10 @@ export default {
     {
       type:"chromosome",
       src: "/static/palette-data/icons/genetics/chromosome-1.svg"
+    },
+    {
+      type:"virus",
+      src:"/static/palette-data/icons/genetics/virus.svg"
     }
   
   ]
