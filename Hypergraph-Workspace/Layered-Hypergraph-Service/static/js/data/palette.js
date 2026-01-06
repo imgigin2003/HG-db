@@ -1,4 +1,4 @@
-import { paletteCategories, umlCategories } from "../palette-data/index.js";
+import { paletteCategories, umlCategories } from "../../palette-data/index.js";
 
 const bioPalette = document.getElementById("palette");
 const umlPalette = document.getElementById("uml-palette");

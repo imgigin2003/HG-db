@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import "../palette.js";
-import { getBioIconSprite } from "./biologicalObjects.js";
-import { createPlane } from './plane.js';
+import "../data/palette.js";
+import { getBioIconSprite } from "../scene/biologicalObjects.js";
+import { createPlane } from '../scene/plane.js';
 
 
 export let sceneNodes = [];

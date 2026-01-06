@@ -4,7 +4,6 @@ import * as THREE from "three";
 
 
 
-
 export function getBioIconSprite({ type, src }, size = 0.12) {
   return new Promise((resolve, reject) => {
     const img = new Image();
