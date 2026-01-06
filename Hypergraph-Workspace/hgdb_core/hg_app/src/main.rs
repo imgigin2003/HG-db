@@ -5,6 +5,19 @@ use std::fs;
 use std::process::Command;
 
 pub fn main() {
+    // Example of Python imports (works)
+    // Python::with_gil(|py| -> PyResult<()> {
+    //     _ = py.import("app_manager")?;
+    //     _ = py.import("config_manager")?;
+    //     _ = py.import("data_loader")?;
+    //     _ = py.import("dual_hypergraph")?;
+    //     _ = py.import("hypergraph")?;
+    //     _ = py.import("layered_hypergraph")?;
+    //     _ = py.import("main")?;
+    //     _ = py.import("visualization_manager")?;
+    //     Ok(())
+    // })
+    // .unwrap();
 
     println!("Streamlit app is running..");
     Python::with_gil(|py| {
