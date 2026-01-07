@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-pyo3 = { version = "0.23.4", features = ["extension-module"] }
+pyo3 = { version = "0.23.4", features = ["auto-initialize"] }
 libc = "0.2.170"
