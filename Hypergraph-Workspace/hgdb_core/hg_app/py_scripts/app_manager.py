@@ -9,6 +9,7 @@ from hypergraph import HypergraphManager
 from dual_hypergraph import DualHypergraphManager
 from layered_hypergraph import LayeredHypergraphManager
 
+
 class AppManager:
     def __init__(self):
         self.data_loader = DataLoader()
@@ -48,33 +49,65 @@ class AppManager:
                     st.session_state.active_menu = "bio"
 
             menu_options = (
-                ["Introduction", "Interactive Hypergraph", "Hyperpath", "Dual Hypergraph", 
-                 "Layered Hypergraph", "Files/Analysis", "Setting"]
+                [
+                    "Introduction",
+                    "Interactive Hypergraph",
+                    "Hyperpath",
+                    "Dual Hypergraph",
+                    "Layered Hypergraph",
+                    "Files/Analysis",
+                    "Setting",
+                ]
                 if st.session_state.active_menu == "main"
                 else ["Atoms", "Molecules", "Genes"]
             )
-            
+
             menu_icons = (
-                ['house', 'graph-up','sign-turn-slight-right', 'kanban', 'graph-down', 'cloud-upload', 'gear']
+                [
+                    "house",
+                    "graph-up",
+                    "sign-turn-slight-right",
+                    "kanban",
+                    "graph-down",
+                    "cloud-upload",
+                    "gear",
+                ]
                 if st.session_state.active_menu == "main"
-                else ['capsule', 'virus', 'gender-ambiguous']
+                else ["capsule", "virus", "gender-ambiguous"]
             )
-            
+
             selected = option_menu(
-                "HG-DB Project" if st.session_state.active_menu == "main" else "Bio",
+                (
+                    "HG-DB Project"
+                    if st.session_state.active_menu == "main"
+                    else "Bio"
+                ),
                 menu_options,
                 icons=menu_icons,
-                menu_icon="bezier" if st.session_state.active_menu == "main" else "file-medical",
+                menu_icon=(
+                    "bezier"
+                    if st.session_state.active_menu == "main"
+                    else "file-medical"
+                ),
                 default_index=0,
                 styles={
                     "container": {"padding": "5!important"},
                     "icon": {"color": "orange", "font-size": "25px"},
-                    "nav-link": {"font-size": "16px", "text-align": "left", "margin": "0px", "--hover-color": "#A594F9"},
+                    "nav-link": {
+                        "font-size": "16px",
+                        "text-align": "left",
+                        "margin": "0px",
+                        "--hover-color": "#A594F9",
+                    },
                     "nav-link-selected": {"background-color": "#7E60BF"},
                 },
-                key="main_menu" if st.session_state.active_menu == "main" else "bio_menu"
+                key=(
+                    "main_menu"
+                    if st.session_state.active_menu == "main"
+                    else "bio_menu"
+                ),
             )
-            
+
             return selected
 
     def render_main_menu(self, selected):
@@ -104,15 +137,23 @@ class AppManager:
     def render_introduction(self):
         st.title("Introduction")
         st.write("Welcome to the HG-DB Project! 📌")
-        st.write("This project provides a comprehensive framework for working with hypergraphs.")
-        st.write("Features: Interactive Hypergraph, Dual Hypergraph, Layered Hypergraph, File Management")
-        st.write("Ensure correct database and Python configuration to avoid issues.")
-        st.write("Requires Python 3.8 or higher. Contact the development team for issues.")
+        st.write(
+            "This project provides a comprehensive framework for working with hypergraphs."
+        )
+        st.write(
+            "Features: Interactive Hypergraph, Dual Hypergraph, Layered Hypergraph, File Management"
+        )
+        st.write(
+            "Ensure correct database and Python configuration to avoid issues."
+        )
+        st.write(
+            "Requires Python 3.8 or higher. Contact the development team for issues."
+        )
 
     def render_interactive_hypergraph(self):
         st.title("Interactive Hypergraph")
         tabs = st.tabs(["Visualization", "Properties", "Tables", "Edit"])
-        
+
         with tabs[0]:
             st.write("### Hypergraph Visualization")
             sub_tabs = st.tabs(["Static Visualize", "Dynamic Visualize"])
@@ -123,7 +164,7 @@ class AppManager:
                         "Visualize based on traversable:",
                         options=["edges", "nodes"],
                         format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
-                        key="hypergraph_viz_mode"
+                        key="hypergraph_viz_mode",
                     )
                 with col2:
                     display_mode = st.radio(
@@ -132,18 +173,18 @@ class AppManager:
                         format_func=lambda x: {
                             "default": "Default (filled ellipses)",
                             "simple": "Simple (outline ellipses)",
-                            "minimal": "Minimal (lines only)"
+                            "minimal": "Minimal (lines only)",
                         }[x],
-                        key="hypergraph_display_mode"
+                        key="hypergraph_display_mode",
                     )
-                
+
                 self.visualizer.display_hypergraph_visualization(
-                    st.session_state.hyperedges, 
-                    "Hypergraph", 
-                    visualize_mode, 
+                    st.session_state.hyperedges,
+                    "Hypergraph",
+                    visualize_mode,
                     tab_key="hypergraph",
                     highlighted_path=None,
-                    display_mode=display_mode
+                    display_mode=display_mode,
                 )
             with sub_tabs[1]:
                 st.write("### Interactive Hypergraph Visualization")
@@ -153,37 +194,46 @@ class AppManager:
             st.write("### Properties")
             H = self.hypergraph.create_hypergraph()[0]
             self.visualizer.display_data_properties(H, "Hypergraph")
-        
+
         with tabs[2]:
             st.write("### Tables")
-            self.visualizer.display_table(st.session_state.hyperedges, "Hypergraph")
-        
+            self.visualizer.display_table(
+                st.session_state.hyperedges, "Hypergraph"
+            )
+
         with tabs[3]:
             self.render_hypergraph_editor()
 
     def render_hypergraph_editor(self):
         st.write("### Edit Hypergraph")
         edit_sub_tabs = st.tabs(["Add", "Edit", "Delete"])
-        
+
         with edit_sub_tabs[0]:
             st.write("#### Add Hyperedge")
             new_edge_id = st.text_input("Edge ID:", key="add_edge_id")
-            new_nodes = st.text_input("Nodes (comma-separated):", key="add_nodes")
+            new_nodes = st.text_input(
+                "Nodes (comma-separated):", key="add_nodes"
+            )
             new_layer = st.selectbox(
-                "Layer:", ["Top", "Middle", "Lower"],
-                key="add_layer_select"
+                "Layer:", ["Top", "Middle", "Lower"], key="add_layer_select"
             )
             is_traverse = st.checkbox("Traversable", key="add_traverse")
             is_directed = st.checkbox("Directed", key="add_directed")
-            
-            all_nodes = set().union(*[data["nodes"] for data in st.session_state.hyperedges.values()])
+
+            all_nodes = set().union(
+                *[
+                    data["nodes"]
+                    for data in st.session_state.hyperedges.values()
+                ]
+            )
             target_node = None
             if is_directed:
                 target_node = st.selectbox(
-                    "Target Node:", list(all_nodes),
-                    key="add_target_node_select"
+                    "Target Node:",
+                    list(all_nodes),
+                    key="add_target_node_select",
                 )
-            
+
             if st.button("Add Hyperedge", key="add_hyperedge_btn"):
                 if new_edge_id and new_nodes:
                     if new_edge_id in st.session_state.hyperedges:
@@ -199,38 +249,47 @@ class AppManager:
                             "type": "linked",
                             "layer": layer_map[new_layer],
                             "directed": is_directed,
-                            "target_node": target_node
+                            "target_node": target_node,
                         }
-                        st.success(f"Added hyperedge '{new_edge_id}' in {new_layer} layer!")
+                        st.success(
+                            f"Added hyperedge '{new_edge_id}' in {new_layer} layer!"
+                        )
 
         with edit_sub_tabs[1]:
             st.write("#### Edit Hyperedge")
             edge_to_edit = st.selectbox(
-                "Edge:", list(st.session_state.hyperedges.keys()),
-                key="edit_edge_select"
+                "Edge:",
+                list(st.session_state.hyperedges.keys()),
+                key="edit_edge_select",
             )
-            edited_nodes = st.text_input("New nodes (comma-separated):", key="edit_nodes_input")
+            edited_nodes = st.text_input(
+                "New nodes (comma-separated):", key="edit_nodes_input"
+            )
             edited_layer = st.selectbox(
-                "New layer:", ["Top", "Middle", "Lower"],
-                key="edit_layer_select"
+                "New layer:",
+                ["Top", "Middle", "Lower"],
+                key="edit_layer_select",
             )
             if st.button("Edit Hyperedge", key="edit_hyperedge_btn"):
                 if edge_to_edit and edited_nodes:
                     new_nodes_set = set(edited_nodes.split(","))
                     layer_map = {"Top": 0, "Middle": 1, "Lower": 2}
-                    st.session_state.hyperedges[edge_to_edit].update({
-                        "nodes": new_nodes_set,
-                        "head": new_nodes_set,
-                        "tail": set(),
-                        "layer": layer_map[edited_layer]
-                    })
+                    st.session_state.hyperedges[edge_to_edit].update(
+                        {
+                            "nodes": new_nodes_set,
+                            "head": new_nodes_set,
+                            "tail": set(),
+                            "layer": layer_map[edited_layer],
+                        }
+                    )
                     st.success(f"Updated hyperedge '{edge_to_edit}'!")
 
         with edit_sub_tabs[2]:
             st.write("#### Delete Hyperedge")
             edge_to_delete = st.selectbox(
-                "Edge:", list(st.session_state.hyperedges.keys()),
-                key="delete_edge_select"
+                "Edge:",
+                list(st.session_state.hyperedges.keys()),
+                key="delete_edge_select",
             )
             if st.button("Delete Hyperedge", key="delete_hyperedge_btn"):
                 del st.session_state.hyperedges[edge_to_delete]
@@ -242,14 +301,18 @@ class AppManager:
         if paths:
             path_ids = [path["id"] for path in paths]
             selected_path_id = st.selectbox(
-                "Select a Hyperpath: ", path_ids,
-                key="hyperpath_select"
+                "Select a Hyperpath: ", path_ids, key="hyperpath_select"
             )
             if selected_path_id:
-                selected_path = next(path for path in paths if path["id"] == selected_path_id)
+                selected_path = next(
+                    path for path in paths if path["id"] == selected_path_id
+                )
                 self.visualizer.display_hypergraph_visualization(
-                    st.session_state.hyperedges, "Hyperpath", visualize_mode="edges",
-                    tab_key="hyperpath", highlighted_path=selected_path
+                    st.session_state.hyperedges,
+                    "Hyperpath",
+                    visualize_mode="edges",
+                    tab_key="hyperpath",
+                    highlighted_path=selected_path,
                 )
             else:
                 st.warning("No Hyperpath found in paths.json")
@@ -257,40 +320,58 @@ class AppManager:
     def render_dual_hypergraph(self):
         st.title("Dual Hypergraph")
         tabs = st.tabs(["Visualization", "Properties", "Tables"])
-        
+
         with tabs[0]:
             self.visualizer.display_hypergraph_visualization(
-                st.session_state.hyperedges, "Dual Hypergraph", is_dual=True, tab_key="dual")
-        
+                st.session_state.hyperedges,
+                "Dual Hypergraph",
+                is_dual=True,
+                tab_key="dual",
+            )
+
         with tabs[1]:
-            H_dual = self.dual_hypergraph.create_dual_hypergraph(st.session_state.hyperedges)[0]
+            H_dual = self.dual_hypergraph.create_dual_hypergraph(
+                st.session_state.hyperedges
+            )[0]
             self.visualizer.display_data_properties(H_dual, "Dual Hypergraph")
-        
+
         with tabs[2]:
-            _, dual_hyperedges = self.dual_hypergraph.create_dual_hypergraph(st.session_state.hyperedges)
+            _, dual_hyperedges = self.dual_hypergraph.create_dual_hypergraph(
+                st.session_state.hyperedges
+            )
             self.visualizer.display_table(dual_hyperedges, "Dual Hypergraph")
 
     def render_layered_hypergraph(self):
         st.title("Layered Hypergraph")
         self.visualizer.display_hypergraph_visualization(
-            st.session_state.hyperedges, "Layered Hypergraph", is_layered=True, tab_key="layered")
+            st.session_state.hyperedges,
+            "Layered Hypergraph",
+            is_layered=True,
+            tab_key="layered",
+        )
 
     def render_files_analysis(self):
         st.title("Files/Analysis")
         edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
         upload_dir = self.config_manager.ensure_upload_dir()
-        
+
         with edit_sub_tabs[0]:
             st.write("#### Add File")
-            uploaded_file = st.file_uploader("Upload file:", key="file_uploader")
+            uploaded_file = st.file_uploader(
+                "Upload file:", key="file_uploader"
+            )
             if st.button("Upload File", key="upload_file_btn"):
                 if uploaded_file and upload_dir:
                     file_path = os.path.join(upload_dir, uploaded_file.name)
                     try:
                         with open(file_path, "wb") as f:
                             f.write(uploaded_file.getbuffer())
-                        st.session_state.file_db[uploaded_file.name] = file_path
-                        st.success(f"Uploaded '{uploaded_file.name}' to {upload_dir}!")
+                        st.session_state.file_db[uploaded_file.name] = (
+                            file_path
+                        )
+                        st.success(
+                            f"Uploaded '{uploaded_file.name}' to {upload_dir}!"
+                        )
                     except Exception as e:
                         st.error(f"Upload failed: {str(e)}")
 
@@ -298,8 +379,9 @@ class AppManager:
             st.write("#### Delete File")
             if st.session_state.file_db:
                 file_to_delete = st.selectbox(
-                    "File:", list(st.session_state.file_db.keys()),
-                    key="delete_file_select"
+                    "File:",
+                    list(st.session_state.file_db.keys()),
+                    key="delete_file_select",
                 )
                 if st.button("Delete File", key="delete_file_btn"):
                     file_path = st.session_state.file_db[file_to_delete]
@@ -316,8 +398,14 @@ class AppManager:
             st.write("#### Files List")
             if st.session_state.file_db:
                 file_data = [
-                    {"File Name": name, "Path": path, "Size (bytes)": os.path.getsize(path), "Upload Directory": upload_dir}
-                    for name, path in st.session_state.file_db.items() if os.path.exists(path)
+                    {
+                        "File Name": name,
+                        "Path": path,
+                        "Size (bytes)": os.path.getsize(path),
+                        "Upload Directory": upload_dir,
+                    }
+                    for name, path in st.session_state.file_db.items()
+                    if os.path.exists(path)
                 ]
                 st.dataframe(pd.DataFrame(file_data))
             else:
@@ -326,36 +414,50 @@ class AppManager:
     def render_setting(self):
         st.title("Configuration")
         tabs = st.tabs(["Configuration", "DB-Config Properties"])
-        
+
         with tabs[0]:
             st.write("Apply configurations to avoid errors! ⚠️")
-            
+
             st.subheader("Database Path")
             current_db_path = self.config_manager.load_db_path()
-            new_db_path = st.text_input("New database path:", value=current_db_path, key="db_path_input")
+            new_db_path = st.text_input(
+                "New database path:",
+                value=current_db_path,
+                key="db_path_input",
+            )
             if st.button("Update DB Path", key="update_db_path_btn"):
                 if self.config_manager.update_db_path(new_db_path):
                     st.success("Database path updated!")
                 else:
                     st.error("Failed to update database path.")
-            
+
             st.subheader("Python Configuration")
-            if st.button("Auto-configure Python", key="auto_config_python_btn"):
+            if st.button(
+                "Auto-configure Python", key="auto_config_python_btn"
+            ):
                 python_lib_path = self.config_manager.get_python_library_path()
                 python_version = self.config_manager.get_python_version()
                 if python_lib_path and python_version:
-                    if self.config_manager.update_build_rs(python_lib_path, python_version):
-                        st.success(f"Python {python_version} configured at {python_lib_path}!")
+                    if self.config_manager.update_build_rs(
+                        python_lib_path, python_version
+                    ):
+                        st.success(
+                            f"Python {python_version} configured at {python_lib_path}!"
+                        )
                     else:
                         st.error("Failed to update build.rs.")
                 else:
                     st.error("Could not detect Python configuration.")
-            
+
             st.subheader("Upload Directory")
-            new_upload_dir = st.text_input("New upload directory:", 
-                                         value=self.config_manager.ensure_upload_dir(), 
-                                         key="upload_dir_input")
-            if st.button("Update Upload Directory", key="update_upload_dir_btn"):
+            new_upload_dir = st.text_input(
+                "New upload directory:",
+                value=self.config_manager.ensure_upload_dir(),
+                key="upload_dir_input",
+            )
+            if st.button(
+                "Update Upload Directory", key="update_upload_dir_btn"
+            ):
                 try:
                     os.makedirs(new_upload_dir, exist_ok=True)
                     st.session_state.upload_dir = new_upload_dir
@@ -370,58 +472,93 @@ class AppManager:
 
     def render_atoms(self):
         st.title("Atoms")
-        tabs = st.tabs(["Visualization", "Layered Visualization", "Properties"])
-        
+        tabs = st.tabs(
+            ["Visualization", "Layered Visualization", "Properties"]
+        )
+
         with tabs[0]:
             self.visualizer.display_hypergraph_visualization(
-                self.data_loader.load_atoms_data(), "Atoms", visualize_mode="nodes", tab_key="atoms")
-        
+                self.data_loader.load_atoms_data(),
+                "Atoms",
+                visualize_mode="nodes",
+                tab_key="atoms",
+            )
+
         with tabs[1]:
             self.visualizer.display_hypergraph_visualization(
-                self.data_loader.load_atoms_data(), "Layered Atoms", is_layered=True, tab_key="layered_atoms")
-        
+                self.data_loader.load_atoms_data(),
+                "Layered Atoms",
+                is_layered=True,
+                tab_key="layered_atoms",
+            )
+
         with tabs[2]:
-            self.visualizer.display_data_properties(self.data_loader.load_atoms_data(), "Atoms")
+            self.visualizer.display_data_properties(
+                self.data_loader.load_atoms_data(), "Atoms"
+            )
 
     def render_molecules(self):
         st.title("Molecules")
-        tabs = st.tabs(["Visualization", "Layered Visualization", "Properties"])
-        
+        tabs = st.tabs(
+            ["Visualization", "Layered Visualization", "Properties"]
+        )
+
         with tabs[0]:
             self.visualizer.display_hypergraph_visualization(
-                self.data_loader.load_mols_data(), "Molecules", visualize_mode="edges", tab_key="molecules")
-        
+                self.data_loader.load_mols_data(),
+                "Molecules",
+                visualize_mode="edges",
+                tab_key="molecules",
+            )
+
         with tabs[1]:
             self.visualizer.display_hypergraph_visualization(
-                self.data_loader.load_mols_data(), "Layered Molecules", is_layered=True, tab_key="layered_molecules")
-        
+                self.data_loader.load_mols_data(),
+                "Layered Molecules",
+                is_layered=True,
+                tab_key="layered_molecules",
+            )
+
         with tabs[2]:
-            self.visualizer.display_data_properties(self.data_loader.load_mols_data(), "Molecules")
+            self.visualizer.display_data_properties(
+                self.data_loader.load_mols_data(), "Molecules"
+            )
 
     def render_genes(self):
         st.title("Genes")
-        tabs = st.tabs(["Visualization", "Layered Visualization", "Properties"])
-        
+        tabs = st.tabs(
+            ["Visualization", "Layered Visualization", "Properties"]
+        )
+
         with tabs[0]:
             self.visualizer.display_hypergraph_visualization(
-                self.data_loader.load_genes_data(), "Genes", visualize_mode="edges", tab_key="genes")
-        
+                self.data_loader.load_genes_data(),
+                "Genes",
+                visualize_mode="edges",
+                tab_key="genes",
+            )
+
         with tabs[1]:
             data = self.data_loader.load_genes_data()
             for gene_name, gene_data in data.items():
                 chrom = gene_data["properties"]["chromosome_location"]
-                chrom_num = ''.join(filter(str.isdigit, chrom.split('q')[0].split('p')[0]))
+                chrom_num = "".join(
+                    filter(str.isdigit, chrom.split("q")[0].split("p")[0])
+                )
                 gene_data["layer"] = int(chrom_num) % 3 if chrom_num else 0
             self.visualizer.display_hypergraph_visualization(
-                data, "Layered Genes", is_layered=True, tab_key="layered_genes")
-        
+                data, "Layered Genes", is_layered=True, tab_key="layered_genes"
+            )
+
         with tabs[2]:
-            self.visualizer.display_data_properties(self.data_loader.load_genes_data(), "Genes")
+            self.visualizer.display_data_properties(
+                self.data_loader.load_genes_data(), "Genes"
+            )
 
     def run(self):
         self.initialize_session_state()
         selected = self.render_sidebar()
-        
+
         if st.session_state.active_menu == "main":
             self.render_main_menu(selected)
         elif st.session_state.active_menu == "bio":
