@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { createScene } from './scene/scene.js';
 import { createPlane, planeSize } from './scene/plane.js';
 import { createLabelRenderer, createLabel , relaxLabels } from './renderers/labels.js';
-import {  relaxLayerToVenn } from './renderers/layout.js';
+import {  relaxLayerToVenn } from './renderers/sharedNodes.js';
 import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './renderers/edges.js'
 import { showEdgeInfo } from './interaction/info.js';
 import {setupDragAndDrop , sceneNodes , selectableObjects} from './interaction/events.js'
