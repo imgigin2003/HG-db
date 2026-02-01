@@ -8,3 +8,7 @@ To run, add the scripts to Python path (assuming you are in `hg_app`):
 ``` sh
 export PYTHONPATH="$PWD/py_scripts"
 ```
+
+# Contribution
+
+Every Python source must be formatted via `black`.
