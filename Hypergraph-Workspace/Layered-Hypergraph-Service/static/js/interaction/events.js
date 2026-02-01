@@ -6,6 +6,30 @@ import { createPlane } from '../scene/plane.js';
 
 export let sceneNodes = [];
 export let selectableObjects = [];  
+const undoStack = [];
+
+export function undoLast() {
+  const action = undoStack.pop();
+  if (!action) return;
+
+  action();
+}
+
+export function clearScene(scene) {
+  sceneNodes.forEach(obj => {
+    // remove selectionRing if exists
+    if (obj.userData.selectionRing) {
+      obj.remove(obj.userData.selectionRing);
+      delete obj.userData.selectionRing;
+    }
+
+    if (obj.parent) obj.parent.remove(obj);
+  });
+
+  sceneNodes.length = 0;
+  selectableObjects.length = 0;
+  undoStack.length = 0;
+}
 
 
 
@@ -82,12 +106,24 @@ canvas.addEventListener("drop", async e => {
     }
   }
 
-  if (objectToAdd) {
-    objectToAdd.position.copy(pos);
-    scene.add(objectToAdd);
-    sceneNodes.push(objectToAdd);
-    console.log(`${draggedItem.type} added at`, pos);
-  }
+if (objectToAdd) {
+  objectToAdd.position.copy(pos);
+  scene.add(objectToAdd);
+
+  sceneNodes.push(objectToAdd);
+  
+  // 🔑 record undo action
+  undoStack.push(() => {
+    scene.remove(objectToAdd);
+
+    const i1 = sceneNodes.indexOf(objectToAdd);
+    if (i1 !== -1) sceneNodes.splice(i1, 1);
+
+    const i2 = selectableObjects.indexOf(objectToAdd);
+    if (i2 !== -1) selectableObjects.splice(i2, 1);
+  });
+}
+
 
   draggedItem = null;
 });

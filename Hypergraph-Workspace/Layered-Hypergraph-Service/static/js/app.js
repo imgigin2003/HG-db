@@ -5,7 +5,7 @@ import { createLabelRenderer, createLabel , relaxLabels } from './renderers/labe
 import {  relaxLayerToVenn } from './renderers/sharedNodes.js';
 import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './renderers/edges.js'
 import { showEdgeInfo } from './interaction/info.js';
-import {setupDragAndDrop , sceneNodes , selectableObjects} from './interaction/events.js'
+import {setupDragAndDrop , sceneNodes , selectableObjects ,undoLast, clearScene} from './interaction/events.js'
 import {connectRepeatedNodes} from './renderers/connectors.js'
 import {createEdgeClickHandler } from './interaction/edgeClick.js'
 import { exportScene, importScene } from "./data/hypergraphIO.js";
@@ -57,6 +57,7 @@ scene.add(connectorsGroup);
     return;
   }
 
+
   // compute bounding ellipse
   const positions = selectedObjects.map(o => o.position);
   const cx = positions.reduce((a, p) => a + p.x, 0) / positions.length;
@@ -92,7 +93,6 @@ scene.add(connectorsGroup);
 
   selectedObjects.length = 0; // clear the array
 });
-
 
 
 
@@ -303,6 +303,15 @@ function animate() {
 }
 
 setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects);
+
+  document.getElementById("undo-btn").onclick = () => {
+  undoLast();
+};
+
+document.getElementById("clear-btn").onclick = () => {
+  clearScene(scene);
+};
+
 
 // EXPORT
 document.getElementById("export-btn").addEventListener("click", () => {
