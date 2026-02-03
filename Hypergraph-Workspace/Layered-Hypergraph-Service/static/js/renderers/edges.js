@@ -7,9 +7,17 @@ import { planeSize } from '../scene/plane.js';
 
 
 
-export function createEdgeEllipse(cx, cz, rx, rz, color = 0x7c3aed) {
+export function createEdgeEllipse(
+  cx,
+  cy,
+  cz,
+  rx,
+  ry,
+  color = 0x7c3aed,
+  { mode = "floor" } = {}
+) {
   const shape = new THREE.Shape();
-  shape.absellipse(0, 0, rx, rz, 0, Math.PI * 2);
+  shape.absellipse(0, 0, rx, ry, 0, Math.PI * 2);
 
   const fillGeom = new THREE.ShapeGeometry(shape, 64);
   const fillMat = new THREE.MeshBasicMaterial({
@@ -22,24 +30,31 @@ export function createEdgeEllipse(cx, cz, rx, rz, color = 0x7c3aed) {
 
   const fillMesh = new THREE.Mesh(fillGeom, fillMat);
 
-  const points = new THREE.EllipseCurve(0, 0, rx, rz, 0, Math.PI * 2).getPoints(64);
+  const points = new THREE.EllipseCurve(0, 0, rx, ry, 0, Math.PI * 2).getPoints(64);
   const outline = new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints(points),
     new THREE.LineBasicMaterial({ color })
   );
 
   const ellipseGroup = new THREE.Group();
-  ellipseGroup.rotation.x = -Math.PI / 2;
   ellipseGroup.add(fillMesh, outline);
 
   const labelAnchor = new THREE.Object3D();
   labelAnchor.position.set(0, 0.12, 0);
 
   const root = new THREE.Group();
-  root.position.set(cx, 0.01, cz);
+
+  if (mode === "floor") {
+    // 🌍 default hyperedges
+    ellipseGroup.rotation.x = -Math.PI / 2;
+    root.position.set(cx, 0.01, cz);
+  } else {
+    // 🧬 biological selection hyperedges
+    root.position.set(cx, cy, cz + 0.01);
+  }
+
   root.add(ellipseGroup);
   root.add(labelAnchor);
-
   root.userData.labelAnchor = labelAnchor;
 
   return root;
