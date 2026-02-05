@@ -126,8 +126,23 @@ html, body {
   padding: 6px;
 }
 
-/* Palette items */
-.palette-item,
+.palette-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;               /* NEW */
+
+  padding: 4px;
+  background: transparent;
+  border: none;
+}
+
+.palette-item:hover .palette-icon {
+  background: #f1f7ff;
+  border-color: #93c5fd;
+}
+
+
 .palette-icon {
   background: white;
   border: 1px solid var(--border);
@@ -138,31 +153,44 @@ html, body {
 }
 
 
-
-
-
-.palette-item:hover 
-,.palette-icon:hover {
-  background: #f1f7ff;
+.palette-label {
+  font-size: 10px;
+  color: #4b5563;
+  margin-top: 4px;        /* was 2px */
+  text-align: center;
+  line-height: 1.3;
+  user-select: none;
 }
+
 
 
 .palette-header {
   width: 100%;
   background: none;
   border: none;
-   color: var(--text-main);
-  padding: 10px;
+  color: var(--text-main);
+  padding: 12px 10px;
   font-size: 14px;
+  font-weight: 600;
+
+  /* NEW */
+  margin-top: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
   text-align: left;
   cursor: pointer;
 }
 
+
 .palette-content {
-  padding: 6px 10px;
+  padding: 10px 10px 14px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+
+  /* NEW */
+  margin-bottom: 6px;
 }
 
 .palette-content.collapsed {
@@ -197,6 +225,13 @@ html, body {
   height: 100%;
   overflow-y: auto;
 }
+
+.bio-label {
+  backdrop-filter: blur(2px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transform: translateY(2px);
+}
+
 
 /* Common button style */
 .sidebar-btn {
