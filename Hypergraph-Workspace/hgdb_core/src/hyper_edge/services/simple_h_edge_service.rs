@@ -49,14 +49,14 @@ where
         let dual_edge = DualHyperEdge {
             id: dual_edge_id.clone(),
             name: format!("Dual of {}", original_edge.name),
-            prime_simple_hyper_edge: std::borrow::Cow::Borrowed(&original_edge),
+            prime_simple_hyper_edge: original_edge.clone(), 
             dual_properties: original_edge.main_properties.clone(),
             traversable: original_edge.traversable,
             head_hyper_nodes: Box::new(head_nodes),
             tail_hyper_nodes: original_edge
                 .tail_hyper_nodes
                 .as_ref()
-                .map(|nodes| Box::new(nodes.iter().map(|node| node.id.clone()).collect::<Vec<String>>())),
+                .map(|nodes| Box::new(nodes.iter().map(|node| node.id.clone()).collect())),
             incidence_matrix,
             transposed_matrix,
         };

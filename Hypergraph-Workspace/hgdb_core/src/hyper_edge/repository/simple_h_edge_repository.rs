@@ -32,8 +32,6 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
 
     /// Method to create (insert) a SimpleHyperEdge
     fn create(&self, key: &str, mut edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-
-        // Check and add default properties if missing
         ["layer", "level", "aspect"].iter().for_each(|prop_key| {
             if !edge.main_properties.iter().any(|p| p.key == *prop_key) {
                 edge.main_properties.push(Property {
@@ -44,13 +42,14 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
             }
         });
 
-        // Serialize the SimpleHyperEdge to Vec<u8>
+        // calculate matrix
+        edge.incidence_matrix = self.create_incidence_matrix(&edge);
+
         let serialized_edge = to_string_pretty(&edge).map_err(|e| {
-            eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
-            Box::new(e) as Box<dyn Error> // Return as a Boxed error
+            eprintln!("Serialization error for edge {}: {:?}", key, e);
+            Box::new(e) as Box<dyn Error>
         })?;
 
-        // Insert the serialized edge into the database
         self.db.put(key, serialized_edge)?;
         Ok(())
     }
