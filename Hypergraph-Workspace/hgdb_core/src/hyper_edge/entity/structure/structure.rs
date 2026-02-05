@@ -1,13 +1,12 @@
-use serde::{Deserialize, Serialize}; // For serialization and deserialization
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)] 
-/// Represents a structure with a name and an optional description
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct StructuralProperty {
-    pub address: Vec<String> // The address of the structure
+    pub address: Vec<String>,
+    pub layer_index: Option<usize>,  
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)] 
-/// Represents a structure with a name and an optional description
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Traverse {
-    pub path: Vec<String> // The path of the structure
+    pub path: Vec<String>
 }

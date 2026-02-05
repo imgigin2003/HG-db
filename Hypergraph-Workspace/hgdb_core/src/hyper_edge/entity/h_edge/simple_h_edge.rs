@@ -1,8 +1,7 @@
-use serde::{Serialize, Deserialize}; // For serializing and deserializing data
-use std::hash::Hash; // For implementing hash-based collections
+use serde::{Deserialize, Serialize};
+use std::hash::Hash;
 
-// Deriving Serialize, Deserialize, and Debug traits for the PropertyType enum
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)] 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PropertyType {
     Simple,
     Main,
@@ -10,23 +9,21 @@ pub enum PropertyType {
     ExtraInfo,
 }
 
-// Deriving Serialize, Deserialize, and Debug traits for the Property struct
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Property<K: Eq + Hash, V: Eq + Hash> {
-    pub key: K, // The key for the property
-    pub value: Vec<V>, // The value associated with the key
-    pub p_type: PropertyType, // The type of the property
+    pub key: K,
+    pub value: Vec<V>,
+    pub p_type: PropertyType,
 }
 
-// Deriving Serialize, Deserialize, and Debug traits for the SimpleHyperEdge struct
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash)]
-pub struct SimpleHyperEdge<T: Eq + Hash + ToString, K: Eq + Hash, V: Eq + Hash> {
-    pub id: T, // The unique ID for the hyperedge
-    pub name: T, // The name of the hyperedge
-    pub main_properties: Vec<Property<K,V>>, // A list of properties associated with the hyperedge
-    pub traversable: bool, // A flag to mark whether the hyperedge is traversable
-    pub directed: bool, // a flag to set wheter a graph is directed or undirected
-    pub head_hyper_nodes: Option<Box<Vec<SimpleHyperEdge<T, K, V>>>>, // A vector of head hypernodes (recursive structure)
-    pub tail_hyper_nodes: Option<Box<Vec<SimpleHyperEdge<T, K, V>>>>, // A vector of tail hypernodes (recursive structure)
-    pub incidence_matrix: Vec<Vec<i8>> // A vector to save the matrices
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SimpleHyperEdge<T: Eq + Hash + Clone, K: Eq + Hash, V: Eq + Hash> {
+    pub id: T,
+    pub name: T,
+    pub main_properties: Vec<Property<K, V>>,
+    pub traversable: bool,
+    pub directed: bool,
+    pub head_hyper_nodes: Option<Box<Vec<SimpleHyperEdge<T, K, V>>>>,
+    pub tail_hyper_nodes: Option<Box<Vec<SimpleHyperEdge<T, K, V>>>>,
+    pub incidence_matrix: Vec<Vec<i8>>,
 }
