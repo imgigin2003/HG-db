@@ -55,27 +55,36 @@ mod tests {
                 }],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone()])),
-                tail_hyper_nodes: None,
+                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone()])),
+                tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone(), nodes[3].clone()])),
                 incidence_matrix: vec![]
             },
-            structural_properties: vec![StructuralProperty {
-                address: vec!["123 Main St".to_string(), "Apt 4B".to_string()],
-            }],
+            structural_properties: vec![
+                StructuralProperty {
+                    address: vec!["789 Oak St".to_string()],
+                    layer_index: None,
+                },
+                StructuralProperty {
+                    address: vec!["101 Pine St".to_string()],
+                    layer_index: None,
+                },
+            ],
             relationship: Relationship {
-                node_1: "v1".to_string(),
-                node_2: "v2".to_string(),
+                node_1: "v2".to_string(),
+                node_2: "v3".to_string(),
                 directed: true,
-                edge_properties: vec!["weight: 5".to_string(), "type: strong".to_string()],
+                edge_properties: vec!["weight: 10".to_string(), "type: weak".to_string()],
             },
             traverse: Traverse {
-                path: vec!["v1".to_string(), "v2".to_string(), "v3".to_string()],
+                path: vec!["v2".to_string(), "v3".to_string(), "v4".to_string()],
             },
         };
 
-        repository.create(test_key, test_edge)?;
-        let retrieved_edge = repository.get_by_key(test_key)?;
-        assert!(retrieved_edge.is_some(), "❌ Edge was not found");
+        repository.create(test_key, test_edge.clone())?;
+
+        let retrieved_edge = repository.get_by_key(test_key)?.expect("❌ Edge not found after create");
+        assert_eq!(retrieved_edge.id, test_key);
+        assert_eq!(retrieved_edge.prime_simple_hyper_edge.name, "test_edge_1");
 
         let updated_edge = LightHyperEdge {
             id: test_key.to_string(),
@@ -96,9 +105,11 @@ mod tests {
             structural_properties: vec![
                 StructuralProperty {
                     address: vec!["789 Oak St".to_string()],
+                    layer_index: None,
                 },
                 StructuralProperty {
                     address: vec!["101 Pine St".to_string()],
+                    layer_index: None,
                 },
             ],
             relationship: Relationship {
