@@ -76,39 +76,72 @@ selectedObjects.forEach((o, i) => {
   });
 });
 
-  const cx = positions.reduce((a, p) => a + p.x, 0) / positions.length;
-  const cy = positions.reduce((a, p) => a + p.y, 0) / positions.length;
-  const cz = positions.reduce((a, p) => a + p.z, 0) / positions.length;
+ function computeEllipseXZ(points) {
+  let minX = Infinity, maxX = -Infinity;
+  let minZ = Infinity, maxZ = -Infinity;
+
+  points.forEach(p => {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minZ = Math.min(minZ, p.z);
+    maxZ = Math.max(maxZ, p.z);
+  });
+
+  const cx = (minX + maxX) / 2;
+  const cz = (minZ + maxZ) / 2;
+
+  const rx = (maxX - minX) / 2;
+  const rz = (maxZ - minZ) / 2;
+
+  return { cx, cz, rx, rz };
+}
 
 
-  console.log("📐 Ellipse computed center:", {
-  cx: cx.toFixed(3),
-  cy: cy?.toFixed?.(3),
- 
-});
+const { cx, cz, rx, rz } = computeEllipseXZ(positions);
 
+// vertical placement = average Y
+const cy =
+  positions.reduce((a, p) => a + p.y, 0) / positions.length;
 
-  const maxDist = Math.max(
-      ...positions.map(p => Math.hypot(p.x - cx, p.y - cy))
-);
-
-  const rx = maxDist * 1.3;
-  const ry = maxDist * 0.9;
-
-  console.log("📏 Ellipse radii:", {
-  rx: rx.toFixed(3),
-  ry: ry?.toFixed?.(3),
- 
-});
 
 
   const color = Math.random() * 0xffffff;
-  const ellipse =createEdgeEllipse(cx, cy, cz, rx, ry, color, { mode: "sprite" });
+  const ellipse = createEdgeEllipse(
+  cx,
+  cy,
+  cz,
+  rx * 1.2,   // padding
+  rz * 1.2,
+  color,
+  { mode: "sprite" }
+);
+
 
 
   const parent = selectedObjects[0].parent;
   
   scene.add(ellipse);
+
+  // 🔗 Attach selected objects to the ellipse
+selectedObjects.forEach(obj => {
+  // get world position BEFORE reparenting
+  const worldPos = new THREE.Vector3();
+  obj.getWorldPosition(worldPos);
+
+  // convert world → ellipse local space
+  ellipse.worldToLocal(worldPos);
+
+  // reparent
+  ellipse.add(obj);
+
+  // set correct local position
+  obj.position.copy(worldPos);
+});
+
+ellipse.userData.isHyperedge = true;
+selectableObjects.push(ellipse);
+sceneNodes.push(ellipse);
+
 
   const ev = new THREE.Vector3();
 ellipse.getWorldPosition(ev);
@@ -140,6 +173,12 @@ console.log("⭕ Ellipse world position:", {
 
   selectedObjects.length = 0; // clear the array
 });
+
+selectedObjects.forEach(obj => {
+  const i = selectableObjects.indexOf(obj);
+  if (i !== -1) selectableObjects.splice(i, 1);
+});
+
 
 
 

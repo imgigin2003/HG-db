@@ -53,6 +53,11 @@ export function createEdgeEllipse(
     root.position.set(cx, cy, cz + 0.01);
   }
 
+if (mode === "sprite") {
+  ellipseGroup.rotation.x = -Math.PI / 2; // lie flat like the objects
+}
+
+
   root.add(ellipseGroup);
   root.add(labelAnchor);
   root.userData.labelAnchor = labelAnchor;

@@ -28,35 +28,40 @@ function createCategoryWrapper(category) {
   content.className = "palette-content";
 
   category.icons.forEach(icon => {
-    let el;
+  const item = document.createElement("div");
+  item.className = "palette-item";
 
-    if (icon.type === "plane") {
-      el = document.createElement("div");
-      el.className = "palette-icon";
-      el.draggable = true;
+  let iconEl;
 
-      el.dataset.type = icon.type;
-      el.dataset.src = "__plane__";
+  if (icon.type === "plane") {
+    iconEl = document.createElement("div");
+    iconEl.className = "palette-icon";
+    iconEl.draggable = true;
+    iconEl.dataset.type = icon.type;
+    iconEl.dataset.src = "__plane__";
 
-      const canvas = document.createElement("canvas");
-      canvas.width = 40;
-      canvas.height = 40;
-      canvas.style.display = "block";
+    const canvas = document.createElement("canvas");
+    canvas.width = 40;
+    canvas.height = 40;
+    iconEl.appendChild(canvas);
+    drawPlaneIcon(canvas);
+  } else {
+    iconEl = document.createElement("img");
+    iconEl.className = "palette-icon";
+    iconEl.draggable = true;
+    iconEl.src = icon.src;
+    iconEl.dataset.src = icon.src;
+    iconEl.dataset.type = icon.type;
+  }
 
-      el.appendChild(canvas);
-      drawPlaneIcon(canvas);
-    } else {
-      el = document.createElement("img");
-      el.className = "palette-icon";
-      el.draggable = true;
+  const label = document.createElement("div");
+  label.className = "palette-label";
+  label.textContent = icon.type;
 
-      el.src = icon.src;
-      el.dataset.src = icon.src;
-      el.dataset.type = icon.type;
-    }
-
-    content.appendChild(el);
-  });
+  item.appendChild(iconEl);
+  item.appendChild(label);
+  content.appendChild(item);
+});
 
   wrapper.appendChild(header);
   wrapper.appendChild(content);
