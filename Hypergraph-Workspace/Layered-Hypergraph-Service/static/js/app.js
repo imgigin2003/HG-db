@@ -10,6 +10,9 @@ import {connectRepeatedNodes} from './renderers/connectors.js'
 import {createEdgeClickHandler } from './interaction/edgeClick.js'
 import { exportScene, importScene } from "./data/hypergraphIO.js";
 import { getBioIconSprite  } from "./scene/biologicalObjects.js";
+import { createGroupFromObjects } from "./scene/grouping.js";
+
+
 
 
 
@@ -110,7 +113,7 @@ const cy =
   cx,
   cy,
   cz,
-  rx * 1.2,   // padding
+  rx * 1.2,   
   rz * 1.2,
   color,
   { mode: "sprite" }
@@ -118,29 +121,22 @@ const cy =
 
 
 
-  const parent = selectedObjects[0].parent;
-  
-  scene.add(ellipse);
+  const group = createGroupFromObjects(selectedObjects, scene);
 
-  // 🔗 Attach selected objects to the ellipse
-selectedObjects.forEach(obj => {
-  // get world position BEFORE reparenting
-  const worldPos = new THREE.Vector3();
-  obj.getWorldPosition(worldPos);
-
-  // convert world → ellipse local space
-  ellipse.worldToLocal(worldPos);
-
-  // reparent
-  ellipse.add(obj);
-
-  // set correct local position
-  obj.position.copy(worldPos);
+// 🔑 keep members selectable
+group.userData.members.forEach(member => {
+  if (!selectableObjects.includes(member)) {
+    selectableObjects.push(member);
+  }
 });
 
+
+  group.worldToLocal(ellipse.position);
+  group.add(ellipse);
+
 ellipse.userData.isHyperedge = true;
-selectableObjects.push(ellipse);
-sceneNodes.push(ellipse);
+selectableObjects.push(group);
+sceneNodes.push(group);
 
 
   const ev = new THREE.Vector3();
@@ -174,10 +170,6 @@ console.log("⭕ Ellipse world position:", {
   selectedObjects.length = 0; // clear the array
 });
 
-selectedObjects.forEach(obj => {
-  const i = selectableObjects.indexOf(obj);
-  if (i !== -1) selectableObjects.splice(i, 1);
-});
 
 
 
@@ -397,7 +389,7 @@ function animate() {
   labelRenderer.render(scene, camera);
 }
 
-setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects);
+setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects , controls);
 
   document.getElementById("undo-btn").onclick = () => {
   undoLast();
