@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-
-axum = { version = "0.8.8", features = ["json"] }          
+actix-web = { version = "=4.11.0", default-features = true }
+actix-cors = "0.7.1"
 tokio = { version = "1.49.0", features = ["full"] }       
 tower-http = { version = "0.6.8", features = ["cors", "trace"] } 
 
@@ -22,4 +22,7 @@ quote = "1.0.39"
 
 chrono = { version = "0.4", features = ["serde"] }
 dashmap = "6.1.0"
-reqwest = "0.13.1"
+reqwest =  { version = "0.13.1", features = ["json"]}  
+toml = "0.9.11"
+thiserror = "2.0.18"
+config = "0.15.19"

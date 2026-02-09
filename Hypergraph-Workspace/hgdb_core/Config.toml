@@ -1,3 +1,13 @@
-[storage]
-mode = "rocksdb"
+[database]
 db_path = "/Users/gigin/Documents/mydbs/rocksdb/"
+
+[api]
+host = "127.0.0.1"
+port = 8080
+
+[layered_service]
+url = "http://localhost:3000"
+
+[rocksdb]
+create_if_missing = true
+optimize_for_point_lookups = true
