@@ -9,7 +9,7 @@ pub struct DualHyperEdgeCreateDto {
     pub dual_properties: Vec<PropertyDto>,
     pub traversable: bool,
     pub head_hyper_node_ids: Vec<String>,
-    pub tail_hyper_node_ids: Option<Vec<String>>,
+    pub tail_hyper_node_ids: Vec<String>,
     pub incidence_matrix: Vec<Vec<i8>>,
     pub transposed_matrix: Vec<Vec<i8>>,
 }

@@ -1,28 +1,21 @@
-use rocksdb::{DB, Options}; // Import RocksDB
-use serde_json::{self, to_string_pretty}; // Import serde_json
-use crate::hyper_edge::entity::h_edge::simple_h_edge::{Property, PropertyType, SimpleHyperEdge}; // Import SimpleHyperEdge
-use crate::hyper_edge::repository::*; // Import Repository trait
-use std::error::Error; // Import Error trait
-
-/****************************************************** CRUD Operation for Hyper Edge ************************************************+/
-                        Here we are going to list all methods regarding creating a new Hyper Edge in the Database
-****************************************************************************************************************************/
+use rocksdb::{DB, Options};
+use serde_json::{self, to_string_pretty};
+use crate::hyper_edge::entity::h_edge::simple_h_edge::{Property, PropertyType, SimpleHyperEdge};
+use crate::hyper_edge::entity::h_edge::dual_h_edge::DualHyperEdge;
+use crate::hyper_edge::repository::*;
+use std::error::Error;
 
 #[allow(dead_code)]
-// SimpleHyperEdgeRepository struct
 pub struct SimpleHyperEdgeRepository {
     pub db: DB,
     db_path: String,
 }
 
-// Implementation of SimpleHyperEdgeRepository
 impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepository {
-    /// Constructor for creating a new repository
-    fn new(db_path: &str) -> Result<Self, Box<dyn Error>> {  // Return Boxed error type
+    fn new(db_path: &str) -> Result<Self, Box<dyn Error>> {
         let mut opts = Options::default();
         opts.create_if_missing(true);
         
-        // Open RocksDB with the provided path
         let db = DB::open(&opts, db_path)?;
         Ok(SimpleHyperEdgeRepository {
             db,
@@ -30,7 +23,6 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
         })
     }
 
-    /// Method to create (insert) a SimpleHyperEdge
     fn create(&self, key: &str, mut edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         ["layer", "level", "aspect"].iter().for_each(|prop_key| {
             if !edge.main_properties.iter().any(|p| p.key == *prop_key) {
@@ -42,7 +34,6 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
             }
         });
 
-        // calculate matrix
         edge.incidence_matrix = self.create_incidence_matrix(&edge);
 
         let serialized_edge = to_string_pretty(&edge).map_err(|e| {
@@ -54,57 +45,51 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
         Ok(())
     }
 
-    /// Method to retrieve a SimpleHyperEdge by key
     fn get_by_key(&self, key: &str) -> Result<Option<SimpleHyperEdge<String, String, String>>, Box<dyn Error>> {
         match self.db.get(key)? {
             Some(serialized_edge) => {
-                // Deserialize the SimpleHyperEdge
                 let edge: SimpleHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge).map_err(|e| {
-                    eprintln!("❌ Deserialization error for key '{}': {:?}", key, e);
-                    Box::new(e) as Box<dyn Error> // Return as a Boxed error
+                    eprintln!("Deserialization error for key '{}': {:?}", key, e);
+                    Box::new(e) as Box<dyn Error>
                 })?;
                 Ok(Some(edge))
             }
-            None => Ok(None), // If the key is not found, return None
+            None => Ok(None),
         }
     }
 
-    /// Method to update an existing SimpleHyperEdge (simply calls `create`)
     fn update(&self, key: &str, edge: &SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
-        self.create(key, edge.clone()) // Reuses the `create` method since it overwrites existing data
+        self.create(key, edge.clone())
     }
 
-    /// Method to delete a SimpleHyperEdge by key
     fn delete(&self, key: &str) -> Result<(), Box<dyn Error>> {
         self.db.delete(key)?;
         Ok(())
     }
 
-    /// Method to retrieve all SimpleHyperEdges in the database
     fn get_all(&self) -> Result<Vec<SimpleHyperEdge<String, String, String>>, Box<dyn Error>> {
         let mut edges = Vec::new();
 
         for item in self.db.iterator(rocksdb::IteratorMode::Start) {
             match item {
                 Ok((_key, value)) => {
-                    // Only attempt to deserialize as SimpleHyperEdge
                     match serde_json::from_slice::<SimpleHyperEdge<String, String, String>>(&value) {
                         Ok(edge) => edges.push(edge),
                         Err(e) => {
-                            eprintln!("❌ Skipping entry due to deserialization error: {:?}", e);
-                            continue; // Skip corrupted or mismatched entries
+                            eprintln!("Skipping entry due to deserialization error: {:?}", e);
+                            continue;
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("❌ Error iterating over database: {:?}", e);
+                    eprintln!("Error iterating over database: {:?}", e);
                     return Err(Box::new(e));
                 }
             }
         }
 
         Ok(edges)
-    }    
+    }
 
     fn save_dual(&self, dual_edge: DualHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         let key = dual_edge.id.to_string();
@@ -113,16 +98,13 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
         Ok(())
     }
 
-    // method to get the dual edge by key
     fn get_dual_by_key(&self, key: &str) -> Result<Option<DualHyperEdge<String, String, String>>, Box<dyn Error>> {
         match self.db.get(key)? {
             Some(serialized_edge) => {
                 let edge: DualHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
-                println!("🔍 Retrieving Dual Hyperedge"); // Debug log
                 Ok(Some(edge))
             }
             None => {
-                println!("❌ No Dual Hyperedge found for key: {}", key); // Debug log
                 Ok(None)
             }
         }
@@ -130,38 +112,28 @@ impl Repository<SimpleHyperEdge<String, String, String>> for SimpleHyperEdgeRepo
 }
 
 impl SimpleHyperEdgeRepository {
-    /*******************************************CRUD Operation for Property Field in Hyper Edge ************************************************+/
-                        Here we are going to list all methods to Create, Update, Delete and Retrieve a Property Field
-****************************************************************************************************************************/
-    // Method to add a property to a HyperEdge
     pub fn add_property(&self, key: &str, property: Property<String, String>) -> Result<(), Box<dyn Error>> {
-        match self.db.get(key)? { // Retrieve the HyperEdge by key
-            Some(serialized_edge) => { // If the HyperEdge is found
-                // Deserialize the HyperEdge 
+        match self.db.get(key)? {
+            Some(serialized_edge) => {
                 let mut edge: SimpleHyperEdge<String, String, String> = serde_json::from_slice(&serialized_edge)?;
-                edge.main_properties.push(property); // Add the new property
-                self.create(key, edge)?; // Reuse create to update the edge in the DB
+                edge.main_properties.push(property);
+                self.create(key, edge)?;
                 Ok(())
             }
             None => {
-                // Return an error if no hyperedge was found for the provided key
                 Err(Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, format!("No Hyperedge found for key: {}", key))))
             }
         }
     }
 
-    // Method to Get a property in a HyperEdge
     pub fn get_property(&self, key: &str) -> Result<Option<Vec<Property<String, String>>>, Box<dyn Error>> {
-        // Retrieve the HyperEdge by key
         if let Some(edge) = self.get_by_key(key)? {
-            // Return the main properties if the HyperEdge is found
             Ok(Some(edge.main_properties))
         } else {
             Ok(None)
         }
     }
 
-    // Method to Update a property
     pub fn update_property(&self, key: &str, property_key: &str, new_property: Property<String, String>) -> Result<(), Box<dyn Error>> {
         let mut edge = self.get_by_key(key)?.ok_or_else(|| Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Edge not found")))?;
         let property = edge.main_properties.iter_mut()
@@ -172,18 +144,14 @@ impl SimpleHyperEdgeRepository {
         Ok(())
     }
 
-    // Method to update a single layer property
     pub fn update_single_layer_property(&self, key: &str, property_key: &str, value: String) -> Result<(), Box<dyn Error>> {
-        // Get edge by key, return error if not found
         let mut edge = self.get_by_key(key)?.ok_or_else(|| {
             Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Edge not found"))
         })?;
 
-        // Try to find existing property to update
         if let Some(prop) = edge.main_properties.iter_mut().find(|p| p.key == property_key) {
-            prop.value = vec![]; // Update existing property's value
+            prop.value = vec![value];
         } else {
-            // Property doesn't exist, create new one
             edge.main_properties.push(Property {
                 key: property_key.to_string(),
                 value: vec![value],
@@ -192,47 +160,39 @@ impl SimpleHyperEdgeRepository {
         }
 
         self.update(key, &edge)?;
-    Ok(())
+        Ok(())
     }
 
-    // Method to get level property value
     pub fn get_level(&self, key: &str) -> Result<Option<String>, Box<dyn Error>> {
-        // Try to get edge by key, return error if fails
         if let Some(edge) = self.get_by_key(key)? {
-            // If edge exists, look at its main_properties
             Ok(edge.main_properties
                 .iter()
-                .find(|p| p.key == "level")  // Find property with key "level"
-                .and_then(|p| p.value.first().cloned())) // Get first value of property if exists
+                .find(|p| p.key == "level")
+                .and_then(|p| p.value.first().cloned()))
         } else {
             Ok(None)
         }
     }
 
-    // Method to update level property 
     pub fn update_level(&self, key: &str, level: String) -> Result<(), Box<dyn Error>> {
-        self.update_single_layer_property(key, "level", level) // Delegate to general update method
+        self.update_single_layer_property(key, "level", level)
     }
 
-    // Method to get layer property value
     pub fn get_layer(&self, key: &str) -> Result<Option<String>, Box<dyn Error>> {
         if let Some(edge) = self.get_by_key(key)? {
-            // Same pattern as get_level
             Ok(edge.main_properties
             .iter()
-            .find(|p| p.key == "layer") // Look for "layer" instead 
+            .find(|p| p.key == "layer")
             .and_then(|p| p.value.first().cloned()))
         } else {
             Ok(None)
         }
     }
 
-    // Method to update layer property
     pub fn update_layer(&self, key: &str, layer: String) -> Result<(), Box<dyn Error>> {
         self.update_single_layer_property(key, "layer", layer)
     }
 
-    // Method to Delete a property
     pub fn delete_property(&self, key: &str, property_key: &str) -> Result<(), Box<dyn Error>> {
         if let Some(mut edge) = self.get_by_key(key)? {
             if let Some(pos) = edge.main_properties.iter().position(|p| p.key == property_key) {
@@ -247,11 +207,6 @@ impl SimpleHyperEdgeRepository {
         }
     }
 
-  /******************************************* Save and Process matrices************************************************+/
-                        Here we are going to list all methods to save and create a matrix for simple-h-edge 
-****************************************************************************************************************************/
-
-    // Save method to explicitly save a SimpleHyperEdge (similar to save_dual)
     pub fn save(&self, edge: SimpleHyperEdge<String, String, String>) -> Result<(), Box<dyn Error>> {
         let key = edge.id.clone();
         let mut edge_with_matrix = edge;
@@ -259,28 +214,30 @@ impl SimpleHyperEdgeRepository {
         self.print_matrix(&edge_with_matrix.incidence_matrix, &format!("Incidence Matrix for {}", key));
         
         let serialized_edge = to_string_pretty(&edge_with_matrix).map_err(|e| {
-            eprintln!("❌ Serialization error for edge with key '{}': {:?}", key, e);
+            eprintln!("Serialization error for edge with key '{}': {:?}", key, e);
             Box::new(e) as Box<dyn Error>
         })?;
         self.db.put(&key, serialized_edge)?;
         Ok(())
     }
 
-    // Helper method to create the incidence matrix
     pub fn create_incidence_matrix(&self, edge: &SimpleHyperEdge<String, String, String>) -> Vec<Vec<i8>> {
         let mut nodes_set: Vec<String> = Vec::new();
-        if let Some(head_nodes) = &edge.head_hyper_nodes {
-            nodes_set.extend(head_nodes.iter().map(|n| n.id.clone()));
+        
+        if let Some(head_node_ids) = &edge.head_hyper_nodes {
+            nodes_set.extend(head_node_ids.clone());
         }
-        if let Some(tail_nodes) = &edge.tail_hyper_nodes {
-            nodes_set.extend(tail_nodes.iter().map(|n| n.id.clone()));
+        if let Some(tail_node_ids) = &edge.tail_hyper_nodes {
+            nodes_set.extend(tail_node_ids.clone());
         }
+        
         nodes_set.sort();
         nodes_set.dedup();
 
         let mut matrix = vec![vec![0i8; 1]; nodes_set.len()];
-        let head_ids = edge.head_hyper_nodes.as_ref().map_or(vec![], |n| n.iter().map(|n| n.id.clone()).collect());
-        let tail_ids = edge.tail_hyper_nodes.as_ref().map_or(vec![], |n| n.iter().map(|n| n.id.clone()).collect());
+        
+        let head_ids = edge.head_hyper_nodes.as_ref().map_or(vec![], |ids| ids.clone());
+        let tail_ids = edge.tail_hyper_nodes.as_ref().map_or(vec![], |ids| ids.clone());
 
         for (i, node) in nodes_set.iter().enumerate() {
             let is_in_head = head_ids.contains(node);
@@ -295,10 +252,9 @@ impl SimpleHyperEdgeRepository {
         matrix
     }
 
-    // Helper method to print the matrix
     pub fn print_matrix(&self, matrix: &Vec<Vec<i8>>, label: &str) {
         println!(
-            "🔢 {} [{}x{}]:",
+            "Matrix {} [{}x{}]:",
             label,
             matrix.len(),
             if matrix.is_empty() { 0 } else { matrix[0].len() }

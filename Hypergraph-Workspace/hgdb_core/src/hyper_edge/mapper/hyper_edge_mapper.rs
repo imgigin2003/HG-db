@@ -6,10 +6,6 @@ pub fn hyper_edge_to_response_dto(entity: &HyperEdge<String, String, String>) ->
     HyperEdgeResponseDto {
         id: entity.id.clone(),
         light_hyper_edge: light_to_response_dto(&entity.light_hyper_edge),
-        attachments: entity
-            .attachments
-            .iter()
-            .map(|p| p.to_string_lossy().into_owned())
-            .collect(),
+        attachments: entity.attachments.clone(),
     }
 }

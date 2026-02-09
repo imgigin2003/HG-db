@@ -21,24 +21,11 @@ mod test {
     fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
         if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
             if e.kind() != std::io::ErrorKind::NotFound {
-                eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
+                eprintln!("Failed to remove DB directory: {:?}", e);
             }
         }
 
         let repository = SimpleHyperEdgeRepository::new(DB_PATH.as_str())?;
-
-        let nodes: Vec<SimpleHyperEdge<String, String, String>> = vec![
-            "v1", "v2", "v3", "v4", "v5", "v6", "v7"
-        ].into_iter().map(|id| SimpleHyperEdge {
-            id: id.to_string(),
-            name: id.to_string(),
-            main_properties: vec![],
-            traversable: false,
-            directed: false,
-            head_hyper_nodes: None,
-            tail_hyper_nodes: None,
-            incidence_matrix: vec![],
-        }).collect();
 
         let hypergraph_1 = vec![
             ("e1", SimpleHyperEdge {
@@ -47,12 +34,12 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone(), nodes[1].clone(), nodes[2].clone()])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[3].clone(), nodes[4].clone()])),
+                head_hyper_nodes: Some(vec!["v1".to_string(), "v2".to_string(), "v3".to_string()]),
+                tail_hyper_nodes: Some(vec!["v4".to_string(), "v5".to_string()]),
                 incidence_matrix: vec![],
             }),
             ("e2", SimpleHyperEdge {
@@ -61,8 +48,8 @@ mod test {
                 main_properties: vec![],
                 traversable: false,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[5].clone()])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[6].clone()])),
+                head_hyper_nodes: Some(vec!["v6".to_string()]),
+                tail_hyper_nodes: Some(vec!["v7".to_string()]),
                 incidence_matrix: vec![],
             }),
         ];
@@ -74,8 +61,8 @@ mod test {
                 main_properties: vec![],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Some(Box::new(vec![nodes[0].clone()])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[1].clone(), nodes[2].clone()])),
+                head_hyper_nodes: Some(vec!["v1".to_string()]),
+                tail_hyper_nodes: Some(vec!["v2".to_string(), "v3".to_string()]),
                 incidence_matrix: vec![],
             }),
         ];
@@ -87,8 +74,8 @@ mod test {
                 main_properties: vec![],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[3].clone(), nodes[4].clone()])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[5].clone()])),
+                head_hyper_nodes: Some(vec!["v4".to_string(), "v5".to_string()]),
+                tail_hyper_nodes: Some(vec!["v6".to_string()]),
                 incidence_matrix: vec![],
             }),
         ];
@@ -98,7 +85,6 @@ mod test {
         all_edges.extend(hypergraph_2.clone());
         all_edges.extend(hypergraph_3.clone());
 
-        // Create edges
         for (key, edge) in &all_edges {
             repository.create(key, edge.clone())?;
         }
@@ -106,7 +92,6 @@ mod test {
         let stored_edges = repository.get_all()?;
         assert_eq!(stored_edges.len(), all_edges.len(), "Not all edges were stored correctly");
 
-        // Check incidence matrix consistency for every stored edge
         for (key, original_edge) in &all_edges {
             let expected_matrix = repository.create_incidence_matrix(original_edge);
 
@@ -120,7 +105,6 @@ mod test {
             );
         }
 
-        // JSON export part
         let json_structure = json!({
             "hypergraph1": hypergraph_1.iter().map(|(_, edge)| {
                 let mut edge_with_matrix = edge.clone();
@@ -144,7 +128,6 @@ mod test {
         file.write_all(json_data.as_bytes())?;
         assert!(metadata(JSON_PATH.as_str())?.is_file(), "JSON file was not created at expected path");
 
-        // Cleanup
         for (key, _) in &all_edges {
             repository.delete(key)?;
         }

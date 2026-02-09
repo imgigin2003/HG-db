@@ -21,24 +21,11 @@ mod test {
     fn test_simple_h_edge_crud_operation() -> Result<(), Box<dyn Error>> {
         if let Err(e) = remove_dir_all(DB_PATH.as_str()) {
             if e.kind() != std::io::ErrorKind::NotFound {
-                eprintln!("⚠️ Failed to remove DB directory: {:?}", e);
+                eprintln!("Failed to remove DB directory: {:?}", e);
             }
         }
 
         let repository = SimpleHyperEdgeRepository::new(DB_PATH.as_str())?;
-
-        let nodes: Vec<SimpleHyperEdge<String, String, String>> = vec![
-            "v1", "v2", "v3", "v4", "v5", "v6", "v7"
-        ].into_iter().map(|id| SimpleHyperEdge {
-            id: id.to_string(),
-            name: id.to_string(),
-            main_properties: vec![],
-            traversable: false,
-            directed: false,
-            head_hyper_nodes: None,
-            tail_hyper_nodes: None,
-            incidence_matrix: vec![],
-        }).collect();
 
         let hypergraph_1 = vec![
             ("e1", SimpleHyperEdge {
@@ -47,16 +34,16 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[0].clone(), // v1
-                    nodes[1].clone(), // v2
-                    nodes[2].clone(), // v3
-                ])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])), // v3
+                head_hyper_nodes: Some(vec![
+                    "v1".to_string(),
+                    "v2".to_string(),
+                    "v3".to_string(),
+                ]),
+                tail_hyper_nodes: Some(vec!["v3".to_string()]),
                 incidence_matrix: vec![],
             }),
             ("e2", SimpleHyperEdge {
@@ -65,16 +52,16 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[0].clone(), // v1
-                    nodes[1].clone(), // v2
-                    nodes[6].clone(), // v7
-                ])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[6].clone()])), // v7
+                head_hyper_nodes: Some(vec![
+                    "v1".to_string(),
+                    "v2".to_string(),
+                    "v7".to_string(),
+                ]),
+                tail_hyper_nodes: Some(vec!["v7".to_string()]),
                 incidence_matrix: vec![],
             }),
         ];
@@ -86,14 +73,14 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[5].clone(), // v6
-                    nodes[6].clone(), // v7
-                ])),
+                head_hyper_nodes: Some(vec![
+                    "v6".to_string(),
+                    "v7".to_string(),
+                ]),
                 tail_hyper_nodes: None,
                 incidence_matrix: vec![],
             }),
@@ -103,12 +90,12 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Some(Box::new(vec![nodes[2].clone()])), // v3
-                tail_hyper_nodes: Some(Box::new(vec![nodes[3].clone()])), // v4
+                head_hyper_nodes: Some(vec!["v3".to_string()]),
+                tail_hyper_nodes: Some(vec!["v4".to_string()]),
                 incidence_matrix: vec![],
             }),
             ("e7", SimpleHyperEdge {
@@ -117,15 +104,15 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: true,
-                head_hyper_nodes: Some(Box::new(vec![
-                    nodes[3].clone(), // v4
-                    nodes[6].clone(), // v7
-                ])),
-                tail_hyper_nodes: Some(Box::new(vec![nodes[3].clone()])), // v4
+                head_hyper_nodes: Some(vec![
+                    "v4".to_string(),
+                    "v7".to_string(),
+                ]),
+                tail_hyper_nodes: Some(vec!["v4".to_string()]),
                 incidence_matrix: vec![],
             }),
         ];
@@ -137,11 +124,11 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[4].clone()])), // v5
+                head_hyper_nodes: Some(vec!["v5".to_string()]),
                 tail_hyper_nodes: None,
                 incidence_matrix: vec![],
             }),
@@ -151,11 +138,11 @@ mod test {
                 main_properties: vec![Property {
                     key: "type".to_string(),
                     value: vec!["linked".to_string()],
-                    p_type: PropertyType::Simple,
+                    p_type: PropertyType::Main,
                 }],
                 traversable: true,
                 directed: false,
-                head_hyper_nodes: Some(Box::new(vec![nodes[3].clone()])), // v4
+                head_hyper_nodes: Some(vec!["v4".to_string()]),
                 tail_hyper_nodes: None,
                 incidence_matrix: vec![],
             }),
@@ -163,21 +150,21 @@ mod test {
 
         let all_edges: Vec<_> = hypergraph_1.iter().chain(hypergraph_2.iter()).chain(hypergraph_3.iter()).collect();
 
-        // Create and save edges
         for (key, edge) in &all_edges {
             match repository.create(key, edge.clone()) {
-                Ok(_) => println!("✅ Successfully created edge: {}", key),
-                Err(e) => eprintln!("❌ Failed to create edge {}: {:?}", key, e),
+                Ok(_) => println!("Successfully created edge: {}", key),
+                Err(e) => eprintln!("Failed to create edge {}: {:?}", key, e),
             }
-            // Explicitly save to ensure matrix is computed and printed
             repository.save(edge.clone())?;
         }
 
         let stored_edges = repository.get_all()?;
-        assert_eq!(stored_edges.len(), all_edges.len(), "❌ Not all edges were stored correctly");
-        assert_eq!(stored_edges[0].incidence_matrix, vec![vec![1], vec![1], vec![3]]); // e1: v1, v2 (head), v3 (head+tail)
+        assert_eq!(stored_edges.len(), all_edges.len(), "Not all edges were stored correctly");
+        
+        if !stored_edges.is_empty() {
+            assert_eq!(stored_edges[0].incidence_matrix, vec![vec![1], vec![1], vec![3]]);
+        }
 
-        // Log incidence matrices for all edges
         for (key, edge) in &all_edges {
             let incidence_matrix = repository.create_incidence_matrix(edge);
             repository.print_matrix(&incidence_matrix, &format!("Incidence Matrix for {}", key));
@@ -185,7 +172,7 @@ mod test {
             let retrieved_edge = repository.get_by_key(key)?.unwrap();
             assert_eq!(
                 retrieved_edge.incidence_matrix, incidence_matrix,
-                "❌ Incidence matrix mismatch for edge '{}'", key
+                "Incidence matrix mismatch for edge '{}'", key
             );
         }
 
@@ -210,14 +197,14 @@ mod test {
         let json_data = to_string_pretty(&json_structure)?;
         let mut file = File::create(JSON_PATH.as_str())?;
         file.write_all(json_data.as_bytes())?;
-        assert!(metadata(JSON_PATH.as_str())?.is_file(), "❌ JSON file was not created at expected path");
+        assert!(metadata(JSON_PATH.as_str())?.is_file(), "JSON file was not created at expected path");
 
         for (key, _) in &all_edges {
             repository.delete(key)?;
         }
 
         let all_edges_after_delete = repository.get_all()?;
-        assert!(all_edges_after_delete.is_empty(), "❌ Database should be empty after deleting all edges");
+        assert!(all_edges_after_delete.is_empty(), "Database should be empty after deleting all edges");
 
         Ok(())
     }
