@@ -23,6 +23,11 @@ html, body {
   overflow: hidden;
 }
 
+#object-actions {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: auto;
+}
 
 #app-root {
   display: flex;
