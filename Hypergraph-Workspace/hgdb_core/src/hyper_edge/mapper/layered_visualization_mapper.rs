@@ -2,7 +2,7 @@ use crate::hyper_edge::dto::layered_hypergraph_dto::LayeredHypergraphCreateDto;
 use crate::hyper_edge::dto::layered_visualization_request::{
     LayeredVisualizationRequestDto, SimpleEdgeInputDto,
 };
-use crate::hyper_edge::dto::property_dto::PropertyDto;
+use crate::hyper_edge::dto::property_dto::{PropertyDto, PropertyTypeDto};
 use crate::hyper_edge::dto::simple_hyper_edge_dto::SimpleHyperEdgeCreateDto;
 use std::collections::HashMap;
 use std::error::Error;
@@ -30,7 +30,10 @@ pub fn transform_visualization_request(
         let mut layer_edges: Vec<SimpleHyperEdgeCreateDto> = Vec::new();
 
         for edge in edges {
-            layer_edges.push(transform_edge_input(edge)?);
+            match transform_edge_input(edge) {
+                Ok(transformed_edge) => layer_edges.push(transformed_edge),
+                Err(e) => return Err(format!("Error transforming edge {}: {}", edge.id, e).into()),
+            }
         }
 
         layers.push(layer_edges);
@@ -77,10 +80,21 @@ fn transform_edge_input(
     let main_properties: Vec<PropertyDto> = edge
         .main_properties
         .iter()
-        .map(|prop| PropertyDto {
-            key: prop.key.clone(),
-            p_type: prop.p_type.clone(),
-            value: prop.value.clone(),
+        .map(|prop| {
+            // Convert string to PropertyTypeDto
+            let p_type = match prop.p_type.as_str() {
+                "Simple" => PropertyTypeDto::Simple,
+                "Main" => PropertyTypeDto::Main,
+                "Structure" => PropertyTypeDto::Structure,
+                "ExtraInfo" => PropertyTypeDto::ExtraInfo,
+                _ => PropertyTypeDto::Simple, // Default fallback
+            };
+
+            PropertyDto {
+                key: prop.key.clone(),
+                p_type,
+                value: prop.value.clone(),
+            }
         })
         .collect();
 
