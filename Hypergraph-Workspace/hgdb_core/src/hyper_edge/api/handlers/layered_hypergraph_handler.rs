@@ -1,6 +1,8 @@
 use crate::hyper_edge::api::client::layered_service_client::LayeredServiceClient;
 use crate::hyper_edge::dto::layered_hypergraph_dto::LayeredHypergraphCreateDto;
+use crate::hyper_edge::dto::layered_visualization_request::LayeredVisualizationRequestDto;
 use crate::hyper_edge::services::h_graph_service::LayeredHypergraphService;
+use crate::hyper_edge::mapper::layered_visualization_mapper;
 use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
 use std::sync::Arc;
@@ -85,7 +87,13 @@ pub async fn delete_layered_hypergraph(
         .await
     {
         Ok(_) => HttpResponse::NoContent().finish(),
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        Err(e) => {
+            if e.to_string().contains("not found") || e.to_string().contains("Key") {
+                HttpResponse::NotFound().body("Layered hypergraph not found")
+            } else {
+                HttpResponse::InternalServerError().body(e.to_string())
+            }
+        }
     }
 }
 
@@ -125,6 +133,60 @@ pub async fn visualize_layered_hypergraph(
             }
         }
         None => HttpResponse::NotFound().body("Layered hypergraph not found"),
+    }
+}
+
+pub async fn visualize_from_json(
+    state: web::Data<Arc<AppState>>,
+    request: web::Json<LayeredVisualizationRequestDto>,
+) -> impl Responder {
+    match layered_visualization_mapper::transform_visualization_request(request.into_inner()) {
+        Ok(hypergraph_dto) => {
+            // Create and save hypergraph
+            match state.layered_hypergraph_service.create_layered_hypergraph(hypergraph_dto).await {
+                Ok(response_dto) => {
+                    // Send to layered service for visualization
+                    match state.layered_service_client.visualize_directly(&response_dto).await {
+                        Ok(visualization_result) => {
+                            HttpResponse::Ok().json(json!({
+                                "status": "success",
+                                "hypergraph": response_dto,
+                                "visualization": visualization_result,
+                                "message": "Hypergraph created and sent for visualization successfully"
+                            }))
+                        }
+                        Err(e) => {
+                            HttpResponse::Ok().json(json!({
+                                "status": "partial_success",
+                                "hypergraph": response_dto,
+                                "message": format!("Hypergraph created but visualization failed: {}", e)
+                            }))
+                        }
+                    }
+                }
+                Err(e) => HttpResponse::BadRequest().body(format!("Failed to create hypergraph: {}", e)),
+            }
+        }
+        Err(e) => HttpResponse::BadRequest().body(format!("Invalid input data: {}", e)),
+    }
+}
+
+pub async fn validate_json_input(
+    request: web::Json<LayeredVisualizationRequestDto>,
+) -> impl Responder {
+    match layered_visualization_mapper::transform_visualization_request(request.into_inner()) {
+        Ok(hypergraph_dto) => {
+            HttpResponse::Ok().json(json!({
+                "status": "valid",
+                "hypergraph": hypergraph_dto,
+                "message": "Input JSON is valid and can be processed"
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(json!({
+            "status": "invalid",
+            "error": e.to_string(),
+            "message": "Input JSON validation failed"
+        })),
     }
 }
 
