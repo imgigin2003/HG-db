@@ -2,22 +2,116 @@ import * as THREE from "three";
 import "../data/palette.js";
 import { getBioIconSprite } from "../scene/biologicalObjects.js";
 import { createPlane } from '../scene/plane.js';
+import { separateGroup } from "../scene/grouping.js";
+
 
 
 export let sceneNodes = [];
 export let selectableObjects = [];  
+const undoStack = [];
+
+export function undoLast() {
+  const action = undoStack.pop();
+  if (!action) return;
+
+  action();
+}
+
+function destroyObject(obj, scene) {
+  if (!obj) return;
+
+  // Selection ring
+  if (obj.userData.selectionRing) {
+    obj.remove(obj.userData.selectionRing);
+    obj.userData.selectionRing.geometry?.dispose?.();
+    obj.userData.selectionRing.material?.dispose?.();
+    delete obj.userData.selectionRing;
+  }
+
+  // Bio label
+  if (obj.userData.label) {
+    obj.remove(obj.userData.label);
+    obj.userData.label.geometry?.dispose?.();
+    obj.userData.label.material?.dispose?.();
+    delete obj.userData.label;
+  }
+
+  // Remove from scene
+  if (obj.parent) {
+    scene.remove(obj);
+  }
+
+  // Clean userData selection state
+  obj.userData.selected = false;
+}
+
+
+export function clearScene(scene) {
+  sceneNodes.forEach(obj => {
+
+    if (obj.userData.selectionRing) {
+      obj.remove(obj.userData.selectionRing);
+      obj.userData.selectionRing.geometry?.dispose?.();
+      obj.userData.selectionRing.material?.dispose?.();
+      delete obj.userData.selectionRing;
+    }
+
+    // 🧹 remove label
+    if (obj.userData.label) {
+      obj.remove(obj.userData.label);
+      obj.userData.label.material?.dispose?.();
+      obj.userData.label.geometry?.dispose?.();
+      delete obj.userData.label;
+    }
+
+    if (obj.parent) obj.parent.remove(obj);
+  });
+
+  sceneNodes.length = 0;
+  selectableObjects.length = 0;
+  undoStack.length = 0;
+}
+
+
+const actionPanel = document.getElementById("object-actions");
+const deleteBtn = document.getElementById("delete-btn");
+const separateBtn = document.getElementById("separate-btn");
+
+function hideActionPanel() {
+  actionPanel.style.display = "none";
+}
+
+function showActionPanelAtObject(object, camera, canvas) {
+  const v = new THREE.Vector3();
+  object.getWorldPosition(v);
+  v.project(camera);
+
+  const rect = canvas.getBoundingClientRect();
+  const x = (v.x * 0.5 + 0.5) * rect.width + rect.left;
+  const y = (-v.y * 0.5 + 0.5) * rect.height + rect.top;
+
+  actionPanel.style.left = `${x + 12}px`;
+  actionPanel.style.top = `${y - 12}px`;
+  actionPanel.style.display = "flex";
+}
 
 
 
 
-export function setupDragAndDrop(camera, scene, canvas, selectedObjects) {
+
+export function setupDragAndDrop(camera, scene, canvas, selectedObjects , controls) {
   let draggedItem = null;
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   const planeNormal = camera.getWorldDirection(new THREE.Vector3());
 const dropPlane = new THREE.Plane();
-let draggedSceneObject = null;
-let isDraggingSceneObject = false;
+
+
+const interaction = {
+  dragging: false,
+  dragTarget: null
+};
+
 
 
 
@@ -35,6 +129,9 @@ let isDraggingSceneObject = false;
   });
 
   // --- DRAG OVER ---
+  canvas.setAttribute("draggable", "false");
+canvas.addEventListener("dragstart", e => e.preventDefault());
+
   canvas.addEventListener("dragover", e => e.preventDefault());
 
   // --- DROP ---
@@ -82,47 +179,74 @@ canvas.addEventListener("drop", async e => {
     }
   }
 
-  if (objectToAdd) {
-    objectToAdd.position.copy(pos);
-    scene.add(objectToAdd);
-    sceneNodes.push(objectToAdd);
-    console.log(`${draggedItem.type} added at`, pos);
-  }
+if (objectToAdd) {
+  objectToAdd.position.copy(pos);
+  scene.add(objectToAdd);
+
+  sceneNodes.push(objectToAdd);
+  
+  undoStack.push(() => {
+  destroyObject(objectToAdd, scene);
+
+  const i1 = sceneNodes.indexOf(objectToAdd);
+  if (i1 !== -1) sceneNodes.splice(i1, 1);
+
+  const i2 = selectableObjects.indexOf(objectToAdd);
+  if (i2 !== -1) selectableObjects.splice(i2, 1);
+});
+
+}
+
 
   draggedItem = null;
 });
 
 canvas.addEventListener("mousedown", e => {
+if (
+    !actionPanel.contains(e.target) &&
+    e.target !== canvas
+  ) {
+    hideActionPanel();
+  }
   const rect = canvas.getBoundingClientRect();
   mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects(selectableObjects, true);
+  if (!hits.length) return;
 
-  if (hits.length > 0) {
-    draggedSceneObject = hits[0].object;
+let hitObject = hits[0].object;
 
-    while (
-      draggedSceneObject.parent &&
-      !selectableObjects.includes(draggedSceneObject)
-    ) {
-      draggedSceneObject = draggedSceneObject.parent;
-    }
+// climb to first selectable (item OR group)
+while (hitObject.parent && !selectableObjects.includes(hitObject)) {
+  hitObject = hitObject.parent;
+}
 
-    camera.getWorldDirection(planeNormal);
-    dropPlane.setFromNormalAndCoplanarPoint(
-      planeNormal,
-      draggedSceneObject.position
-    );
+// 🔑 DECIDE DRAG TARGET
+let dragTarget = hitObject;
 
-    isDraggingSceneObject = false; // reset here
-  }
+// if item is inside a group → drag the group
+if (hitObject.userData.isInGroup && hitObject.userData.groupRoot) {
+  dragTarget = hitObject.userData.groupRoot;
+}
+
+interaction.dragTarget = dragTarget;
+interaction.dragging = true;
+controls.enabled = false;
+
+camera.getWorldDirection(planeNormal);
+dropPlane.setFromNormalAndCoplanarPoint(
+  planeNormal,
+  interaction.dragTarget.position
+);
+
+
 });
-canvas.addEventListener("mousemove", e => {
-  if (!draggedSceneObject) return;
 
-  isDraggingSceneObject = true; // 👈 mark as drag
+
+canvas.addEventListener("mousemove", e => {
+  if (!interaction.dragging || !interaction.dragTarget) return;
 
   const rect = canvas.getBoundingClientRect();
   mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -132,25 +256,87 @@ canvas.addEventListener("mousemove", e => {
 
   const pos = new THREE.Vector3();
   if (raycaster.ray.intersectPlane(dropPlane, pos)) {
-    draggedSceneObject.position.copy(pos);
+    interaction.dragTarget.position.copy(pos);
   }
 });
 
 
 window.addEventListener("mouseup", () => {
-  draggedSceneObject = null;
+  if (!interaction.dragging) return;
+
+  interaction.dragging = false;
+  interaction.dragTarget = null;
+  controls.enabled = true;
 });
 
-  // --- CLICK SELECTION ---
-window.addEventListener("click", event => {
-    if (isDraggingSceneObject) {
-    isDraggingSceneObject = false;
-    return; // 🚫 stop click selection
+
+deleteBtn.addEventListener("click", () => {
+  if (selectedObjects.length !== 1) return;
+
+  const target = selectedObjects[0];
+  const visualTarget =
+    target.userData.isGrouped && target.userData.parentGroup
+      ? target.userData.parentGroup
+      : target;
+
+  // Remove selection ring
+if (visualTarget.userData.selectionRing) {
+  visualTarget.remove(visualTarget.userData.selectionRing);
+  visualTarget.userData.selectionRing.geometry?.dispose?.();
+  visualTarget.userData.selectionRing.material?.dispose?.();
+  delete visualTarget.userData.selectionRing;
+}
+
+// 🧹 Remove bio label if exists
+if (visualTarget.userData.label) {
+  visualTarget.remove(visualTarget.userData.label);
+
+  visualTarget.userData.label.material?.dispose?.();
+  visualTarget.userData.label.geometry?.dispose?.();
+
+  delete visualTarget.userData.label;
+}
+
+destroyObject(visualTarget, scene);
+
+
+  // Cleanup arrays
+  selectableObjects = selectableObjects.filter(o => o !== visualTarget);
+  sceneNodes = sceneNodes.filter(o => o !== visualTarget);
+
+  selectedObjects.length = 0;
+  hideActionPanel();
+});
+
+separateBtn.addEventListener("click", () => {
+  if (selectedObjects.length !== 1) return;
+
+  const target = selectedObjects[0];
+  const group =
+    target.userData.isGroup
+      ? target
+      : target.userData.parentGroup;
+
+  if (!group?.userData?.isGroup) return;
+
+  separateGroup(group, scene);
+
+  // Cleanup
+  if (group.userData.selectionRing) {
+    group.remove(group.userData.selectionRing);
   }
-  // Optional: only process if clicked on canvas
+
+  selectableObjects = selectableObjects.filter(o => o !== group);
+  sceneNodes = sceneNodes.filter(o => o !== group);
+
+  selectedObjects.length = 0;
+  hideActionPanel();
+});
+
+
+window.addEventListener("dblclick", event => {
   if (event.target !== canvas) return;
 
-  // Get FRESH rect every click
   const rect = canvas.getBoundingClientRect();
 
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -158,61 +344,88 @@ window.addEventListener("click", event => {
 
   raycaster.setFromCamera(mouse, camera);
 
-  const intersects = raycaster.intersectObjects(selectableObjects, true);
+  // 🔑 IMPORTANT: ignore Groups entirely
+  const intersects = raycaster.intersectObjects(
+    selectableObjects.filter(o => !o.userData?.isGroup),
+    true
+  );
 
-  console.log("Click - Intersects:", intersects.length); // ADD THIS FOR DEBUG
+  if (!intersects.length) return;
 
-  
-  if (intersects.length > 0) {
   let clicked = intersects[0].object;
 
-  // Climb up the hierarchy until we find the actual selectable object (the Sprite or Plane)
-  while (clicked.parent && !selectableObjects.includes(clicked)) {
+  // climb until real selectable (sprite / plane)
+  while (
+    clicked.parent &&
+    clicked.parent !== scene &&
+    !selectableObjects.includes(clicked)
+  ) {
     clicked = clicked.parent;
   }
 
-  // Safety check: if we went too far (e.g. reached scene), abort
-  if (!selectableObjects.includes(clicked)) {
-    console.log("Clicked on non-selectable object");
-    return;
-  }
+  if (!selectableObjects.includes(clicked)) return;
 
-  console.log("Actually selecting:", clicked); // Should now log the Sprite
-
-  // Now proceed with toggle logic on the real object
+  // toggle
   clicked.userData.selected = !clicked.userData.selected;
 
+  const visualTarget =
+    clicked.userData.isGrouped && clicked.userData.parentGroup
+      ? clicked.userData.parentGroup
+      : clicked;
+
   if (clicked.userData.selected) {
-    selectedObjects.push(clicked);
-
-    // Create and show ring if not exists
-    if (!clicked.userData.selectionRing) {
-      const ring = createSelectionSquare(clicked);
-      clicked.userData.selectionRing = ring;
-      clicked.add(ring);
+    if (!selectedObjects.includes(clicked)) {
+      selectedObjects.push(clicked);
     }
-    clicked.userData.selectionRing.visible = true;
 
-    // Tint the sprite
-    if (clicked.material && clicked.material.color) {
-      clicked.userData.originalColor = clicked.material.color.clone();
+    if (!visualTarget.userData.selectionRing) {
+      const ring = createSelectionSquare(visualTarget);
+      visualTarget.userData.selectionRing = ring;
+      visualTarget.add(ring);
+    }
+
+    visualTarget.userData.selectionRing.visible = true;
+
+    if (clicked.material?.color) {
+      clicked.userData.originalColor =
+        clicked.material.color.clone();
       clicked.material.color.set(0x88ff88);
     }
-
   } else {
-    // Deselect
     const idx = selectedObjects.indexOf(clicked);
     if (idx !== -1) selectedObjects.splice(idx, 1);
 
-    if (clicked.userData.selectionRing) {
-      clicked.userData.selectionRing.visible = false;
+    if (visualTarget.userData.selectionRing) {
+      visualTarget.userData.selectionRing.visible = false;
     }
 
     if (clicked.userData.originalColor) {
-      clicked.material.color.copy(clicked.userData.originalColor);
+      clicked.material.color.copy(
+        clicked.userData.originalColor
+      );
+      delete clicked.userData.originalColor;
     }
   }
+
+  // After selection toggle logic
+if (selectedObjects.length === 1) {
+  const selected = selectedObjects[0];
+
+  const visualTarget =
+    selected.userData.isGrouped && selected.userData.parentGroup
+      ? selected.userData.parentGroup
+      : selected;
+
+  showActionPanelAtObject(visualTarget, camera, canvas);
+
+  // Only show separate if it's a group
+  separateBtn.style.display = visualTarget.userData.isGroup
+    ? "inline-block"
+    : "none";
+} else {
+  hideActionPanel();
 }
+
 });
 
 

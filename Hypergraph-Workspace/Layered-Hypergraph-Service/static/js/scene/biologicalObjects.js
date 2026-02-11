@@ -1,5 +1,6 @@
 // biologicalObjects.js
 import * as THREE from "three";
+import { createBioLabel } from '../renderers/bioLabels.js';
 
 
 
@@ -41,6 +42,19 @@ export function getBioIconSprite({ type, src }, size = 0.12) {
       src,
       selected: false
     };
+
+    const label = createBioLabel(type);
+
+    // position label under the sprite
+    const yOffset = -sprite.scale.y * 0.75;
+
+
+    label.position.set(0, yOffset, 0);
+    label.center.set(0.5, 0); 
+    sprite.add(label);
+
+    // optional: keep reference
+    sprite.userData.label = label;
 
 
       

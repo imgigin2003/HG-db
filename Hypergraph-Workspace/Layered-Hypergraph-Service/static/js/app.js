@@ -2,14 +2,17 @@ import * as THREE from 'three';
 import { createScene } from './scene/scene.js';
 import { createPlane, planeSize } from './scene/plane.js';
 import { createLabelRenderer, createLabel , relaxLabels } from './renderers/labels.js';
-import {  relaxLayerToVenn } from './renderers/layout.js';
+import {  relaxLayerToVenn } from './renderers/sharedNodes.js';
 import {layoutEdges , createEdgeEllipse , createEdgeLabel } from './renderers/edges.js'
 import { showEdgeInfo } from './interaction/info.js';
-import {setupDragAndDrop , sceneNodes , selectableObjects} from './interaction/events.js'
+import {setupDragAndDrop , sceneNodes , selectableObjects ,undoLast, clearScene} from './interaction/events.js'
 import {connectRepeatedNodes} from './renderers/connectors.js'
 import {createEdgeClickHandler } from './interaction/edgeClick.js'
 import { exportScene, importScene } from "./data/hypergraphIO.js";
 import { getBioIconSprite  } from "./scene/biologicalObjects.js";
+import { createGroupFromObjects } from "./scene/grouping.js";
+
+
 
 
 
@@ -57,21 +60,95 @@ scene.add(connectorsGroup);
     return;
   }
 
+
   // compute bounding ellipse
-  const positions = selectedObjects.map(o => o.position);
-  const cx = positions.reduce((a, p) => a + p.x, 0) / positions.length;
-  const cz = positions.reduce((a, p) => a + p.z, 0) / positions.length;
+  const positions = selectedObjects.map(o => {
+  const v = new THREE.Vector3();
+  o.getWorldPosition(v);
+  return v;
+});
+console.log("🔎 Selected objects world positions:");
+selectedObjects.forEach((o, i) => {
+  const v = new THREE.Vector3();
+  o.getWorldPosition(v);
+  console.log(`  obj ${i}:`, {
+    x: v.x.toFixed(3),
+    y: v.y.toFixed(3),
+    z: v.z.toFixed(3),
+    parent: o.parent?.name || o.parent?.type
+  });
+});
 
-  const maxDist = Math.max(
-    ...positions.map(p => Math.hypot(p.x - cx, p.z - cz))
-  );
+ function computeEllipseXZ(points) {
+  let minX = Infinity, maxX = -Infinity;
+  let minZ = Infinity, maxZ = -Infinity;
 
-  const rx = maxDist * 1.3;
-  const rz = maxDist * 0.9;
+  points.forEach(p => {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minZ = Math.min(minZ, p.z);
+    maxZ = Math.max(maxZ, p.z);
+  });
+
+  const cx = (minX + maxX) / 2;
+  const cz = (minZ + maxZ) / 2;
+
+  const rx = (maxX - minX) / 2;
+  const rz = (maxZ - minZ) / 2;
+
+  return { cx, cz, rx, rz };
+}
+
+
+const { cx, cz, rx, rz } = computeEllipseXZ(positions);
+
+// vertical placement = average Y
+const cy =
+  positions.reduce((a, p) => a + p.y, 0) / positions.length;
+
+
 
   const color = Math.random() * 0xffffff;
-  const ellipse = createEdgeEllipse(cx, cz, rx, rz, color);
-  scene.add(ellipse);
+  const ellipse = createEdgeEllipse(
+  cx,
+  cy,
+  cz,
+  rx * 1.2,   
+  rz * 1.2,
+  color,
+  { mode: "sprite" }
+);
+
+
+
+  const group = createGroupFromObjects(selectedObjects, scene);
+
+// 🔑 keep members selectable
+group.userData.members.forEach(member => {
+  if (!selectableObjects.includes(member)) {
+    selectableObjects.push(member);
+  }
+});
+
+
+  group.worldToLocal(ellipse.position);
+  group.add(ellipse);
+
+ellipse.userData.isHyperedge = true;
+selectableObjects.push(group);
+sceneNodes.push(group);
+
+
+  const ev = new THREE.Vector3();
+ellipse.getWorldPosition(ev);
+
+console.log("⭕ Ellipse world position:", {
+  x: ev.x.toFixed(3),
+  y: ev.y.toFixed(3),
+  z: ev.z.toFixed(3),
+  parent: ellipse.parent?.name || ellipse.parent?.type
+});
+
 
   console.log("✅ Created hyperedge around:", selectedObjects.map(o => o.userData.type));
 
@@ -92,6 +169,7 @@ scene.add(connectorsGroup);
 
   selectedObjects.length = 0; // clear the array
 });
+
 
 
 
@@ -205,7 +283,16 @@ layerList.appendChild(layerRow);
       const edgeToOval = {};
 
       finalEdges.forEach(e => {
-        const oval = createEdgeEllipse(e.cx, e.cz, e.rx, e.rz);
+        const oval = createEdgeEllipse(
+  e.cx,     // X center
+  0,        // Y on floor
+  e.cz,     // Z center
+  e.rx,     // radius along X
+  e.rz,     // radius along Z
+  undefined, // color optional
+  { mode: "floor" }
+);
+
         layerGroup.add(oval);
         edgeToOval[e.eid] = oval;
 
@@ -302,7 +389,16 @@ function animate() {
   labelRenderer.render(scene, camera);
 }
 
-setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects);
+setupDragAndDrop(camera, scene, renderer.domElement, selectedObjects , controls);
+
+  document.getElementById("undo-btn").onclick = () => {
+  undoLast();
+};
+
+document.getElementById("clear-btn").onclick = () => {
+  clearScene(scene);
+};
+
 
 // EXPORT
 document.getElementById("export-btn").addEventListener("click", () => {
