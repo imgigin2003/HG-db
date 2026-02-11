@@ -36,27 +36,18 @@ class VisualizationManager:
         return clean
 
 
-    def send_to_layered_service(self, layers):
-        url = "http://127.0.0.1:8000/render-layered"
+    def send_to_rust_layered(self, edges_payload):
+        url = "http://127.0.0.1:8080/api/layered-hypergraphs/visualize-from-json"
 
-        payload = {
-            "layers": layers
-        }
-
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=edges_payload)
 
         if response.status_code != 200:
             raise RuntimeError(
-                f"Layered service failed [{response.status_code}]: {response.text}"
+                f"Rust backend failed [{response.status_code}]: {response.text}"
             )
 
-        return {
-            "method": "POST",
-            "endpoint": "/render-layered",
-            "status": response.status_code,
-            "request": payload,
-            "body": response.json()
-        }
+        return response.json()
+
 
 
     def display_hypergraph_visualization(self, hyperedges, graph_type, visualize_mode=None, 
@@ -74,23 +65,38 @@ class VisualizationManager:
 
 
                         # --------- Build request payload (Layered format) ----------
-                        serialized = {}
+                        edges_array = []
 
                         for edge_id, data in hyperedges.items():
-                            layer = str(data.get("layer", 0))
-                            serialized.setdefault(layer, {})
-                            serialized[layer][edge_id] = list(data["nodes"])
-                        
+                            edge_obj = {
+                                "id": edge_id,
+                                "name": edge_id,
+                                "main_properties": [
+                                    { "key": "type", "p_type": "Simple", "value": ["linked"] }
+                                ],
+                                "traversable": True,
+                                "directed": data.get("directed", False),
+                                "head_hyper_nodes": [
+                                    { "id": node_id } for node_id in data["nodes"]
+                                ],
+                                "tail_hyper_nodes": None,
+                                "layer": data.get("layer", 0)
+                            }
+
+                            edges_array.append(edge_obj)
+
                         request_payload = {
-                            "layers": serialized
+                            "edges": edges_array,
+                            "hypergraph_id": "",
+                            "hypergraph_name": ""
                         }
 
-                        # --------- Send to microservice ----------
-                        result = self.send_to_layered_service(serialized)
 
+                        # --------- Send to microservice ----------
+                        result = self.send_to_rust_layered(request_payload)
 
                         # --------- Layout: 2 columns ----------
-                        viewer_url = "http://127.0.0.1:8000/viewer"
+                        viewer_url = "http://127.0.0.1:3000/viewer"
 
                         colA, colB, colC = st.columns([1,2,1])
                         with colB:
@@ -127,7 +133,7 @@ class VisualizationManager:
                                 st.json(result)
 
                         # -------- Status --------
-                        if result["status"] == 200:
+                        if result.get("status") == "success":
                             st.success("3D Scene Generated Successfully 🚀")
                         else:
                             st.error("Layered service failed")
