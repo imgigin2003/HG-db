@@ -14,3 +14,12 @@ __pycache__/
 .vscode/
 
 
+Hypergraph-Workspace/hgdb_core/Cargo.lock
+
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/app_manager.cpython-312.pyc
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/config_manager.cpython-312.pyc
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/data_loader.cpython-312.pyc
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/dual_hypergraph.cpython-312.pyc
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/hypergraph.cpython-312.pyc
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/layered_hypergraph.cpython-312.pyc
+Hypergraph-Workspace/hgdb_core/hg_app/py_scripts/__pycache__/visualization_manager.cpython-312.pyc

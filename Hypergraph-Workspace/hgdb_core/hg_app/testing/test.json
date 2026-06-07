@@ -1,86 +1,90 @@
-[
-  {
-    "id": "e1",
-    "name": "e1",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": false,
-    "head_hyper_nodes": [{ "id": "v1" }, { "id": "v3" }],
-    "tail_hyper_nodes": null,
-    "layer": 0
-  },
-  {
-    "id": "e2",
-    "name": "e2",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": false,
-    "head_hyper_nodes": [{ "id": "v1" }, { "id": "v2" }, { "id": "v7" }],
-    "tail_hyper_nodes": null,
-    "layer": 0
-  },
-  {
-    "id": "e3",
-    "name": "e3",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": false,
-    "head_hyper_nodes": [{ "id": "v6" }, { "id": "v7" }],
-    "tail_hyper_nodes": null,
-    "layer": 1
-  },
-  {
-    "id": "e4",
-    "name": "e4",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": false,
-    "head_hyper_nodes": [{ "id": "v5" }],
-    "tail_hyper_nodes": null,
-    "layer": 2
-  },
-  {
-    "id": "e5",
-    "name": "e5",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": false,
-    "head_hyper_nodes": [{ "id": "v4" }],
-    "tail_hyper_nodes": null,
-    "layer": 2
-  },
-  {
-    "id": "e6",
-    "name": "e6",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": true,
-    "head_hyper_nodes": [{ "id": "v3" }],
-    "tail_hyper_nodes": [{ "id": "v4" }],
-    "layer": 1
-  },
-  {
-    "id": "e7",
-    "name": "e7",
-    "main_properties": [
-      { "key": "type", "p_type": "Simple", "value": ["linked"] }
-    ],
-    "traversable": true,
-    "directed": true,
-    "head_hyper_nodes": [{ "id": "v7" }],
-    "tail_hyper_nodes": [{ "id": "v4" }],
-    "layer": 1
-  }
-]
+{
+  "edges": [
+    {
+      "id": "e1",
+      "name": "e1",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [{ "id": "v1" }, { "id": "v3" }],
+      "tail_hyper_nodes": null,
+      "layer": 0
+    },
+    {
+      "id": "e2",
+      "name": "e2",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [{ "id": "v1" }, { "id": "v2" }, { "id": "v7" }],
+      "tail_hyper_nodes": null,
+      "layer": 0
+    },
+    {
+      "id": "e3",
+      "name": "e3",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [{ "id": "v6" }, { "id": "v7" }],
+      "tail_hyper_nodes": null,
+      "layer": 1
+    },
+    {
+      "id": "e4",
+      "name": "e4",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [{ "id": "v5" }],
+      "tail_hyper_nodes": null,
+      "layer": 2
+    },
+    {
+      "id": "e5",
+      "name": "e5",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": false,
+      "head_hyper_nodes": [{ "id": "v4" }],
+      "tail_hyper_nodes": null,
+      "layer": 2
+    },
+    {
+      "id": "e6",
+      "name": "e6",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [{ "id": "v3" }],
+      "tail_hyper_nodes": [{ "id": "v4" }],
+      "layer": 1
+    },
+    {
+      "id": "e7",
+      "name": "e7",
+      "main_properties": [
+        { "key": "type", "p_type": "Simple", "value": ["linked"] }
+      ],
+      "traversable": true,
+      "directed": true,
+      "head_hyper_nodes": [{ "id": "v7" }],
+      "tail_hyper_nodes": [{ "id": "v4" }],
+      "layer": 1
+    }
+  ],
+  "hypergraph_id": "",
+  "hypergraph_name": ""
+}

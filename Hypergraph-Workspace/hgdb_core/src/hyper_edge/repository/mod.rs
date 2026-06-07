@@ -1,6 +1,7 @@
 pub mod simple_h_edge_repository;
 pub mod light_h_edge_repository;
 pub mod h_edge_repository;
+pub mod h_graph_repository;
 
 use std::error::Error; // for error handling
 use crate::hyper_edge::entity::h_edge::dual_h_edge::DualHyperEdge; // import DualHyperEdge
