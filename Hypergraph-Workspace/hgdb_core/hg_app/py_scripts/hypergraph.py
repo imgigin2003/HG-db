@@ -11,27 +11,31 @@ import matplotlib.pyplot as plt
 class HypergraphManager:
     def __init__(self):
         self.data_loader = DataLoader()
-        self.json_file_path = (
-            self.data_loader.get_statics_root() / "statics" / "test_edge.json"
+        # Bundled sample so the app has data to show on first run.
+        self.sample_file_path = (
+            self.data_loader.get_statics_root() / "testing" / "test.json"
         )
 
-    def load_hyperedges_from_json(self, json_file_path=None):
-        json_file_path = json_file_path or self.json_file_path
-        with open(json_file_path, "r") as file:
-            data = json.load(file)
+    def parse_edges(self, data):
+        """Build the internal hyperedge dict from canonical edge data.
+
+        `data` is either the canonical ``{"edges": [...]}`` object or a bare list of
+        edges (both as produced by the Rust normalizer / test.json).
+        """
+        if isinstance(data, dict):
+            data = data.get("edges", [])
+
+        def node_ids(edge, key):
+            return [n["id"] if isinstance(n, dict) else n for n in (edge.get(key) or [])]
 
         # Sort edges by size for default layer assignment
         edge_sizes = [
             (
-                edge["id"],
-                len(edge["head_hyper_nodes"])
-                + (
-                    len(edge["tail_hyper_nodes"])
-                    if edge["tail_hyper_nodes"]
-                    else 0
-                ),
+                edge.get("id", f"e{i + 1}"),
+                len(node_ids(edge, "head_hyper_nodes"))
+                + len(node_ids(edge, "tail_hyper_nodes")),
             )
-            for edge in data
+            for i, edge in enumerate(data)
         ]
         edge_sizes.sort(
             key=lambda x: (-x[1], x[0])
@@ -44,13 +48,9 @@ class HypergraphManager:
 
         hyperedges = {}
         for idx, edge in enumerate(data):
-            edge_id = edge["id"]
-            head_nodes = [node["id"] for node in edge["head_hyper_nodes"]]
-            tail_nodes = (
-                [node["id"] for node in edge["tail_hyper_nodes"]]
-                if edge["tail_hyper_nodes"]
-                else []
-            )
+            edge_id = edge.get("id", f"e{idx + 1}")
+            head_nodes = node_ids(edge, "head_hyper_nodes")
+            tail_nodes = node_ids(edge, "tail_hyper_nodes")
 
             # Assign layer based on the 'layer' key, or fall back to size-based grouping
             if "layer" in edge:
@@ -69,19 +69,31 @@ class HypergraphManager:
                 else:
                     layer = 2  # Lower layer
 
+            props = edge.get("main_properties") or []
+            edge_type = (
+                props[0]["value"][0]
+                if props and props[0].get("value")
+                else "linked"
+            )
+
             hyperedges[edge_id] = {
                 "nodes": set(head_nodes + tail_nodes),
                 "head": set(head_nodes),
                 "tail": set(tail_nodes),
-                "traversable": edge["traversable"],
-                "directed": edge["directed"],
-                "type": edge["main_properties"][0]["value"][0],
+                "traversable": edge.get("traversable", True),
+                "directed": edge.get("directed", False),
+                "type": edge_type,
                 "layer": layer,  # Add layer attribute
             }
         return hyperedges
 
+    def load_sample(self):
+        """Load the bundled sample hypergraph (testing/test.json)."""
+        with open(self.sample_file_path, "r") as file:
+            return self.parse_edges(json.load(file))
+
     def create_hypergraph(self):
-        hyperedges = self.load_hyperedges_from_json()
+        hyperedges = self.load_sample()
         if not hyperedges:
             return None, None
         H = hnx.Hypergraph({k: v["nodes"] for k, v in hyperedges.items()})

@@ -1,0 +1,6 @@
+# ===== Rust =====
+target/
+
+# ===== OS / IDE =====
+.DS_Store
+.vscode/

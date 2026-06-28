@@ -1,3 +1,16 @@
-/**/.venv
-/**/__pycache__
-py_scripts/__pycache__/
+# ===== Rust =====
+target/
+
+# ===== Python =====
+**/venv/
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# ===== Streamlit / runtime =====
+.streamlit/secrets.toml
+mydbs/
+
+# ===== OS / IDE =====
+.DS_Store
+.vscode/

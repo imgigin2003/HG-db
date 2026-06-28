@@ -6,7 +6,7 @@ host = "127.0.0.1"
 port = 8080
 
 [layered_service]
-url = "http://localhost:3000"
+url = "http://localhost:8000"
 
 [rocksdb]
 create_if_missing = true

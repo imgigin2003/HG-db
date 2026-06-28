@@ -1,10 +1,9 @@
-import os
-import pandas as pd
+import json
+import requests
 import streamlit as st
 from streamlit_option_menu import option_menu
 from data_loader import DataLoader
-from visualization_manager import VisualizationManager
-from config_manager import ConfigManager
+from visualization_manager import VisualizationManager, RUST_CORE_URL
 from hypergraph import HypergraphManager
 from dual_hypergraph import DualHypergraphManager
 from layered_hypergraph import LayeredHypergraphManager
@@ -14,7 +13,6 @@ class AppManager:
     def __init__(self):
         self.data_loader = DataLoader()
         self.visualizer = VisualizationManager()
-        self.config_manager = ConfigManager()
         self.hypergraph = HypergraphManager()
         self.dual_hypergraph = DualHypergraphManager()
         self.layered_hypergraph = LayeredHypergraphManager()
@@ -32,9 +30,6 @@ class AppManager:
         if "active_menu" not in st.session_state:
             st.session_state.active_menu = "main"
 
-        if "file_db" not in st.session_state:
-            st.session_state.file_db = {}
-
         if "selected_node" not in st.session_state:
             st.session_state.selected_node = None
 
@@ -51,12 +46,11 @@ class AppManager:
             menu_options = (
                 [
                     "Introduction",
+                    "Upload Data",
                     "Interactive Hypergraph",
                     "Hyperpath",
                     "Dual Hypergraph",
                     "Layered Hypergraph",
-                    "Files/Analysis",
-                    "Setting",
                 ]
                 if st.session_state.active_menu == "main"
                 else ["Atoms", "Molecules", "Genes"]
@@ -65,12 +59,11 @@ class AppManager:
             menu_icons = (
                 [
                     "house",
+                    "cloud-upload",
                     "graph-up",
                     "sign-turn-slight-right",
                     "kanban",
                     "graph-down",
-                    "cloud-upload",
-                    "gear",
                 ]
                 if st.session_state.active_menu == "main"
                 else ["capsule", "virus", "gender-ambiguous"]
@@ -113,6 +106,8 @@ class AppManager:
     def render_main_menu(self, selected):
         if selected == "Introduction":
             self.render_introduction()
+        elif selected == "Upload Data":
+            self.render_upload_data()
         elif selected == "Interactive Hypergraph":
             self.render_interactive_hypergraph()
         elif selected == "Hyperpath":
@@ -121,10 +116,6 @@ class AppManager:
             self.render_dual_hypergraph()
         elif selected == "Layered Hypergraph":
             self.render_layered_hypergraph()
-        elif selected == "Files/Analysis":
-            self.render_files_analysis()
-        elif selected == "Setting":
-            self.render_setting()
 
     def render_bio_menu(self, selected):
         if selected == "Atoms":
@@ -135,20 +126,23 @@ class AppManager:
             self.render_genes()
 
     def render_introduction(self):
-        st.title("Introduction")
-        st.write("Welcome to the HG-DB Project! 📌")
+        st.title("🕸️ HG-DB — Hypergraph Explorer")
         st.write(
-            "This project provides a comprehensive framework for working with hypergraphs."
+            "Upload a hypergraph, let the Rust core normalize it, and explore it "
+            "across interactive 2D, dual, and layered 3D views."
         )
-        st.write(
-            "Features: Interactive Hypergraph, Dual Hypergraph, Layered Hypergraph, File Management"
-        )
-        st.write(
-            "Ensure correct database and Python configuration to avoid issues."
-        )
-        st.write(
-            "Requires Python 3.8 or higher. Contact the development team for issues."
-        )
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.subheader("📤 Upload")
+            st.write("Drop in any hypergraph JSON. The Rust core formats it for you.")
+        with col2:
+            st.subheader("🔗 Explore")
+            st.write("Interactive hypergraph, hyperpaths, and the dual hypergraph.")
+        with col3:
+            st.subheader("🧊 Layered 3D")
+            st.write("Send layers to the Three.js service for a 3D scene.")
+        st.divider()
+        st.info("Start in the **Upload Data** tab — or load the bundled sample there.")
 
     def render_interactive_hypergraph(self):
         st.title("Interactive Hypergraph")
@@ -156,39 +150,34 @@ class AppManager:
 
         with tabs[0]:
             st.write("### Hypergraph Visualization")
-            sub_tabs = st.tabs(["Static Visualize", "Dynamic Visualize"])
-            with sub_tabs[0]:
-                col1, col2 = st.columns(2)
-                with col1:
-                    visualize_mode = st.radio(
-                        "Visualize based on traversable:",
-                        options=["edges", "nodes"],
-                        format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
-                        key="hypergraph_viz_mode",
-                    )
-                with col2:
-                    display_mode = st.radio(
-                        "Display mode:",
-                        options=["default", "simple", "minimal"],
-                        format_func=lambda x: {
-                            "default": "Default (filled ellipses)",
-                            "simple": "Simple (outline ellipses)",
-                            "minimal": "Minimal (lines only)",
-                        }[x],
-                        key="hypergraph_display_mode",
-                    )
-
-                self.visualizer.display_hypergraph_visualization(
-                    st.session_state.hyperedges,
-                    "Hypergraph",
-                    visualize_mode,
-                    tab_key="hypergraph",
-                    highlighted_path=None,
-                    display_mode=display_mode,
+            col1, col2 = st.columns(2)
+            with col1:
+                visualize_mode = st.radio(
+                    "Visualize based on traversable:",
+                    options=["edges", "nodes"],
+                    format_func=lambda x: f"{'Edges' if x == 'edges' else 'Nodes'} (traversable: {x == 'edges'})",
+                    key="hypergraph_viz_mode",
                 )
-            with sub_tabs[1]:
-                st.write("### Interactive Hypergraph Visualization")
-                self.visualizer.render_interactive_visualization()
+            with col2:
+                display_mode = st.radio(
+                    "Display mode:",
+                    options=["default", "simple", "minimal"],
+                    format_func=lambda x: {
+                        "default": "Default (filled ellipses)",
+                        "simple": "Simple (outline ellipses)",
+                        "minimal": "Minimal (lines only)",
+                    }[x],
+                    key="hypergraph_display_mode",
+                )
+
+            self.visualizer.display_hypergraph_visualization(
+                st.session_state.hyperedges,
+                "Hypergraph",
+                visualize_mode,
+                tab_key="hypergraph",
+                highlighted_path=None,
+                display_mode=display_mode,
+            )
 
         with tabs[1]:
             st.write("### Properties")
@@ -350,125 +339,91 @@ class AppManager:
             tab_key="layered",
         )
 
-    def render_files_analysis(self):
-        st.title("Files/Analysis")
-        edit_sub_tabs = st.tabs(["Add File", "Delete File", "Files List"])
-        upload_dir = self.config_manager.ensure_upload_dir()
+    def render_upload_data(self):
+        st.title("Upload Data")
+        st.caption(
+            "Upload any hypergraph JSON. The Rust core normalizes it into the "
+            "canonical format, then every view below uses it."
+        )
 
-        with edit_sub_tabs[0]:
-            st.write("#### Add File")
+        col_a, col_b = st.columns([3, 1])
+        with col_a:
             uploaded_file = st.file_uploader(
-                "Upload file:", key="file_uploader"
+                "Hypergraph JSON file", type=["json"], key="hg_uploader"
             )
-            if st.button("Upload File", key="upload_file_btn"):
-                if uploaded_file and upload_dir:
-                    file_path = os.path.join(upload_dir, uploaded_file.name)
-                    try:
-                        with open(file_path, "wb") as f:
-                            f.write(uploaded_file.getbuffer())
-                        st.session_state.file_db[uploaded_file.name] = (
-                            file_path
-                        )
-                        st.success(
-                            f"Uploaded '{uploaded_file.name}' to {upload_dir}!"
-                        )
-                    except Exception as e:
-                        st.error(f"Upload failed: {str(e)}")
+        with col_b:
+            st.write("")
+            st.write("")
+            if st.button("↺ Load sample", key="load_sample_btn"):
+                self._load_sample_into_session()
 
-        with edit_sub_tabs[1]:
-            st.write("#### Delete File")
-            if st.session_state.file_db:
-                file_to_delete = st.selectbox(
-                    "File:",
-                    list(st.session_state.file_db.keys()),
-                    key="delete_file_select",
-                )
-                if st.button("Delete File", key="delete_file_btn"):
-                    file_path = st.session_state.file_db[file_to_delete]
-                    try:
-                        os.remove(file_path)
-                        del st.session_state.file_db[file_to_delete]
-                        st.success(f"Deleted '{file_to_delete}'!")
-                    except Exception as e:
-                        st.error(f"Deletion failed: {str(e)}")
-            else:
-                st.write("No files uploaded yet.")
+        if uploaded_file and st.button("⚙️ Process file", key="process_file_btn"):
+            self._process_upload(uploaded_file)
 
-        with edit_sub_tabs[2]:
-            st.write("#### Files List")
-            if st.session_state.file_db:
-                file_data = [
-                    {
-                        "File Name": name,
-                        "Path": path,
-                        "Size (bytes)": os.path.getsize(path),
-                        "Upload Directory": upload_dir,
-                    }
-                    for name, path in st.session_state.file_db.items()
-                    if os.path.exists(path)
-                ]
-                st.dataframe(pd.DataFrame(file_data))
-            else:
-                st.write("No files uploaded yet.")
+        st.divider()
+        self._render_active_dataset_summary()
 
-    def render_setting(self):
-        st.title("Configuration")
-        tabs = st.tabs(["Configuration", "DB-Config Properties"])
+    def _process_upload(self, uploaded_file):
+        """Send raw JSON to the Rust normalizer and load the result into session."""
+        try:
+            raw = json.load(uploaded_file)
+        except Exception as e:
+            st.error(f"That file isn't valid JSON: {e}")
+            return
 
-        with tabs[0]:
-            st.write("Apply configurations to avoid errors! ⚠️")
-
-            st.subheader("Database Path")
-            current_db_path = self.config_manager.load_db_path()
-            new_db_path = st.text_input(
-                "New database path:",
-                value=current_db_path,
-                key="db_path_input",
+        try:
+            resp = requests.post(
+                f"{RUST_CORE_URL}/api/normalize", json=raw, timeout=10
             )
-            if st.button("Update DB Path", key="update_db_path_btn"):
-                if self.config_manager.update_db_path(new_db_path):
-                    st.success("Database path updated!")
-                else:
-                    st.error("Failed to update database path.")
-
-            st.subheader("Python Configuration")
-            if st.button(
-                "Auto-configure Python", key="auto_config_python_btn"
-            ):
-                python_lib_path = self.config_manager.get_python_library_path()
-                python_version = self.config_manager.get_python_version()
-                if python_lib_path and python_version:
-                    if self.config_manager.update_build_rs(
-                        python_lib_path, python_version
-                    ):
-                        st.success(
-                            f"Python {python_version} configured at {python_lib_path}!"
-                        )
-                    else:
-                        st.error("Failed to update build.rs.")
-                else:
-                    st.error("Could not detect Python configuration.")
-
-            st.subheader("Upload Directory")
-            new_upload_dir = st.text_input(
-                "New upload directory:",
-                value=self.config_manager.ensure_upload_dir(),
-                key="upload_dir_input",
+        except requests.exceptions.ConnectionError:
+            st.error(
+                f"Cannot reach the Rust core at {RUST_CORE_URL}. "
+                "Start it with `cargo run` inside `hgdb_core`."
             )
-            if st.button(
-                "Update Upload Directory", key="update_upload_dir_btn"
-            ):
-                try:
-                    os.makedirs(new_upload_dir, exist_ok=True)
-                    st.session_state.upload_dir = new_upload_dir
-                    st.session_state.file_db = {}
-                    st.success("Upload directory updated!")
-                except Exception as e:
-                    st.error(f"Failed to update upload directory: {str(e)}")
+            return
 
-        with tabs[1]:
-            st.write("### DB-Config Properties")
-            self.config_manager.display_db_config_properties()
+        if resp.status_code != 200:
+            detail = resp.json().get("error", resp.text)
+            st.error(f"Normalization failed: {detail}")
+            return
+
+        canonical = resp.json()
+        try:
+            hyperedges = self.hypergraph.parse_edges(canonical)
+        except Exception as e:
+            st.error(f"Could not build hypergraph from normalized data: {e}")
+            return
+
+        st.session_state.hyperedges = hyperedges
+        st.session_state.canonical_data = canonical
+        st.success(
+            f"✅ Loaded {len(hyperedges)} edges from '{uploaded_file.name}'. "
+            "Open any visualization tab to explore it."
+        )
+        with st.expander("📦 Normalized JSON (canonical format)", expanded=False):
+            st.json(canonical)
+
+    def _load_sample_into_session(self):
+        try:
+            st.session_state.hyperedges = self.hypergraph.load_sample()
+            st.session_state.pop("canonical_data", None)
+            st.success("✅ Loaded the bundled sample hypergraph.")
+        except Exception as e:
+            st.error(f"Failed to load sample data: {e}")
+
+    def _render_active_dataset_summary(self):
+        st.subheader("Active dataset")
+        hyperedges = st.session_state.get("hyperedges") or {}
+        if not hyperedges:
+            st.info("No data loaded yet — upload a file or load the sample.")
+            return
+
+        nodes = set().union(*[d["nodes"] for d in hyperedges.values()])
+        layers = {d.get("layer", 0) for d in hyperedges.values()}
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Hyperedges", len(hyperedges))
+        col2.metric("Nodes", len(nodes))
+        col3.metric("Layers", len(layers))
 
     def render_atoms(self):
         st.title("Atoms")

@@ -3,8 +3,9 @@ use crate::hyper_edge::dto::layered_hypergraph_dto::LayeredHypergraphCreateDto;
 use crate::hyper_edge::dto::layered_visualization_request::LayeredVisualizationRequestDto;
 use crate::hyper_edge::services::h_graph_service::LayeredHypergraphService;
 use crate::hyper_edge::mapper::layered_visualization_mapper;
+use crate::hyper_edge::mapper::normalize_mapper;
 use actix_web::{web, HttpResponse, Responder};
-use serde_json::json;
+use serde_json::{json, Value};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -186,6 +187,36 @@ pub async fn validate_json_input(
             "status": "invalid",
             "error": e.to_string(),
             "message": "Input JSON validation failed"
+        })),
+    }
+}
+
+/// Best-effort normalize: accept an arbitrary uploaded JSON document and coerce it into
+/// the canonical hypergraph edge format consumed by the rest of the pipeline.
+/// Stateless — does not touch RocksDB — so it works even without a database.
+pub async fn normalize_hypergraph(body: web::Json<Value>) -> impl Responder {
+    match normalize_mapper::normalize(body.into_inner()) {
+        Ok(normalized) => HttpResponse::Ok().json(normalized),
+        Err(e) => HttpResponse::BadRequest().json(json!({
+            "status": "invalid",
+            "error": e.to_string(),
+            "message": "Could not normalize the uploaded JSON into a hypergraph",
+        })),
+    }
+}
+
+/// Validate-only variant: same logic, but reports validity without returning the payload.
+pub async fn validate_normalize(body: web::Json<Value>) -> impl Responder {
+    match normalize_mapper::normalize(body.into_inner()) {
+        Ok(normalized) => HttpResponse::Ok().json(json!({
+            "status": "valid",
+            "edge_count": normalized.edges.len(),
+            "message": "Input JSON can be normalized successfully",
+        })),
+        Err(e) => HttpResponse::BadRequest().json(json!({
+            "status": "invalid",
+            "error": e.to_string(),
+            "message": "Input JSON normalization failed",
         })),
     }
 }

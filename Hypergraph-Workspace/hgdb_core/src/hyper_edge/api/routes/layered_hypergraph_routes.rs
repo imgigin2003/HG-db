@@ -5,6 +5,14 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
             .service(
+                web::resource("/normalize")
+                    .route(web::post().to(layered_hypergraph_handler::normalize_hypergraph)),
+            )
+            .service(
+                web::resource("/normalize/validate")
+                    .route(web::post().to(layered_hypergraph_handler::validate_normalize)),
+            )
+            .service(
                 web::resource("/layered-hypergraphs/visualize-from-json")
                     .route(web::post().to(layered_hypergraph_handler::visualize_from_json)),
             )

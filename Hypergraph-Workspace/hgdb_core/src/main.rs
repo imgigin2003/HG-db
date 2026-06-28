@@ -19,9 +19,23 @@ async fn main() -> std::io::Result<()> {
     // Load configuration
     let config = db_config::get_config().expect("Failed to load configuration");
 
-    // Create repository
-    let repository = LayeredHypergraphRepository::new(&config.database.db_path)
-        .expect("Failed to create repository");
+    // Create repository. If the configured RocksDB path is unavailable we fall back to a
+    // temp directory instead of crashing, so stateless endpoints (e.g. /api/normalize)
+    // keep working without a provisioned database.
+    let repository = match LayeredHypergraphRepository::new(&config.database.db_path) {
+        Ok(repo) => repo,
+        Err(e) => {
+            let fallback = std::env::temp_dir().join("hgdb_rocksdb");
+            eprintln!(
+                "Warning: could not open RocksDB at '{}' ({}). Falling back to '{}'.",
+                config.database.db_path,
+                e,
+                fallback.display()
+            );
+            LayeredHypergraphRepository::new(&fallback.to_string_lossy())
+                .expect("Failed to create fallback repository")
+        }
+    };
     let repository_arc = Arc::new(repository);
 
     // Create service
