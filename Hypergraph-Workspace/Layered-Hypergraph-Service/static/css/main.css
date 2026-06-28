@@ -1,15 +1,15 @@
 :root {
-  --bg-main: #f8fbff;
-  --bg-sidebar: #eef5ff;
-  --bg-topbar: #e6f0ff;
+  --bg-main: #faf9ff;
+  --bg-sidebar: #f3f0fc;
+  --bg-topbar: #ece6fb;
 
-  --text-main: #1e293b;
-  --text-muted: #64748b;
+  --text-main: #2b2440;
+  --text-muted: #6b6486;
 
-  --border: #c7d8f0;
+  --border: #ddd3f5;
 
-  --accent: #7dd3fc;
-  --accent-strong: #38bdf8;
+  --accent: #A594F9;
+  --accent-strong: #7E60BF;
 }
 
 
@@ -240,10 +240,10 @@ html, body {
 
 /* Common button style */
 .sidebar-btn {
-  background: linear-gradient(135deg, #a3d2f2, #74b9e0);
-  /* soft light blue */
-  border: 1px solid #74b9e0;  /* slightly darker blue border */
-  color: #1a1a1a;             /* dark text for contrast */
+  background: linear-gradient(135deg, #A594F9, #7E60BF);
+  /* soft purple */
+  border: 1px solid #7E60BF;  /* slightly darker purple border */
+  color: #ffffff;             /* light text for contrast */
   font-weight: 600;
   padding: 6px 12px;
   margin: 4px 0;
@@ -256,13 +256,13 @@ html, body {
 }
 
 .sidebar-btn:hover {
-  background-color: #74b9e0;  /* darker on hover */
+  background-color: #7E60BF;  /* darker on hover */
   color: #fff;
   box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
 }
 
 .sidebar-btn:active {
-  background-color: #5dade2;
+  background-color: #6a4fa6;
   transform: translateY(1px);
   box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 }

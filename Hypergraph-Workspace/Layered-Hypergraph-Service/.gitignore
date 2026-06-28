@@ -9,6 +9,9 @@
 __pycache__/
 
 
+# ===== Runtime artifacts =====
+data_file.json
+
 # ===== OS / IDE =====
 .DS_Store
 .vscode/
