@@ -1,157 +1,37 @@
 {
-  "id": "hypergraph-1770798127",
-  "name": "Layered Hypergraph hypergraph-1770798127",
-  "layers": [
-    [
-      {
-        "id": "e1",
-        "name": "e1",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": false,
-        "head_hyper_node_ids": ["v1", "v3"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      },
-      {
-        "id": "e2",
-        "name": "e2",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": false,
-        "head_hyper_node_ids": ["v1", "v7", "v2"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      }
-    ],
-    [
-      {
-        "id": "e3",
-        "name": "e3",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": false,
-        "head_hyper_node_ids": ["v7", "v6"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      },
-      {
-        "id": "e6",
-        "name": "e6",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": true,
-        "head_hyper_node_ids": ["v3", "v4"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      },
-      {
-        "id": "e7",
-        "name": "e7",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": true,
-        "head_hyper_node_ids": ["v7", "v4"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      }
-    ],
-    [
-      {
-        "id": "e4",
-        "name": "e4",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": false,
-        "head_hyper_node_ids": ["v5"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      },
-      {
-        "id": "e5",
-        "name": "e5",
-        "main_properties": [
-          {
-            "key": "type",
-            "value": ["linked"],
-            "p_type": "Simple"
-          }
-        ],
-        "traversable": true,
-        "directed": false,
-        "head_hyper_node_ids": ["v4"],
-        "tail_hyper_node_ids": [],
-        "incidence_matrix": []
-      }
-    ]
-  ],
-  "incidence_matrices": [
-    [
-      [1, 1],
-      [0, 1],
-      [1, 0],
-      [0, 1]
-    ],
-    [
-      [0, 1, 0],
-      [0, 1, 1],
-      [1, 0, 0],
-      [1, 0, 1]
-    ],
-    [
-      [0, 1],
-      [1, 0]
-    ]
-  ],
-  "transposed_matrices": [
-    [
-      [1, 0, 1, 0],
-      [1, 1, 0, 1]
-    ],
-    [
-      [0, 0, 1, 1],
-      [1, 1, 0, 0],
-      [0, 1, 0, 1]
-    ],
-    [
-      [0, 1],
-      [1, 0]
-    ]
-  ]
+  "layers": {
+    "0": {
+      "e1": [
+        "v1",
+        "v3"
+      ],
+      "e2": [
+        "v7",
+        "v2",
+        "v1"
+      ]
+    },
+    "1": {
+      "e3": [
+        "v7",
+        "v6"
+      ],
+      "e6": [
+        "v4",
+        "v3"
+      ],
+      "e7": [
+        "v7",
+        "v4"
+      ]
+    },
+    "2": {
+      "e4": [
+        "v5"
+      ],
+      "e5": [
+        "v4"
+      ]
+    }
+  }
 }

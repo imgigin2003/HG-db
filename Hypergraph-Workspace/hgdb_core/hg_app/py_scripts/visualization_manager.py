@@ -28,13 +28,19 @@ class VisualizationManager:
         self.layered_hypergraph = LayeredHypergraphManager()
 
     def serialize_hyperedges(self, hyperedges):
+<<<<<<< Updated upstream
         """Convert internal hyperedge dict to a JSON-safe format."""
         clean = {}
+=======
+        clean = {}
+
+>>>>>>> Stashed changes
         for edge_name, data in hyperedges.items():
             clean[edge_name] = {
                 "nodes": list(data["nodes"]),
                 "layer": data.get("layer", 0),
             }
+<<<<<<< Updated upstream
         return clean
 
     def _build_layers_payload(self, hyperedges: dict) -> dict:
@@ -84,6 +90,23 @@ class VisualizationManager:
         }
 
     # ──────────────────────────────────────────────────────────────────────────
+=======
+
+        return clean
+
+    def send_to_rust_layered(self, edges_payload):
+        url = "http://127.0.0.1:8080/api/visualize"
+
+        response = requests.post(url, json=edges_payload)
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Rust backend failed [{response.status_code}]: {response.text}"
+            )
+
+        return response.json()
+
+>>>>>>> Stashed changes
     def display_hypergraph_visualization(
         self,
         hyperedges,
@@ -101,6 +124,7 @@ class VisualizationManager:
             else:
                 H = hnx.Hypergraph({k: v["nodes"] for k, v in hyperedges.items()})
 
+<<<<<<< Updated upstream
             if not st.button(
                 f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"
             ):
@@ -167,6 +191,106 @@ class VisualizationManager:
                 st.pyplot(fig)
             else:
                 st.error(f"Failed to visualize {graph_type}")
+=======
+            if st.button(
+                f"Visualize {graph_type} ✨", key=f"viz_{tab_key}_{graph_type}"
+            ):
+                if is_layered:
+                    st.info("Sending Layered Hypergraph to 3D Service...")
+
+                    # --------- Build request payload (Layered format) ----------
+                    edges_array = []
+
+                    for edge_id, data in hyperedges.items():
+                        edge_obj = {
+                            "id": edge_id,
+                            "name": edge_id,
+                            "main_properties": [
+                                {"key": "type", "p_type": "Simple", "value": ["linked"]}
+                            ],
+                            "traversable": True,
+                            "directed": data.get("directed", False),
+                            "head_hyper_nodes": [
+                                {"id": node_id} for node_id in data["nodes"]
+                            ],
+                            "tail_hyper_nodes": None,
+                            "layer": data.get("layer", 0),
+                        }
+
+                        edges_array.append(edge_obj)
+
+                    request_payload = {
+                        "edges": edges_array,
+                        "hypergraph_id": "",
+                        "hypergraph_name": "",
+                    }
+
+                    # --------- Send to microservice ----------
+                    result = self.send_to_rust_layered(request_payload)
+
+                    # --------- Layout: 2 columns ----------
+                    viewer_url = "http://127.0.0.1:3000/viewer"
+
+                    colA, colB, colC = st.columns([1, 2, 1])
+                    with colB:
+                        st.markdown(
+                            f"""
+                                <div style="text-align:center; margin-bottom:15px;">
+                                    <a href="{viewer_url}" target="_blank">
+                                        <button style="
+                                            background:#6a00ff;
+                                            color:white;
+                                            border:none;
+                                            padding:12px 20px;
+                                            font-size:18px;
+                                            border-radius:10px;
+                                            cursor:pointer;
+                                        ">
+                                            🔮 Open 3D Viewer
+                                        </button>
+                                    </a>
+                                </div>
+                                """,
+                            unsafe_allow_html=True,
+                        )
+
+                    # -------- Request / Response --------
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        with st.expander("📤 Request → FastAPI", expanded=False):
+                            st.code(
+                                json.dumps(request_payload, indent=2), language="json"
+                            )
+
+                    with col2:
+                        with st.expander("📥 Response ← Microservice", expanded=False):
+                            st.json(result)
+
+                    # -------- Status --------
+                    if result.get("status") == "success":
+                        st.success("3D Scene Generated Successfully 🚀")
+                    else:
+                        st.error("Layered service failed")
+
+                    return
+
+                elif is_dual:
+                    fig = self.dual_hypergraph.draw_dual_hypergraph(H)
+
+                else:
+                    fig = self.hypergraph.draw_hypergraph(
+                        H,
+                        hyperedges,
+                        visualize_mode,
+                        highlighted_path=highlighted_path,
+                        display_mode=display_mode,
+                    )
+                if fig:
+                    st.pyplot(fig)
+                else:
+                    st.error(f"Failed to visualize {graph_type}")
+>>>>>>> Stashed changes
 
         except Exception as e:
             st.error(f"Visualization error: {e}")
@@ -177,17 +301,29 @@ class VisualizationManager:
         json_path = self.data_loader.get_statics_root() / "statics" / "test_edge.json"
 
         try:
+<<<<<<< Updated upstream
+=======
+            # Load HTML template
+>>>>>>> Stashed changes
             with open(html_path, "r", encoding="utf-8") as f:
                 html_content = f.read()
 
             with open(json_path, "r", encoding="utf-8") as f:
                 json_data = json.load(f)
 
+<<<<<<< Updated upstream
+=======
+            # Inject JSON directly into the HTML as a JS variable
+>>>>>>> Stashed changes
             injected_script = (
                 f"<script>const injectedData = {json.dumps(json_data)};</script>"
             )
 
+<<<<<<< Updated upstream
             # Patch fetch() so the HTML works without a separate file server
+=======
+            # Replace the fetch line in HTML with use of the JS variable
+>>>>>>> Stashed changes
             html_content = html_content.replace(
                 'fetch("test_edge.json")',
                 "Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(injectedData) })",
@@ -260,9 +396,18 @@ class VisualizationManager:
                     df = pd.DataFrame(properties)
                     st.dataframe(df)
                     col1, col2, col3 = st.columns(3)
+<<<<<<< Updated upstream
                     col1.metric("Total Atoms", len(df))
                     col2.metric("Average Weight", f"{df['Weight'].mean():.2f}")
                     col3.metric("Unique Layers", df["Layer"].nunique())
+=======
+                    with col1:
+                        st.metric("Total Atoms", len(df))
+                    with col2:
+                        st.metric("Average Weight", f"{df['Weight'].mean():.2f}")
+                    with col3:
+                        st.metric("Unique Layers", df["Layer"].nunique())
+>>>>>>> Stashed changes
 
                 elif data_type == "Molecules":
                     for mol in json_data:
